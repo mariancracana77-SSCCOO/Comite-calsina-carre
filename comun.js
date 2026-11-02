@@ -1,0 +1,177 @@
+// Código que comparten la web (index.html) y el panel (admin.html).
+
+// ---- Conexión con Supabase ----
+// Esta clave es pública: solo permite LEER lo publicado y enviar al buzón.
+// Para publicar hace falta iniciar sesión en el panel con una cuenta de admin.
+window.SUPABASE_URL = "https://ytxpubqyhnohhugpukdm.supabase.co";
+window.SUPABASE_KEY = "sb_publishable_tmkeed90aj4Fv00UoTTy7Q_qBPUAaCj";
+window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+window.VERSION_WEB = "1"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.WEB_URL = "https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/";
+
+// ---- Utilidades ----
+window.esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+// Solo deja pasar enlaces http, https, mailto y tel
+window.urlSegura = (u) => {
+  const s = String(u || "").trim();
+  return /^(https?:|mailto:|tel:)/i.test(s) ? s : "#";
+};
+
+// Texto sencillo a HTML: párrafos, listas con "- ", **negrita** y enlaces
+window.textoHTML = (s) => {
+  const linea = (t) => esc(t)
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  const esLista = (l) => /^\s*[-•*]\s+/.test(l);
+  return String(s ?? "").trim().split(/\n\s*\n/).map((bloque) => {
+    const out = []; let lista = [], texto = [];
+    const cierraTexto = () => { if (texto.length) out.push("<p>" + texto.map(linea).join("<br>") + "</p>"); texto = []; };
+    const cierraLista = () => { if (lista.length) out.push("<ul>" + lista.map((l) => "<li>" + linea(l.replace(/^\s*[-•*]\s+/, "")) + "</li>").join("") + "</ul>"); lista = []; };
+    bloque.split("\n").forEach((l) => { if (esLista(l)) { cierraTexto(); lista.push(l); } else { cierraLista(); texto.push(l); } });
+    cierraTexto(); cierraLista();
+    return out.join("");
+  }).join("");
+};
+
+window.fechaDia = (iso) => new Date(String(iso).slice(0, 10) + "T12:00:00");
+window.fechaLarga = (d) => (typeof d === "string" && d.length === 10 ? fechaDia(d) : new Date(d))
+  .toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
+window.fechaSemana = (iso) => {
+  const t = fechaDia(iso).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
+  return t.charAt(0).toUpperCase() + t.slice(1);
+};
+window.hoyISO = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+window.esNuevo = (d) => d && Date.now() - new Date(d) < 7 * 86400000;
+window.horario = (r) => r.hora ? (r.hora + (r.hora_fin ? " a " + r.hora_fin : "")) : "";
+
+// ---- Archivos adjuntos ----
+window.esImagen = (a) => /^image\//.test(a.tipo || "") && !/hei[cf]/.test(a.tipo);
+window.tamanoTxt = (b) => !b ? "" : b < 1048576 ? Math.max(1, Math.round(b / 1024)) + " KB" : (b / 1048576).toFixed(1).replace(".", ",") + " MB";
+window.tipoTxt = (a) => {
+  const t = a.tipo || "", e = (String(a.nombre || "").split(".").pop() || "").toUpperCase();
+  if (t.startsWith("image/")) return "Imagen";
+  if (t === "application/pdf") return "PDF";
+  if (/word|opendocument\.text/.test(t)) return "Word";
+  if (/excel|spreadsheet|csv/.test(t)) return "Excel";
+  return e || "Archivo";
+};
+window.adjuntosHTML = (lista) => {
+  lista = lista || [];
+  if (!lista.length) return "";
+  const fotos = lista.filter(esImagen), docs = lista.filter((a) => !esImagen(a));
+  return (fotos.length ? `<div class="galeria${fotos.length === 1 ? " una" : ""}">${fotos.map((f) =>
+      `<a href="${esc(urlSegura(f.url))}" target="_blank" rel="noopener" aria-label="Ver la foto en grande"><img src="${esc(urlSegura(f.url))}" alt="" loading="lazy"></a>`).join("")}</div>` : "")
+    + (docs.length ? `<div class="adjuntos">${docs.map((a) =>
+      `<a class="adjunto" href="${esc(urlSegura(a.url))}" target="_blank" rel="noopener">${icono("documento")}
+        <span><b>${esc(a.nombre || "Archivo")}</b><small>${tipoTxt(a)}${a.tamano ? " · " + tamanoTxt(a.tamano) : ""}</small></span></a>`).join("")}</div>` : "");
+};
+
+// ---- Iconos (trazos SVG sencillos, sin emojis) ----
+const IC = {
+  periodico: '<path d="M4 5h13v14H6a2 2 0 0 1-2-2V5z"/><path d="M17 9h3v8a2 2 0 0 1-2 2"/><path d="M7 9h7M7 13h7M7 16h4"/>',
+  megafono: '<path d="M3 10v4h4l6 4V6L7 10H3z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>',
+  calendario: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  acta: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 12h7M9 16h7"/>',
+  mensaje: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>',
+  personas: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14a5 5 0 0 1 6 5"/>',
+  alerta: '<path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/>',
+  reloj: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  lugar: '<path d="M12 21s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/>',
+  documento: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/>',
+  compartir: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="m8.2 10.8 7.6-3.6M8.2 13.2l7.6 3.6"/>',
+  anadir: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/>',
+  telefono: '<path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2"/>',
+  email: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+  sol: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  luna: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
+  flecha: '<path d="m9 6 6 6-6 6"/>',
+  atras: '<path d="m15 6-6 6 6 6"/>',
+  check: '<path d="m5 12 5 5 9-10"/>',
+  editar: '<path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="m13.5 6.5 4 4"/>',
+  borrar: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  mas: '<path d="M12 5v14M5 12h14"/>',
+  salir: '<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/>',
+  buscar: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
+  instalar: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>',
+  cerrar: '<path d="M6 6l12 12M18 6 6 18"/>',
+  candado: '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+  ojo: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  archivo: '<path d="M3 7h18v13H3zM3 7l2-3h14l2 3M10 11h4"/>',
+  sinred: '<path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0M12 19h.01M3 3l18 18"/>',
+};
+window.icono = (n, clase = "") =>
+  `<svg class="ico ${clase}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n] || ""}</svg>`;
+
+// ---- Tema y tamaño de letra (se recuerdan en este dispositivo) ----
+const lee = (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } };
+const guarda = (k, v) => { try { localStorage.setItem(k, v); } catch (_) {} };
+window.TEMA = {
+  aplica() {
+    const t = lee("comite-tema");
+    if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+    const l = lee("comite-letra");
+    if (l) document.documentElement.dataset.letra = l; else delete document.documentElement.dataset.letra;
+  },
+  oscuro() {
+    const t = document.documentElement.dataset.theme;
+    return t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  },
+  cambiaTema() { guarda("comite-tema", this.oscuro() ? "light" : "dark"); this.aplica(); },
+  cambiaLetra() {
+    const orden = ["", "grande", "muy-grande"], ahora = lee("comite-letra") || "";
+    guarda("comite-letra", orden[(orden.indexOf(ahora) + 1) % orden.length]); this.aplica();
+    return lee("comite-letra") || "";
+  },
+  lee, guarda,
+};
+TEMA.aplica();
+
+// ---- Archivo .ics para añadir una reunión al calendario del móvil ----
+window.descargaICS = (r) => {
+  const d = String(r.fecha).replace(/-/g, "");
+  const hm = (h) => (String(h || "").match(/^(\d{1,2}):(\d{2})/) || []).slice(1).map((x) => x.padStart(2, "0")).join("") + "00";
+  const limpia = (t) => String(t || "").replace(/[\\;,]/g, (c) => "\\" + c).replace(/\n/g, "\\n");
+  let ini, fin;
+  if (r.hora && /^\d{1,2}:\d{2}/.test(r.hora)) {
+    ini = `DTSTART;TZID=Europe/Madrid:${d}T${hm(r.hora)}`;
+    fin = r.hora_fin && /^\d{1,2}:\d{2}/.test(r.hora_fin) ? `DTEND;TZID=Europe/Madrid:${d}T${hm(r.hora_fin)}` : "";
+  } else {
+    const s = fechaDia(r.fecha); s.setDate(s.getDate() + 1);
+    ini = `DTSTART;VALUE=DATE:${d}`; fin = `DTEND;VALUE=DATE:${s.toISOString().slice(0, 10).replace(/-/g, "")}`;
+  }
+  const txt = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Comite Calsina Carre//ES", "BEGIN:VEVENT",
+    `UID:reunion-${r.id}@comite-calsina-carre`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`,
+    ini, fin, `SUMMARY:${limpia(r.titulo)}`, r.lugar ? `LOCATION:${limpia(r.lugar)}` : "", r.descripcion ? `DESCRIPTION:${limpia(r.descripcion)}` : "",
+    "END:VEVENT", "END:VCALENDAR"].filter(Boolean).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([txt], { type: "text/calendar" }));
+  a.download = "reunion-comite.ics";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+};
+
+// ---- Compartir (menú del móvil o WhatsApp) ----
+window.compartir = async (titulo, cuerpo, ancla) => {
+  const limpio = String(cuerpo || "").replace(/\*\*/g, "").trim();
+  const texto = `*${titulo}*\n\n${limpio.length > 400 ? limpio.slice(0, 399) + "…" : limpio}\n\nMás información: ${WEB_URL}${ancla ? "#" + ancla : ""}`;
+  if (navigator.share) { try { await navigator.share({ title: titulo, text: texto }); return; } catch (e) { if (e.name === "AbortError") return; } }
+  window.open("https://wa.me/?text=" + encodeURIComponent(texto), "_blank", "noopener");
+};
+
+// ---- Aviso de versión nueva (cuando el service worker se actualiza) ----
+window.registraSW = () => {
+  if (!("serviceWorker" in navigator)) return;
+  const habia = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register("sw.js").then((reg) => {
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") reg.update().catch(() => {}); });
+  }).catch(() => {});
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!habia || document.getElementById("banda-version")) return;
+    const b = document.createElement("div");
+    b.id = "banda-version"; b.className = "banda-version";
+    b.innerHTML = `<span>Hay una versión nueva</span><button type="button" class="btn claro">Actualizar</button>`;
+    b.querySelector("button").addEventListener("click", () => location.reload());
+    document.body.appendChild(b);
+  });
+};

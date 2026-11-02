@@ -1,0 +1,17 @@
+{
+  "name": "Comité de Empresa Calsina Carré",
+  "short_name": "Comité CC",
+  "description": "Actualidad, avisos, reuniones, actas y buzón del comité de empresa para la plantilla de Calsina Carré",
+  "lang": "es",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0B1E3C",
+  "theme_color": "#0B1E3C",
+  "icons": [
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "img/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

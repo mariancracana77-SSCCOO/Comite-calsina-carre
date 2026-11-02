@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://ytxpubqyhnohhugpukdm.supabase.co; connect-src 'self' https://ytxpubqyhnohhugpukdm.supabase.co wss://ytxpubqyhnohhugpukdm.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="robots" content="noindex">
+<title>Panel del comité · Calsina Carré</title>
+<meta name="theme-color" content="#0B1E3C">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="img/favicon-32.png" type="image/png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="stylesheet" href="fuentes.css?v=1">
+<link rel="stylesheet" href="styles.css?v=1">
+<link rel="stylesheet" href="admin.css?v=1">
+</head>
+<body class="panel">
+<header class="cabecera">
+  <div class="cab-fila">
+    <a class="marca" href="./" aria-label="Ver la web">
+      <span class="marca-logo"><img src="img/icon-192.png" alt="" width="48" height="48"></span>
+      <span class="marca-txt"><b>Panel del comité</b><small id="quien">Calsina Carré</small></span>
+    </a>
+    <div class="cab-botones">
+      <button type="button" id="b-tema" class="cab-btn" aria-label="Cambiar entre modo claro y oscuro"></button>
+      <button type="button" id="b-salir" class="cab-btn" aria-label="Cerrar sesión" hidden></button>
+    </div>
+  </div>
+  <nav class="pestanas" aria-label="Secciones del panel" id="nav-panel" hidden>
+    <div class="pestanas-fila" id="pestanas-panel"></div>
+  </nav>
+</header>
+
+<main class="caja" id="contenido">
+  <!-- Entrar -->
+  <section id="p-entrar" hidden>
+    <form id="f-entrar" class="tarjeta form-panel" novalidate>
+      <h1 class="titulo-vista">Entrar al panel</h1>
+      <p class="sub-vista">Solo para los miembros del comité autorizados.</p>
+      <label class="campo"><span>Email</span><input type="email" id="e-email" autocomplete="username" required></label>
+      <label class="campo"><span>Contraseña</span><input type="password" id="e-clave" autocomplete="current-password" required></label>
+      <button type="submit" class="btn grande">Entrar</button>
+      <p id="e-estado" class="estado" role="status"></p>
+      <div class="enlaces-login">
+        <button type="button" class="btn-texto" id="b-primera">Es la primera vez: crear mi contraseña</button>
+        <button type="button" class="btn-texto" id="b-olvido">He olvidado la contraseña</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Nueva contraseña (al venir del email de recuperar) -->
+  <section id="p-nueva" hidden>
+    <form id="f-nueva" class="tarjeta form-panel" novalidate>
+      <h1 class="titulo-vista">Nueva contraseña</h1>
+      <label class="campo"><span>Contraseña nueva (mínimo 8 letras o números)</span><input type="password" id="n-clave" autocomplete="new-password" minlength="8" required></label>
+      <button type="submit" class="btn grande">Guardar contraseña</button>
+      <p id="n-estado" class="estado" role="status"></p>
+    </form>
+  </section>
+
+  <!-- Sin permiso -->
+  <section id="p-sinpermiso" hidden>
+    <div class="tarjeta">
+      <h1 class="titulo-vista">Sin permiso</h1>
+      <p>Esta cuenta no está autorizada para usar el panel. Pide a otro administrador que la añada en «Accesos».</p>
+    </div>
+  </section>
+
+  <!-- Panel -->
+  <section id="p-panel" hidden>
+    <div id="vista-panel"></div>
+  </section>
+</main>
+
+<div id="aviso-flotante" class="aviso-flotante" role="status" hidden></div>
+
+<script src="lib/supabase.js"></script>
+<script src="comun.js?v=1"></script>
+<script src="admin.js?v=1"></script>
+</body>
+</html>

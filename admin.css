@@ -1,0 +1,39 @@
+/* Panel del comité (se suma a styles.css) */
+.panel main { padding-top: 12px; }
+.form-panel { display: grid; gap: 14px; max-width: 720px; margin-top: 8px; }
+.form-panel .titulo-vista { margin-top: 0; }
+.campo { display: grid; gap: 6px; }
+.campo > span { font-weight: 700; }
+.campo input, .campo select { min-height: 48px; }
+.ayuda { color: var(--suave); font-size: .82rem; }
+.casilla { display: flex; gap: 10px; align-items: center; font-weight: 700; min-height: 44px; }
+.casilla input { width: 24px; height: 24px; accent-color: var(--azul); }
+.btn-texto { border: 0; background: none; color: var(--azul); font: inherit; font-weight: 600; cursor: pointer; padding: 8px 0; text-align: left; display: inline-flex; align-items: center; gap: 6px; }
+.enlaces-login { display: flex; flex-direction: column; align-items: flex-start; }
+.volver { margin: 4px 0 8px; }
+.cab-seccion { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; }
+.cab-seccion .titulo-vista { margin: 10px 0 0; }
+.fila-panel { display: flex; align-items: center; gap: 12px; justify-content: space-between; padding: 12px 14px; }
+.fila-txt { display: flex; flex-direction: column; min-width: 0; }
+.fila-txt b { overflow-wrap: anywhere; }
+.fila-txt small { color: var(--suave); }
+.fila-btns { display: flex; gap: 6px; flex: none; }
+.btn-linea.peligro { color: var(--rojo); }
+.mensaje.sin-leer { border-left: 6px solid var(--azul); }
+.lista-adj { display: grid; gap: 6px; }
+.lista-adj:empty { display: none; }
+.adj-fila { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: var(--azul-claro); }
+.adj-fila > span { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-wrap: anywhere; }
+.adj-fila small { color: var(--suave); }
+.subir { position: relative; justify-self: start; }
+.subir input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.aviso-flotante {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 60;
+  background: var(--cab); color: #fff; padding: 12px 18px; border-radius: 12px; box-shadow: 0 6px 24px rgba(0, 0, 0, .3);
+  max-width: calc(100% - 32px); font-weight: 600;
+}
+.aviso-flotante.mal { background: #b71c1c; }
+@media (max-width: 520px) {
+  .fila-panel { flex-direction: column; align-items: stretch; }
+  .fila-btns { justify-content: flex-end; }
+}
