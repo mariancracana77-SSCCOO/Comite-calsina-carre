@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Comité Calsina Carré</title>
+  <meta name="description" content="App del Comité Calsina Carré: avisos, agenda y contacto.">
+  <meta name="theme-color" content="#1f4e79">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Comité">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="cabecera">
+    <img src="icons/icon.svg" alt="" class="logo" width="44" height="44">
+    <div>
+      <h1 id="titulo">Comité Calsina Carré</h1>
+      <p id="lema" class="lema"></p>
+    </div>
+  </header>
+
+  <div id="banner-instalar" class="banner" hidden>
+    <span>📲 Instala la app en tu móvil</span>
+    <button id="boton-instalar" class="boton">Instalar</button>
+  </div>
+  <div id="ayuda-ios" class="banner" hidden>
+    <span>📲 Para instalarla en iPhone: pulsa <strong>Compartir</strong> y luego <strong>«Añadir a pantalla de inicio»</strong>.</span>
+    <button class="cerrar" aria-label="Cerrar" data-cierra="ayuda-ios">✕</button>
+  </div>
+
+  <main>
+    <section id="inicio" class="pantalla activa">
+      <div class="tarjeta destacada">
+        <h2>Bienvenidos</h2>
+        <p id="bienvenida"></p>
+      </div>
+      <h2 class="seccion">Último aviso</h2>
+      <div id="ultimo-aviso"></div>
+      <h2 class="seccion">Próximo evento</h2>
+      <div id="proximo-evento"></div>
+    </section>
+
+    <section id="avisos" class="pantalla">
+      <h2 class="seccion">Avisos</h2>
+      <div id="lista-avisos"></div>
+    </section>
+
+    <section id="agenda" class="pantalla">
+      <h2 class="seccion">Agenda</h2>
+      <div id="lista-eventos"></div>
+    </section>
+
+    <section id="contacto" class="pantalla">
+      <h2 class="seccion">Contacto</h2>
+      <div class="tarjeta" id="datos-contacto"></div>
+    </section>
+  </main>
+
+  <nav class="menu" aria-label="Menú principal">
+    <button data-ir="inicio" class="activo"><span>🏠</span>Inicio</button>
+    <button data-ir="avisos"><span>📢</span>Avisos</button>
+    <button data-ir="agenda"><span>📅</span>Agenda</button>
+    <button data-ir="contacto"><span>✉️</span>Contacto</button>
+  </nav>
+
+  <script src="contenido.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
