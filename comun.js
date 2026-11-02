@@ -98,6 +98,17 @@ const IC = {
   candado: '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
   ojo: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
   archivo: '<path d="M3 7h18v13H3zM3 7l2-3h14l2 3M10 11h4"/>',
+  inicio: '<rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/>',
+  subir: '<path d="M12 16V4M7 9l5-5 5 5M5 20h14"/>',
+  ayuda: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01"/>',
+  qr: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 17h4v4h-4"/>',
+  texto: '<path d="M4 6h16M4 10h16M4 14h10M4 18h7"/>',
+  grafica: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  puntos: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
+  duplicar: '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',
+  recuperar: '<path d="M4 12a8 8 0 1 0 2.3-5.6L4 8.7"/><path d="M4 3v5.7h5.7"/>',
+  subirOrden: '<path d="m6 15 6-6 6 6"/>',
+  bajarOrden: '<path d="m6 9 6 6 6-6"/>',
   sinred: '<path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0M12 19h.01M3 3l18 18"/>',
 };
 window.icono = (n, clase = "") =>

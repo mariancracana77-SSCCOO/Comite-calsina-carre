@@ -8,7 +8,8 @@
 <meta name="description" content="Información del comité de empresa para la plantilla de Calsina Carré: actualidad, avisos, reuniones, actas, buzón de sugerencias y preguntas.">
 <meta name="theme-color" content="#0B1E3C">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="img/favicon-32.png" type="image/png">
+<link rel="icon" href="img/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="img/favicon-64.png" sizes="64x64" type="image/png">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Comité CC">
@@ -29,6 +30,7 @@
       <span class="marca-txt"><b>Calsina Carré</b><small>Comité de empresa</small></span>
     </a>
     <div class="cab-botones">
+      <button type="button" id="b-buscar" class="cab-btn" aria-label="Buscar en toda la web"></button>
       <button type="button" id="b-letra" class="cab-btn" aria-label="Cambiar el tamaño de la letra"><span class="aa">Aa</span></button>
       <button type="button" id="b-tema" class="cab-btn" aria-label="Cambiar entre modo claro y oscuro"></button>
     </div>
@@ -56,11 +58,20 @@
   <!-- ACTUALIDAD (portada) -->
   <section id="v-actualidad" class="vista" data-titulo="Actualidad">
     <div class="portada">
+      <img class="banner-marca" src="img/cabecera-900.webp" srcset="img/cabecera-900.webp 900w, img/cabecera-1600.webp 1600w" sizes="(min-width: 980px) 948px, 100vw" width="1600" height="352" alt="Calsina Carré · Transporte y logística · Comité de empresa">
       <p class="bienvenida" id="bienvenida"></p>
       <div id="urgente"></div>
       <div id="proxima"></div>
     </div>
     <div class="caja">
+      <div id="novedades"></div>
+      <div id="consultas"></div>
+      <nav class="accesos" aria-label="Accesos rápidos">
+        <a href="#reuniones"><span class="ic" data-ic="calendario"></span><span>Reuniones</span></a>
+        <a href="#actas"><span class="ic" data-ic="acta"></span><span>Actas</span></a>
+        <a href="#documentos"><span class="ic" data-ic="documento"></span><span>Documentos</span></a>
+        <a href="#buzon"><span class="ic" data-ic="mensaje"></span><span>Buzón anónimo</span></a>
+      </nav>
       <h1 class="titulo-vista">Actualidad</h1>
       <p class="sub-vista">Noticias e información que os afecta como trabajadores.</p>
       <div id="lista-actualidad" class="lista"><div class="esq"></div><div class="esq"></div></div>
@@ -103,6 +114,15 @@
   <section id="v-actas" class="vista" data-titulo="Actas" hidden>
     <div class="caja">
       <h1 class="titulo-vista">Actas</h1>
+      <div class="segmentos" role="tablist" aria-label="Actas o documentos">
+        <button type="button" role="tab" id="seg-actas" aria-selected="true" aria-controls="bloque-actas">Actas</button>
+        <button type="button" role="tab" id="seg-documentos" aria-selected="false" aria-controls="bloque-documentos">Documentos útiles</button>
+      </div>
+      <div id="bloque-documentos" role="tabpanel" aria-labelledby="seg-documentos" hidden>
+        <p class="sub-vista">Convenio, calendario laboral, tablas salariales y otros documentos que te pueden hacer falta.</p>
+        <div id="lista-documentos"></div>
+      </div>
+      <div id="bloque-actas" role="tabpanel" aria-labelledby="seg-actas">
       <p class="sub-vista">Resumen y acuerdos de cada reunión. Si hay acta completa, puedes abrirla en PDF.</p>
       <label class="buscador">
         <span class="sr-only">Buscar en las actas</span>
@@ -110,6 +130,7 @@
       </label>
       <div id="anos-actas" class="chips" role="group" aria-label="Elegir año"></div>
       <div id="lista-actas" class="lista"></div>
+      </div>
     </div>
   </section>
 
@@ -145,15 +166,41 @@
       <div id="lista-miembros" class="miembros"></div>
     </div>
   </section>
+  <!-- BUSCAR -->
+  <section id="v-buscar" class="vista" data-titulo="Buscar" hidden>
+    <div class="caja">
+      <h1 class="titulo-vista">Buscar</h1>
+      <label class="buscador">
+        <span class="sr-only">Qué quieres buscar</span>
+        <input type="search" id="buscar-todo" placeholder="Ej.: vacaciones, nómina, turnos…" autocomplete="off" enterkeyhint="search">
+      </label>
+      <p id="buscar-info" class="sub-vista" role="status"></p>
+      <div id="lista-buscar" class="lista"></div>
+    </div>
+  </section>
+
+  <!-- PRIVACIDAD -->
+  <section id="v-privacidad" class="vista" data-titulo="Privacidad" hidden>
+    <div class="caja">
+      <h1 class="titulo-vista">Privacidad</h1>
+      <div id="privacidad-texto" class="tarjeta texto"></div>
+    </div>
+  </section>
 </main>
+
+<nav class="barra-fija" aria-label="Contacto">
+  <a href="#nosotros" class="btn grande"><span class="ic" data-ic="personas"></span><span>Contactar con el comité</span></a>
+  <a href="#buzon" class="barra-buzon" aria-label="Buzón anónimo"><span class="ic" data-ic="mensaje"></span><span>Buzón</span></a>
+</nav>
 
 <footer class="pie">
   <p>Comité de Empresa de Calsina Carré · Web informativa para la plantilla</p>
-  <p><a href="admin.html">Acceso del comité</a></p>
+  <p><a href="#privacidad">Privacidad</a> · <a href="admin.html">Acceso del comité</a></p>
 </footer>
 
 <script src="lib/supabase.js"></script>
 <script src="comun.js?v=1"></script>
+<script src="render.js?v=1"></script>
 <script src="app.js?v=1"></script>
 </body>
 </html>

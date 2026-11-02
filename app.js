@@ -1,10 +1,18 @@
 // Web pública del Comité de Empresa Calsina Carré
 (function () {
   const $ = (id) => document.getElementById(id);
-  const D = { actualidad: [], avisos: [], reuniones: [], actas: [], preguntas: [], miembros: [], paginas: {} };
-  const VISTAS = ["actualidad", "avisos", "reuniones", "actas", "buzon", "nosotros"];
+  const D = { actualidad: [], avisos: [], reuniones: [], actas: [], preguntas: [], miembros: [], encuestas: [], votos: {}, documentos: [], paginas: {} };
+  const VISTAS = ["actualidad", "avisos", "reuniones", "actas", "buzon", "nosotros", "buscar", "privacidad"];
+  const PESTANA_DE = { buscar: null, privacidad: null };
 
-  // ---------- Cabecera: tema y letra ----------
+  // ---------- Iconos fijos del HTML ----------
+  document.querySelectorAll("[data-ic]").forEach((s) => { s.innerHTML = icono(s.dataset.ic); });
+  $("b-buscar").innerHTML = icono("buscar");
+  $("mes-ant").innerHTML = icono("atras");
+  $("mes-sig").innerHTML = icono("flecha");
+  $("b-instalar-no").innerHTML = icono("cerrar");
+
+  // ---------- Cabecera: tema, letra y buscar ----------
   const pintaTema = () => { $("b-tema").innerHTML = icono(TEMA.oscuro() ? "sol" : "luna"); };
   pintaTema();
   $("b-tema").addEventListener("click", () => { TEMA.cambiaTema(); pintaTema(); });
@@ -12,33 +20,38 @@
     const l = TEMA.cambiaLetra();
     $("b-letra").setAttribute("aria-label", "Tamaño de letra: " + ({ "": "normal", grande: "grande", "muy-grande": "muy grande" }[l]));
   });
-  $("mes-ant").innerHTML = icono("atras");
-  $("mes-sig").innerHTML = icono("flecha");
-  $("b-instalar-no").innerHTML = icono("cerrar");
+  $("b-buscar").addEventListener("click", () => { location.hash = "buscar"; });
 
   // ---------- Navegación entre apartados ----------
   const irA = (hash, { foco = false } = {}) => {
     const h = (hash || "").replace(/^#/, "");
     let vista = VISTAS.includes(h) ? h : "actualidad", destino = null;
-    const m = h.match(/^(noticia|aviso|reunion|acta)-(\d+)$/);
-    if (m) { vista = { noticia: "actualidad", aviso: "avisos", reunion: "reuniones", acta: "actas" }[m[1]]; destino = h; }
+    if (h === "documentos") { vista = "actas"; ponSegmento("documentos"); }
+    const m = h.match(/^(noticia|aviso|reunion|acta|consulta|documento)-(\d+)$/);
+    if (m) {
+      vista = { noticia: "actualidad", aviso: "avisos", reunion: "reuniones", acta: "actas", consulta: "actualidad", documento: "actas" }[m[1]];
+      destino = h;
+    }
     VISTAS.forEach((v) => { $("v-" + v).hidden = v !== vista; });
+    const pest = vista in PESTANA_DE ? PESTANA_DE[vista] : vista;
     document.querySelectorAll("#pestanas a").forEach((a) => {
-      const sel = a.dataset.vista === vista;
+      const sel = a.dataset.vista === pest;
       a.classList.toggle("activa", sel);
       if (sel) { a.setAttribute("aria-current", "page"); a.scrollIntoView({ block: "nearest", inline: "center" }); } else a.removeAttribute("aria-current");
     });
     document.title = $("v-" + vista).dataset.titulo + " · Comité de Empresa Calsina Carré";
     if (vista === "avisos") marcaAvisosVistos();
+    if (vista === "buscar") setTimeout(() => $("buscar-todo").focus(), 50);
     if (destino) {
       if (m[1] === "reunion") { const r = D.reuniones.find((x) => String(x.id) === m[2]); if (r && r.fecha < hoyISO()) $("pasadas-caja").open = true; }
-      if (m[1] === "acta") { filtroAno = "todos"; $("buscar-actas").value = ""; pintaActas(); }
+      if (m[1] === "acta") { ponSegmento("actas"); filtroAno = "todos"; $("buscar-actas").value = ""; pintaActas(); }
+      if (m[1] === "documento") ponSegmento("documentos");
       requestAnimationFrame(() => {
         const el = $(destino);
         if (el) { el.scrollIntoView({ block: "start" }); el.classList.add("resalta"); setTimeout(() => el.classList.remove("resalta"), 2200); }
       });
     } else window.scrollTo(0, 0);
-    if (foco) $("contenido").focus({ preventScroll: true });
+    if (foco && vista !== "buscar") $("contenido").focus({ preventScroll: true });
   };
   window.addEventListener("hashchange", () => irA(location.hash, { foco: true }));
 
@@ -55,60 +68,63 @@
     c.hidden = !n; c.textContent = n; c.setAttribute("aria-label", n + " sin leer");
   };
 
-  // ---------- Piezas ----------
-  const nuevo = (d) => esNuevo(d) ? '<span class="etq nuevo">Nuevo</span>' : "";
-  const botonesItem = (tipo, x, titulo, texto) => `<div class="acciones">
-      <button type="button" class="btn-linea" data-compartir="${tipo}-${x.id}" data-t="${esc(titulo)}" data-x="${esc(texto)}">${icono("compartir")}Compartir</button>
-    </div>`;
-
-  const tarjetaNoticia = (n) => `
-    <article class="tarjeta" id="noticia-${n.id}">
-      <div class="meta">${n.categoria && n.categoria !== "General" ? `<span class="etq">${esc(n.categoria)}</span>` : ""}${nuevo(n.creado)}<span>${esc(fechaLarga(n.fecha))}</span></div>
-      <h3>${esc(n.titulo)}</h3>
-      <div class="texto">${textoHTML(n.contenido)}</div>
-      ${adjuntosHTML(n.adjuntos)}
-      ${botonesItem("noticia", n, n.titulo, n.contenido)}
-    </article>`;
-
-  const tarjetaAviso = (a) => `
-    <article class="tarjeta aviso${a.urgente ? " urgente" : ""}" id="aviso-${a.id}">
-      <div class="meta">${a.urgente ? `<span class="etq rojo">${icono("alerta")}Urgente</span>` : ""}${nuevo(a.fecha)}<span>${esc(fechaLarga(a.fecha))}</span></div>
-      <h3>${esc(a.titulo)}</h3>
-      <div class="texto">${textoHTML(a.contenido)}</div>
-      ${adjuntosHTML(a.adjuntos)}
-      ${botonesItem("aviso", a, a.titulo, a.contenido)}
-    </article>`;
-
-  const tarjetaReunion = (r) => {
-    const d = fechaDia(r.fecha), pasada = r.fecha < hoyISO();
-    return `
-    <article class="tarjeta reunion${pasada ? " pasada" : ""}" id="reunion-${r.id}">
-      <div class="dia" aria-hidden="true"><b>${d.getDate()}</b><span>${d.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}</span></div>
-      <div class="reunion-cuerpo">
-        <div class="meta"><span class="etq azul">${esc(r.tipo)}</span>${r.fecha === hoyISO() ? '<span class="etq rojo">Hoy</span>' : ""}</div>
-        <h3>${esc(r.titulo)}</h3>
-        <p class="dato">${icono("calendario")}${esc(fechaSemana(r.fecha))}${r.hora ? " · " + esc(horario(r)) : ""}</p>
-        ${r.lugar ? `<p class="dato">${icono("lugar")}${esc(r.lugar)}</p>` : ""}
-        ${r.descripcion ? `<div class="texto">${textoHTML(r.descripcion)}</div>` : ""}
-        ${pasada ? "" : `<div class="acciones">
-          <button type="button" class="btn-linea" data-ics="${r.id}">${icono("anadir")}Añadir a mi calendario</button>
-          <button type="button" class="btn-linea" data-compartir="reunion-${r.id}" data-t="${esc(r.titulo)}" data-x="${esc(fechaSemana(r.fecha) + (r.hora ? ", " + horario(r) : "") + (r.lugar ? ". Lugar: " + r.lugar : "") + (r.descripcion ? "\n\n" + r.descripcion : ""))}">${icono("compartir")}Compartir</button>
-        </div>`}
-      </div>
-    </article>`;
-  };
-
-  const tarjetaActa = (a) => `
-    <article class="tarjeta acta" id="acta-${a.id}">
-      <div class="meta"><span class="etq azul">${esc(a.tipo)}</span>${nuevo(a.creado)}<span>${esc(fechaLarga(a.fecha))}</span></div>
-      <h3>${esc(a.titulo)}</h3>
-      ${a.resumen ? `<h4>Resumen</h4><div class="texto">${textoHTML(a.resumen)}</div>` : ""}
-      ${a.acuerdos ? `<h4>Acuerdos</h4><div class="texto acuerdos">${textoHTML(a.acuerdos)}</div>` : ""}
-      ${adjuntosHTML(a.adjuntos)}
-      ${botonesItem("acta", a, "Acta: " + a.titulo, (a.acuerdos ? "Acuerdos:\n" + a.acuerdos : a.resumen))}
-    </article>`;
-
+  // ---------- Piezas (en render.js, compartidas con el panel) ----------
   const vacio = (txt) => `<p class="vacio">${esc(txt)}</p>`;
+  const tarjetaNoticia = R.noticia, tarjetaAviso = R.aviso, tarjetaReunion = R.reunion, tarjetaActa = R.acta, tarjetaDocumento = R.documento;
+
+  // ---------- Consultas anónimas ----------
+  const abierta = R.abierta;
+  const misVotos = () => { try { return JSON.parse(TEMA.lee("comite-votos") || "{}"); } catch (_) { return {}; } };
+  const consultaHTML = (e) => R.consulta(e, D.votos[e.id] || {}, misVotos()[e.id] || 0);
+  const pintaConsultas = () => {
+    // Abiertas siempre; cerradas solo las de los últimos 30 días
+    const lim = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+    const lista = D.encuestas.filter((e) => abierta(e) || e.cierra >= lim);
+    $("consultas").innerHTML = lista.length ? `<h2 class="titulo-bloque">Consultas a la plantilla</h2><div class="lista">${lista.map(consultaHTML).join("")}</div>` : "";
+  };
+  document.addEventListener("click", async (ev) => {
+    const b = ev.target.closest("[data-voto]"); if (!b) return;
+    const [id, op] = b.dataset.voto.split(":").map(Number);
+    const caja = b.closest(".consulta"), est = caja.querySelector(".estado");
+    caja.querySelectorAll("[data-voto]").forEach((x) => { x.disabled = true; });
+    est.className = "estado"; est.textContent = "Enviando tu voto…";
+    const { error } = await sb.rpc("votar_encuesta", { p_id: id, p_opcion: op });
+    if (error) {
+      est.textContent = /fetch|network/i.test(error.message) ? "No hay conexión. Prueba de nuevo." : error.message;
+      est.classList.add("mal");
+      caja.querySelectorAll("[data-voto]").forEach((x) => { x.disabled = false; });
+      return;
+    }
+    const mv = misVotos(); mv[id] = op; TEMA.guarda("comite-votos", JSON.stringify(mv));
+    const { data } = await sb.from("encuesta_votos").select("*").eq("encuesta_id", id);
+    if (data) { D.votos[id] = {}; data.forEach((r) => { D.votos[id][r.opcion] = r.n; }); }
+    else { (D.votos[id] ||= {})[op] = ((D.votos[id] || {})[op] || 0) + 1; }
+    caja.outerHTML = consultaHTML(D.encuestas.find((e) => e.id === id));
+  });
+
+  // ---------- Novedades desde tu última visita ----------
+  let ultimaVisita = null;
+  const NOV = [
+    ["avisos", "fecha", "aviso", "avisos", "aviso"],
+    ["actualidad", "creado", "noticia", "noticias", "noticia"],
+    ["reuniones", "creado", "reunión", "reuniones", "reunion"],
+    ["actas", "creado", "acta", "actas", "acta"],
+    ["encuestas", "creado", "consulta", "consultas", "consulta"],
+    ["documentos", "creado", "documento", "documentos", "documento"],
+  ];
+  const pintaNovedades = () => {
+    if (!ultimaVisita) { $("novedades").innerHTML = ""; return; }
+    const partes = [], enlaces = [];
+    NOV.forEach(([t, campo, uno, varios, ancla]) => {
+      const nuevos = D[t].filter((x) => x[campo] && x[campo] > ultimaVisita);
+      if (!nuevos.length) return;
+      partes.push(nuevos.length + " " + (nuevos.length === 1 ? uno : varios));
+      enlaces.push(`<a href="#${ancla}-${nuevos[0].id}">${esc(nuevos.length === 1 ? (nuevos[0].titulo || nuevos[0].pregunta) : "Ver " + varios)}</a>`);
+    });
+    $("novedades").innerHTML = partes.length
+      ? `<div class="novedades"><b>Novedades desde tu última visita:</b> ${esc(partes.join(", "))}<div class="nov-enlaces">${enlaces.join("")}</div></div>`
+      : `<div class="novedades al-dia">${icono("check")}<span>Estás al día: no hay nada nuevo desde tu última visita.</span></div>`;
+  };
 
   // ---------- Actualidad (portada) ----------
   const pintaActualidad = () => {
@@ -134,6 +150,8 @@
         <span class="faltan">${dias === 0 ? "Es hoy" : dias === 1 ? "Mañana" : "Faltan " + dias + " días"}</span>
       </a>`;
     })() : "";
+    pintaNovedades();
+    pintaConsultas();
     $("lista-actualidad").innerHTML = D.actualidad.map(tarjetaNoticia).join("") || vacio("Todavía no hay noticias publicadas.");
   };
 
@@ -144,7 +162,7 @@
   };
 
   // ---------- Calendario de reuniones ----------
-  let mesVisto = (() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
+  const mesVisto = (() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
   const pintaMes = () => {
     const a = mesVisto.getFullYear(), m = mesVisto.getMonth();
     const nombre = mesVisto.toLocaleDateString("es-ES", { month: "long", year: "numeric" });
@@ -177,8 +195,17 @@
     pintaMes();
   };
 
-  // ---------- Actas ----------
+  // ---------- Actas y documentos ----------
   let filtroAno = "todos";
+  function ponSegmento(s) {
+    ["actas", "documentos"].forEach((k) => {
+      $("seg-" + k).setAttribute("aria-selected", String(k === s));
+      $("bloque-" + k).hidden = k !== s;
+    });
+  }
+  $("seg-actas").addEventListener("click", () => { ponSegmento("actas"); history.replaceState(null, "", "#actas"); });
+  $("seg-documentos").addEventListener("click", () => { ponSegmento("documentos"); history.replaceState(null, "", "#documentos"); });
+
   const pintaActas = () => {
     const anos = [...new Set(D.actas.map((a) => a.fecha.slice(0, 4)))];
     $("anos-actas").innerHTML = anos.length > 1 ? ["todos", ...anos].map((y) =>
@@ -194,14 +221,18 @@
     const b = e.target.closest("[data-ano]"); if (!b) return;
     filtroAno = b.dataset.ano; pintaActas();
   });
+  const pintaDocumentos = () => {
+    const grupos = {};
+    D.documentos.forEach((d) => { (grupos[d.categoria || "General"] ||= []).push(d); });
+    const nombres = Object.keys(grupos);
+    $("lista-documentos").innerHTML = nombres.map((g) =>
+      `${nombres.length > 1 ? `<h2 class="titulo-bloque">${esc(g)}</h2>` : ""}<div class="lista">${grupos[g].map(tarjetaDocumento).join("")}</div>`).join("")
+      || vacio("Todavía no hay documentos.");
+  };
 
   // ---------- Sugerencias y preguntas ----------
   const pintaPreguntas = () => {
-    $("lista-preguntas").innerHTML = D.preguntas.map((p) => `
-      <details class="tarjeta pregunta">
-        <summary>${esc(p.pregunta)}</summary>
-        <div class="texto">${textoHTML(p.respuesta) || "<p>Pendiente de respuesta.</p>"}</div>
-      </details>`).join("") || vacio("Todavía no hay preguntas respondidas.");
+    $("lista-preguntas").innerHTML = D.preguntas.map((p) => R.pregunta(p)).join("") || vacio("Todavía no hay preguntas respondidas.");
   };
   $("buzon-texto").addEventListener("input", (e) => { $("buzon-cuenta").textContent = e.target.value.length; });
   $("form-buzon").addEventListener("submit", async (e) => {
@@ -224,27 +255,37 @@
     } finally { b.disabled = false; }
   });
 
-  // ---------- Nosotros ----------
+  // ---------- Nosotros y privacidad ----------
   const pintaNosotros = () => {
     $("nosotros-texto").innerHTML = textoHTML(D.paginas.nosotros) || "<p>Información del comité próximamente.</p>";
-    $("lista-miembros").innerHTML = D.miembros.map((m) => {
-      const ini = m.nombre.split(/\s+/).slice(0, 2).map((p) => p[0] || "").join("").toUpperCase();
-      const tel = String(m.telefono || "").replace(/[^\d+]/g, "");
-      return `
-      <article class="tarjeta miembro">
-        <div class="inicial" aria-hidden="true">${esc(ini)}</div>
-        <div>
-          <h3>${esc(m.nombre)}</h3>
-          <p class="cargo">${esc(m.cargo)}${m.sindicato ? " · " + esc(m.sindicato) : ""}</p>
-          ${m.detalle ? `<p class="detalle">${esc(m.detalle)}</p>` : ""}
-          <div class="acciones">
-            ${tel ? `<a class="btn-linea" href="tel:${esc(tel)}">${icono("telefono")}Llamar</a>` : ""}
-            ${m.email ? `<a class="btn-linea" href="mailto:${esc(m.email)}">${icono("email")}Email</a>` : ""}
-          </div>
-        </div>
-      </article>`;
-    }).join("") || vacio("Pronto pondremos aquí quién forma el comité.");
+    $("privacidad-texto").innerHTML = textoHTML(D.paginas.privacidad) || "<p>Esta web es solo informativa.</p>";
+    $("lista-miembros").innerHTML = D.miembros.map(R.miembro).join("") || vacio("Pronto pondremos aquí quién forma el comité.");
   };
+
+  // ---------- Buscar en toda la web ----------
+  const sinAcentos = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const buscar = () => {
+    const q = sinAcentos($("buscar-todo").value.trim());
+    if (q.length < 2) { $("buscar-info").textContent = "Escribe al menos 2 letras."; $("lista-buscar").innerHTML = ""; return; }
+    const palabras = q.split(/\s+/);
+    const casa = (...t) => { const s = sinAcentos(t.join(" ")); return palabras.every((p) => s.includes(p)); };
+    const res = [
+      ...D.avisos.filter((x) => casa(x.titulo, x.contenido)).map((x) => ["Aviso", x.titulo, "aviso-" + x.id, x.fecha]),
+      ...D.actualidad.filter((x) => casa(x.titulo, x.contenido, x.categoria)).map((x) => ["Actualidad", x.titulo, "noticia-" + x.id, x.fecha]),
+      ...D.reuniones.filter((x) => casa(x.titulo, x.descripcion, x.lugar, x.tipo)).map((x) => ["Reunión", x.titulo, "reunion-" + x.id, x.fecha]),
+      ...D.actas.filter((x) => casa(x.titulo, x.resumen, x.acuerdos, x.tipo)).map((x) => ["Acta", x.titulo, "acta-" + x.id, x.fecha]),
+      ...D.documentos.filter((x) => casa(x.titulo, x.descripcion, x.categoria, (x.adjuntos || []).map((a) => a.nombre).join(" "))).map((x) => ["Documento", x.titulo, "documento-" + x.id, null]),
+      ...D.preguntas.filter((x) => casa(x.pregunta, x.respuesta)).map((x) => ["Pregunta frecuente", x.pregunta, "buzon", null]),
+      ...D.encuestas.filter((x) => casa(x.pregunta, x.explicacion, x.opciones)).map((x) => ["Consulta", x.pregunta, "consulta-" + x.id, x.creado]),
+    ];
+    $("buscar-info").textContent = res.length ? res.length + (res.length === 1 ? " resultado" : " resultados") : "No hay nada con esas palabras. Prueba con otras, o pregúntanos en el buzón.";
+    $("lista-buscar").innerHTML = res.map(([tipo, titulo, ancla, fecha]) => `
+      <a class="tarjeta resultado" href="#${ancla}">
+        <span class="meta"><span class="etq azul">${esc(tipo)}</span>${fecha ? `<span>${esc(fechaLarga(fecha))}</span>` : ""}</span>
+        <b>${esc(titulo)}</b>${icono("flecha")}
+      </a>`).join("");
+  };
+  $("buscar-todo").addEventListener("input", buscar);
 
   // ---------- Botones de compartir y calendario ----------
   document.addEventListener("click", (e) => {
@@ -255,7 +296,7 @@
   });
 
   // ---------- Carga de datos ----------
-  const pintaTodo = () => { pintaActualidad(); pintaAvisos(); pintaReuniones(); pintaActas(); pintaPreguntas(); pintaNosotros(); };
+  const pintaTodo = () => { pintaActualidad(); pintaAvisos(); pintaReuniones(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaNosotros(); };
   const guardaCopia = () => TEMA.guarda("comite-copia", JSON.stringify({ t: Date.now(), D }));
   const leeCopia = () => { try { return JSON.parse(TEMA.lee("comite-copia") || "null"); } catch (_) { return null; } };
 
@@ -267,24 +308,32 @@
       sb.from("actas").select("*").order("fecha", { ascending: false }),
       sb.from("preguntas").select("*").order("orden").order("id"),
       sb.from("miembros").select("*").order("orden").order("id"),
+      sb.from("encuestas").select("*").eq("publicada", true).order("creado", { ascending: false }),
+      sb.from("documentos").select("*").order("categoria").order("orden").order("id"),
+      sb.from("encuesta_votos").select("*"),
       sb.from("paginas").select("*"),
     ]);
     const fallo = r.find((x) => x.error);
     if (fallo) throw fallo.error;
     const ahora = new Date().toISOString();
-    [D.actualidad, D.avisos, D.reuniones, D.actas, D.preguntas, D.miembros] = r.slice(0, 6).map((x) => x.data || []);
+    [D.actualidad, D.avisos, D.reuniones, D.actas, D.preguntas, D.miembros, D.encuestas, D.documentos] = r.slice(0, 8).map((x) => x.data || []);
     // Si el panel está abierto en este navegador, el servidor le da también lo programado: aquí no se enseña
     D.avisos = D.avisos.filter((a) => !a.publicar_en || a.publicar_en <= ahora);
-    D.paginas = Object.fromEntries((r[6].data || []).map((p) => [p.slug, p.contenido]));
+    D.votos = {};
+    (r[8].data || []).forEach((v) => { (D.votos[v.encuesta_id] ||= {})[v.opcion] = v.n; });
+    D.paginas = Object.fromEntries((r[9].data || []).map((p) => [p.slug, p.contenido]));
   };
 
+  let primeraCarga = true;
   const arranca = async () => {
     // Primera visita: no avisar de avisos antiguos como "sin leer"
     const primera = !TEMA.lee("comite-avisos-vistos");
+    if (primeraCarga) { ultimaVisita = TEMA.lee("comite-ultima-visita"); }
     try {
       await cargar();
       guardaCopia();
       $("sin-red").hidden = true;
+      if (primeraCarga) TEMA.guarda("comite-ultima-visita", new Date().toISOString());
     } catch (_) {
       const c = leeCopia();
       if (c) Object.assign(D, c.D);
@@ -295,9 +344,17 @@
     }
     if (primera && D.avisos.length) TEMA.guarda("comite-avisos-vistos", D.avisos[0].fecha);
     pintaTodo();
-    irA(location.hash);
+    if (primeraCarga) irA(location.hash);
+    if (!$("v-buscar").hidden) buscar();
+    primeraCarga = false;
   };
   window.addEventListener("online", arranca);
+  // Al volver a la app después de un rato, se actualiza sola
+  let oculta = 0;
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") oculta = Date.now();
+    else if (oculta && Date.now() - oculta > 5 * 60000) arranca();
+  });
 
   // ---------- Instalar como app ----------
   const instalada = matchMedia("(display-mode: standalone)").matches || navigator.standalone;

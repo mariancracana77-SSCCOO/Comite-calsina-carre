@@ -139,8 +139,8 @@ main { outline: none; }
 /* ---------- Portada ---------- */
 .portada { background: radial-gradient(120% 140% at 85% 0%, #12457f 0%, var(--cab) 55%); color: #fff; padding: 4px 16px 20px; }
 .portada > * { max-width: 948px; margin-left: auto; margin-right: auto; }
-.bienvenida { margin: 10px auto 14px; font-size: 1rem; opacity: .9; }
-.portada:has(.bienvenida[hidden]):has(#urgente:empty):has(#proxima:empty) { display: none; }
+.banner-marca { display: block; width: 100%; height: auto; margin-top: 12px; border-radius: 12px; box-shadow: 0 0 0 1px rgba(0, 198, 255, .25); }
+.bienvenida { margin: 12px auto 14px; font-size: 1rem; opacity: .9; }
 .rotulo {
   display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; margin-bottom: 12px;
   border-radius: var(--radio); text-decoration: none; color: #fff; border: 2px solid rgba(255, 255, 255, .16); background: var(--cab-2);
@@ -263,3 +263,54 @@ textarea, .campo input, .campo select, .campo textarea {
   .marca-txt b { font-size: .9rem; }
   .cab-btn { width: 42px; height: 42px; }
 }
+
+/* ---------- Novedades, accesos rápidos y consultas ---------- */
+.novedades { margin: 16px 0 4px; padding: 12px 14px; border-radius: 12px; background: var(--azul-claro); color: var(--azul-osc); }
+.novedades.al-dia { display: flex; gap: 10px; align-items: center; background: var(--tarjeta); color: var(--suave); border: 1px solid var(--borde); }
+.novedades.al-dia .ico { color: var(--verde); }
+.nov-enlaces { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 6px; }
+.nov-enlaces a { font-weight: 700; }
+.accesos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 18px 0 4px; }
+.accesos a {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 4px; border-radius: var(--radio);
+  background: var(--tarjeta); border: 1px solid var(--borde); color: var(--texto); text-decoration: none; font-weight: 600; font-size: .78rem; text-align: center; box-shadow: var(--sombra);
+}
+.accesos .ic { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: var(--cab); color: var(--celeste); }
+.accesos .ic .ico { width: 22px; height: 22px; }
+.consulta { border: 2px solid var(--azul); }
+.cons-tipo { display: inline-flex; align-items: center; gap: 6px; color: var(--azul); font-family: "Montserrat", sans-serif; font-weight: 700; font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; }
+.cons-cuerpo { display: grid; gap: 8px; margin-top: 10px; }
+.cons-op { min-height: 50px; padding: 10px 14px; border-radius: 12px; border: 2px solid var(--borde); background: var(--fondo); color: var(--texto); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.cons-op:hover, .cons-op:focus-visible { border-color: var(--azul); }
+.cons-op:disabled { opacity: .6; }
+.cons-fila { display: flex; justify-content: space-between; gap: 10px; }
+.cons-res.mio .cons-fila span { font-weight: 700; color: var(--azul); }
+.cons-barra { height: 10px; border-radius: 99px; background: var(--azul-claro); overflow: hidden; margin-top: 4px; }
+.cons-barra i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #0E5FAE, #00C6FF); }
+.cons-pie { margin: 4px 0 0; color: var(--suave); font-size: .82rem; }
+
+/* ---------- Actas / documentos ---------- */
+.segmentos { display: inline-grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin: 6px 0 14px; border-radius: 14px; background: var(--azul-claro); }
+.segmentos button { min-height: 44px; padding: 6px 16px; border: 0; border-radius: 10px; background: none; color: var(--azul-osc); font: inherit; font-weight: 700; cursor: pointer; }
+.segmentos button[aria-selected="true"] { background: var(--tarjeta); box-shadow: var(--sombra); color: var(--azul); }
+
+/* ---------- Buscar ---------- */
+.resultado { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; text-decoration: none; color: var(--texto); }
+.resultado .meta { width: 100%; }
+.resultado b { flex: 1; }
+.resultado > .ico { color: var(--azul); }
+
+/* ---------- Barra fija de contacto ---------- */
+body:not(.panel) { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+.barra-fija {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 15; display: flex; gap: 10px;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: var(--tarjeta); border-top: 1px solid var(--borde);
+  box-shadow: 0 -4px 16px rgba(11, 30, 60, .08);
+}
+.barra-fija .btn { flex: 1; min-height: 54px; }
+.barra-fija .ic, .barra-buzon .ic { display: inline-grid; }
+.barra-buzon { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 76px; border: 2px solid var(--cab); border-radius: 12px; color: var(--texto); text-decoration: none; font-weight: 700; font-size: .78rem; }
+:root[data-theme="dark"] .barra-buzon { border-color: var(--borde); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .barra-buzon { border-color: var(--borde); } }
+@media (min-width: 980px) { .barra-fija { left: 50%; right: auto; width: 640px; transform: translateX(-50%); border: 1px solid var(--borde); border-bottom: 0; border-radius: 16px 16px 0 0; } }
+.instalar { margin-bottom: 0; }
