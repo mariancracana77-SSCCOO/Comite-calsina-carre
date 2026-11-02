@@ -20,6 +20,8 @@
         ["contenido", "Texto del aviso", "largo"],
         ["urgente", "Urgente: destacarlo arriba en la portada", "si", { def: false }],
         ["adjuntos", "Archivos adjuntos", "archivos"],
+        ["notificar", "Avisar al móvil al publicar", "si", { def: true, soloNuevo: true, ayuda: "Llega una notificación a los móviles que tienen los avisos activados." }],
+        ["_cambio", "Volver a avisar al móvil de este cambio", "si", { def: false, soloEditar: true }],
         ["publicar_en", "Programar para más tarde (opcional)", "fechahora", { ayuda: "Déjalo vacío para publicarlo ya. Si pones día y hora, no se verá hasta entonces." }],
       ],
       chips: (x) => [x.urgente && "Urgente", x.publicar_en && x.publicar_en > ahoraISO() && "Programado"],
@@ -38,6 +40,8 @@
         ["contenido", "Texto", "largo"],
         ["adjuntos", "Fotos y documentos", "archivos"],
         ["publicado", "Se ve en la web", "si", { def: true }],
+        ["notificar", "Avisar al móvil al publicar", "si", { def: true, soloNuevo: true, ayuda: "Llega una notificación a los móviles que tienen los avisos activados." }],
+        ["_cambio", "Volver a avisar al móvil de este cambio", "si", { def: false, soloEditar: true }],
       ],
       chips: (x) => [x.categoria !== "General" && x.categoria, !x.publicado && "Oculta"],
       sub: (x) => resumen(x.contenido),
@@ -55,6 +59,8 @@
         ["hora_fin", "Hora de fin (opcional)", "hora"],
         ["lugar", "Lugar", "texto", { ph: "Ej.: Sala de reuniones de la nave 2" }],
         ["descripcion", "Orden del día o detalles", "largo"],
+        ["notificar", "Avisar al móvil al publicar", "si", { def: true, soloNuevo: true, ayuda: "Llega una notificación a los móviles que tienen los avisos activados." }],
+        ["_cambio", "Volver a avisar al móvil de este cambio", "si", { def: false, soloEditar: true }],
       ],
       chips: (x) => [x.tipo, x.fecha < hoyISO() && "Pasada"],
       sub: (x) => fechaSemana(x.fecha) + " de " + x.fecha.slice(0, 4) + (x.hora ? " · " + horario(x) : "") + (x.lugar ? " · " + x.lugar : ""),
@@ -72,6 +78,8 @@
         ["resumen", "Resumen", "largo"],
         ["acuerdos", "Acuerdos", "largo", { ayuda: "Un acuerdo por línea, empezando con «- » (o pulsa «Lista»)." }],
         ["adjuntos", "Acta en PDF, fotos u otros documentos", "archivos"],
+        ["notificar", "Avisar al móvil al publicar", "si", { def: true, soloNuevo: true, ayuda: "Llega una notificación a los móviles que tienen los avisos activados." }],
+        ["_cambio", "Volver a avisar al móvil de este cambio", "si", { def: false, soloEditar: true }],
       ],
       chips: (x) => [x.tipo, (x.adjuntos || []).length && x.adjuntos.length + " archivo" + (x.adjuntos.length > 1 ? "s" : "")],
       sub: (x) => fechaLarga(x.fecha),
@@ -87,6 +95,8 @@
         ["explicacion", "Explicación (opcional)", "largo"],
         ["cierra", "Último día para votar (opcional)", "fecha"],
         ["publicada", "Se ve en la web", "si", { def: true }],
+        ["notificar", "Avisar al móvil al publicar", "si", { def: true, soloNuevo: true, ayuda: "Llega una notificación a los móviles que tienen los avisos activados." }],
+        ["_cambio", "Volver a avisar al móvil de este cambio", "si", { def: false, soloEditar: true }],
       ],
       titulo: (x) => x.pregunta,
       chips: (x) => [!R.abierta(x) ? "Cerrada" : "Abierta", !x.publicada && "Oculta", VOTOS[x.id] && totalVotos(x.id) + (totalVotos(x.id) === 1 ? " voto" : " votos")],
@@ -138,6 +148,8 @@
         ["descripcion", "Explicación (opcional)", "largo"],
         ["adjuntos", "Archivos", "archivos"],
         ["enlace", "Enlace a una web (opcional)", "url", { ph: "https://…" }],
+        ["notificar", "Avisar al móvil al publicar", "si", { def: true, soloNuevo: true, ayuda: "Llega una notificación a los móviles que tienen los avisos activados." }],
+        ["_cambio", "Volver a avisar al móvil de este cambio", "si", { def: false, soloEditar: true }],
       ],
       chips: (x) => [x.categoria, (x.adjuntos || []).length && x.adjuntos.length + " archivo" + (x.adjuntos.length > 1 ? "s" : "")],
       sub: (x) => resumen(x.descripcion),
@@ -277,6 +289,7 @@
       `<div class="menu-grupo">${grupo ? `<p class="menu-titulo">${esc(grupo)}</p>` : ""}${items.map(enlaceMenu).join("")}</div>`).join("")
       + `<div class="menu-pie"><p>${esc(YO)}<br>Versión ${esc(VERSION_WEB)}</p>
           <button type="button" class="menu-btn" data-instalar hidden>${icono("instalar")}<span>Instalar la app</span></button>
+          <a class="menu-btn" href="guia.html" target="_blank" rel="noopener">${icono("ayuda")}<span>Guía del panel</span></a>
           <button type="button" class="menu-btn" data-salir>${icono("salir")}<span>Salir</span></button></div>`;
     $("barra-movil").innerHTML = BARRA.map(enlaceMenu).join("")
       + `<button type="button" data-mas>${icono("puntos")}<span>Más</span><b class="cuenta" data-cuenta-buzon hidden></b></button>`;
@@ -326,6 +339,7 @@
   $("hoja").addEventListener("click", (e) => { if (e.target.closest("[data-cerrar-hoja], [data-ir]")) cierraHoja(); });
   const abreHojaMas = () => abreHoja("Más secciones", `<div class="hoja-lista">${MENU.map(([g, items]) =>
     `${g ? `<p class="menu-titulo">${esc(g)}</p>` : ""}${items.filter(([k]) => !BARRA.some((b) => b[0] === k)).map(enlaceMenu).join("")}`).join("")}
+    <a class="menu-btn" href="guia.html" target="_blank" rel="noopener">${icono("ayuda")}<span>Guía del panel</span></a>
     <button type="button" class="menu-btn" data-salir>${icono("salir")}<span>Salir</span></button></div>`) || cuentaBuzon();
   const ACCIONES = [
     ["avisos", "Publicar un aviso", "Con archivos si quieres"],
@@ -365,6 +379,7 @@
         ${ACCIONES.map(([k, t, s]) => `<button type="button" class="accion-tarjeta" data-nuevo="${k}">${icono(SECCIONES[k].ic)}<span><b>${esc(t)}</b><small>${esc(s)}</small></span></button>`).join("")}
         <a class="accion-tarjeta${PEND_BUZON ? " destaca" : ""}" href="#buzon">${icono("mensaje")}<span><b>Leer el buzón</b><small>${PEND_BUZON ? PEND_BUZON + (PEND_BUZON === 1 ? " mensaje sin leer" : " mensajes sin leer") : "No hay mensajes nuevos"}</small></span></a>
         <a class="accion-tarjeta" href="#cartel">${icono("qr")}<span><b>Cartel con QR</b><small>Para el tablón de anuncios</small></span></a>
+        <a class="accion-tarjeta" href="guia.html" target="_blank" rel="noopener">${icono("ayuda")}<span><b>Guía del panel</b><small>Cómo se hace cada cosa, con fotos</small></span></a>
       </div>
       <div class="tarjeta instalar-panel" data-instalar-tarjeta hidden>
         ${icono("instalar")}<span><b>Instala la app en tu móvil</b><small>Tendrás la web y el panel a un toque, con el logo en la pantalla de inicio.</small></span>
@@ -386,9 +401,59 @@
             : '<p class="vacio">No hay avisos programados. Al crear un aviso puedes elegir día y hora para que se publique solo.</p>'}
         </section>
       </div>
+      <div class="tarjeta push-panel">
+        ${icono("campana")}<span><b>Avisos al móvil</b><small id="push-cuenta">Contando móviles apuntados…</small></span>
+        <button type="button" class="btn-linea" id="b-push-prueba">${icono("campana")}Mandar un aviso de prueba</button>
+      </div>
       <h2 class="titulo-bloque">Lo último que has publicado</h2>
-      <div class="lista">${ultimos.map((x) => filaHTML(x._t, x, true)).join("") || '<p class="vacio">Todavía no has publicado nada. Empieza con uno de los botones de arriba.</p>'}</div>`;
+      <div class="lista">${ultimos.map((x) => filaHTML(x._t, x, true)).join("") || '<p class="vacio">Todavía no has publicado nada. Empieza con uno de los botones de arriba.</p>'}</div>
+      <details class="estadisticas" id="det-est">
+        <summary>${icono("grafica")}Visitas y estadísticas <small>Toca para ver</small></summary>
+        <div id="est-cuerpo"><div class="esq"></div></div>
+      </details>`;
     if (pideInstalar) document.querySelectorAll("[data-instalar-tarjeta]").forEach((b) => { b.hidden = false; });
+    sb.rpc("contar_suscritos").then(({ data, error }) => {
+      if (!$("push-cuenta")) return;
+      $("push-cuenta").textContent = error ? "No se ha podido contar." : data === 1 ? "1 móvil tiene los avisos activados." : `${data || 0} móviles tienen los avisos activados.`;
+    });
+    $("b-push-prueba").addEventListener("click", async () => {
+      if (!confirm("Se mandará «Prueba de avisos» a TODOS los móviles apuntados. ¿Seguro?")) return;
+      try {
+        const { data, error } = await sb.functions.invoke("notificar", { body: { modo: "prueba" } });
+        if (error) throw error;
+        avisa(`Prueba enviada a ${data.push.ok} de ${data.push.total} móviles`);
+      } catch (_) { avisa("No se ha podido mandar la prueba.", true); }
+    });
+    $("det-est").addEventListener("toggle", (e) => { if (e.target.open) pintaEstadisticas(); TEMA.guarda("comite-adm-est", e.target.open ? "1" : ""); });
+    if (TEMA.lee("comite-adm-est") === "1") $("det-est").open = true;
+  };
+
+  // ---- Estadísticas: visitas de los últimos 30 días ----
+  const NOMBRE_SECCION = { actualidad: "Actualidad", avisos: "Avisos", reuniones: "Reuniones", actas: "Actas", documentos: "Documentos", buzon: "Sugerencias y preguntas", nosotros: "Nosotros", buscar: "Buscador" };
+  const pintaEstadisticas = async () => {
+    const desde = new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10);
+    const [{ data, error }, sus] = await Promise.all([sb.from("visitas").select("*").gte("dia", desde), sb.rpc("contar_suscritos")]);
+    if (!$("est-cuerpo")) return;
+    if (error) { $("est-cuerpo").innerHTML = `<p class="vacio">${esc(errTxt(error))}</p>`; return; }
+    const suma = (f) => data.filter(f).reduce((a, x) => a + x.n, 0);
+    const total = suma((x) => x.seccion === "total"), app = suma((x) => x.seccion === "app");
+    const hace7 = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
+    const dias = [...Array(14)].map((_, i) => { const d = new Date(Date.now() - (13 - i) * 86400000); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); });
+    const porDia = dias.map((d) => suma((x) => x.seccion === "total" && x.dia === d)), max = Math.max(1, ...porDia);
+    const secciones = Object.keys(NOMBRE_SECCION).map((k) => [NOMBRE_SECCION[k], suma((x) => x.seccion === k)]).sort((a, b) => b[1] - a[1]);
+    const maxS = Math.max(1, ...secciones.map((x) => x[1]));
+    $("est-cuerpo").innerHTML = `
+      <div class="cifras">
+        <div><b>${suma((x) => x.seccion === "total" && x.dia >= hace7)}</b><span>visitas en 7 días</span></div>
+        <div><b>${total}</b><span>visitas en 30 días</span></div>
+        <div><b>${app}</b><span>desde la app instalada (30 días)</span></div>
+        <div><b>${sus.data ?? "–"}</b><span>móviles con avisos</span></div>
+      </div>
+      <h3 class="est-titulo">Visitas por día (últimas 2 semanas)</h3>
+      <div class="barras" role="img" aria-label="Visitas por día: ${porDia.join(", ")}">${dias.map((d, i) => `<div class="barra" title="${esc(fechaSemana(d))}: ${porDia[i]}"><i style="height:${Math.round(porDia[i] * 100 / max)}%"></i><span>${fechaDia(d).getDate()}</span></div>`).join("")}</div>
+      <h3 class="est-titulo">Lo más visto (30 días)</h3>
+      <div class="ranking">${secciones.map(([n, v]) => `<div class="rk-fila"><span>${esc(n)}</span><div class="cons-barra"><i style="width:${Math.round(v * 100 / maxS)}%"></i></div><b>${v}</b></div>`).join("")}</div>
+      <p class="ayuda">Cada móvil cuenta una visita al día, y una por apartado cada vez que abre la web. No se guarda quién entra. Las visitas de quien usa el panel no cuentan.</p>`;
   };
 
   // ================== LISTAS ==================
@@ -513,7 +578,7 @@
   const leeForm = (comprobar) => {
     const S = SECCIONES[ED.k], v = {};
     document.querySelectorAll("#ed-form .falta").forEach((x) => x.classList.remove("falta"));
-    for (const [col, etq, tipo, o = {}] of S.campos) {
+    for (const [col, etq, tipo, o = {}] of camposDe(S)) {
       if (tipo === "nota") continue;
       const el = $("f-" + col);
       if (tipo === "archivos") { v[col] = ED.adj; continue; }
@@ -541,12 +606,14 @@
     const oculto = v.publicado === false || v.publicada === false;
     $("ed-guardar").innerHTML = icono(programado ? "reloj" : "check") + (programado ? "Programar" : ED.orig ? "Guardar cambios" : oculto ? "Guardar sin publicar" : "Publicar");
   };
+  // Campos que se enseñan: unos solo al crear (avisar al publicar) y otros solo al editar (avisar del cambio)
+  const camposDe = (S) => S.campos.filter(([, , , o = {}]) => ED.orig ? !o.soloNuevo : !o.soloEditar);
   const abrirEditor = (k, x, { duplicando = false } = {}) => {
     const S = SECCIONES[k];
     ED = { k, orig: duplicando ? null : x, adj: x?.adjuntos ? [...x.adjuntos] : [], subidos: [], quitados: [], sucio: duplicando };
     $("ed-modo").textContent = duplicando ? "Copia de " + S.uno : x ? "Editar " + S.uno : S.nuevo;
     $("ed-form").innerHTML = (x && S.avisoEditar ? `<p class="nota-campo">${icono("alerta")}${esc(S.avisoEditar)}</p>` : "")
-      + S.campos.map((c) => campoHTML(c, x ? x[c[0]] : (typeof c[3]?.def === "function" ? c[3].def() : c[3]?.def))).join("");
+      + camposDe(S).map((c) => campoHTML(c, x && !c[0].startsWith("_") && c[0] in x ? x[c[0]] : (typeof c[3]?.def === "function" ? c[3].def() : c[3]?.def))).join("");
     pintaAdj();
     $("ed-borrar").hidden = !ED.orig; $("ed-borrar").innerHTML = icono("borrar") + "Borrar";
     $("ed-duplicar").hidden = !ED.orig; $("ed-duplicar").innerHTML = icono("duplicar") + "Duplicar";
@@ -609,13 +676,25 @@
     const S = SECCIONES[ED.k], [v, error] = leeForm(true), msg = $("ed-msg");
     if (error) return estado(msg, error, "mal");
     S.alGuardar?.(v, ED.orig);
+    const cambio = !!v._cambio;
+    Object.keys(v).forEach((c) => { if (c.startsWith("_")) delete v[c]; });
     const b = $("ed-guardar"); b.disabled = true; estado(msg, "Guardando…");
-    const r = ED.orig ? await sb.from(S.tabla).update(v).eq("id", ED.orig.id) : await sb.from(S.tabla).insert(v);
+    const r = ED.orig ? await sb.from(S.tabla).update(v).eq("id", ED.orig.id) : await sb.from(S.tabla).insert(v).select("id").single();
     b.disabled = false;
     if (r.error) return estado(msg, errTxt(r.error), "mal");
     borraArchivos(ED.quitados.filter((a) => !ED.adj.some((x) => x.url === a.url)));
     const programado = ED.k === "avisos" && v.publicar_en && v.publicar_en > ahoraISO();
-    avisa(programado ? "Aviso programado" : ED.orig ? "Cambios guardados" : (v.publicado === false || v.publicada === false) ? "Guardado (no se ve en la web)" : "Publicado");
+    const oculto = v.publicado === false || v.publicada === false;
+    let txt = programado ? "Aviso programado" : ED.orig ? "Cambios guardados" : oculto ? "Guardado (no se ve en la web)" : "Publicado";
+    // Avisar al móvil: al publicar algo nuevo (si la casilla está marcada) o al pedir «volver a avisar»
+    const id = ED.orig ? ED.orig.id : r.data?.id;
+    if (AVISABLE.includes(ED.k) && id && !programado && !oculto && ((!ED.orig && v.notificar) || cambio)) {
+      estado(msg, "Avisando a los móviles…");
+      const n = await avisarMoviles(ED.k, id, cambio);
+      if (n != null) txt += n ? ` y avisado a ${n} ${n === 1 ? "móvil" : "móviles"}` : " (todavía no hay móviles apuntados a los avisos)";
+    }
+    if (programado && v.notificar !== false) txt += ": avisará a los móviles cuando se publique";
+    avisa(txt);
     cerrarEditor(true);
     irA(actual);
   });
@@ -635,6 +714,17 @@
     abrirEditor(k, copia, { duplicando: true });
     avisa(k === "reuniones" ? "Copia lista: elige el día nuevo y guarda" : "Copia lista: cambia lo que haga falta y guarda");
   });
+
+  // ================== AVISOS AL MÓVIL ==================
+  const AVISABLE = ["avisos", "actualidad", "reuniones", "actas", "encuestas", "documentos"];
+  // Devuelve a cuántos móviles ha llegado (o null si ha fallado)
+  const avisarMoviles = async (tabla, id, cambio = false) => {
+    try {
+      const { data, error } = await sb.functions.invoke("notificar", { body: { modo: "publicado", tabla, id, cambio } });
+      if (error) throw error;
+      return data?.push ? data.push.ok : 0;
+    } catch (e) { avisa("Se ha publicado, pero no se ha podido avisar a los móviles. Se intentará solo en unos minutos.", true); return null; }
+  };
 
   // ================== BUZÓN ==================
   const marcaCuentaBuzon = () => document.querySelectorAll("[data-cuenta-buzon]").forEach((c) => { c.hidden = !PEND_BUZON; c.textContent = PEND_BUZON || ""; });

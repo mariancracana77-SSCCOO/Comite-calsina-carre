@@ -17,8 +17,8 @@
 <meta property="og:description" content="Actualidad, avisos, reuniones, actas y buzón para la plantilla.">
 <meta property="og:image" content="https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/img/og.png">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="fuentes.css?v=1">
-<link rel="stylesheet" href="styles.css?v=1">
+<link rel="stylesheet" href="fuentes.css?v=2">
+<link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
 <a class="saltar" href="#contenido">Ir al contenido</a>
@@ -83,6 +83,18 @@
     <div class="caja">
       <h1 class="titulo-vista">Avisos</h1>
       <p class="sub-vista">Comunicados cortos del comité. Los urgentes salen marcados en rojo.</p>
+      <div id="push-caja" class="tarjeta push-caja" hidden>
+        <div class="push-cab"><span class="ic" data-ic="campana"></span><div><h2>Recibe los avisos en tu móvil</h2><p id="push-txt">Te llega una notificación cada vez que el comité publica algo, aunque tengas la web cerrada.</p></div></div>
+        <div id="push-off">
+          <label class="acepto"><input type="checkbox" id="push-acepto"><span>Acepto que este móvil quede apuntado para recibir los avisos. Solo se guarda una dirección técnica anónima (no tu nombre ni tu número) y puedo quitarlo cuando quiera.</span></label>
+          <button type="button" class="btn grande" id="push-activar"><span class="ic" data-ic="campana"></span>Activar los avisos</button>
+        </div>
+        <div id="push-on" hidden>
+          <p class="push-ok"><span class="ic" data-ic="check"></span>Los avisos están activados en este móvil.</p>
+          <button type="button" class="btn-linea" id="push-desactivar"><span class="ic" data-ic="campanaNo"></span>Desactivar los avisos</button>
+        </div>
+        <p id="push-estado" class="estado" role="status"></p>
+      </div>
       <div id="lista-avisos" class="lista"></div>
     </div>
   </section>
@@ -189,8 +201,9 @@
 </main>
 
 <nav class="barra-fija" aria-label="Contacto">
-  <a href="#nosotros" class="btn grande"><span class="ic" data-ic="personas"></span><span>Contactar con el comité</span></a>
+  <a href="#nosotros" class="btn grande"><span class="ic" data-ic="personas"></span><span>Contactar<span class="solo-ancho"> con el comité</span></span></a>
   <a href="#buzon" class="barra-buzon" aria-label="Buzón anónimo"><span class="ic" data-ic="mensaje"></span><span>Buzón</span></a>
+  <a href="#avisos-movil" class="barra-buzon" id="barra-campana" aria-label="Avisos al móvil"><span class="ic" data-ic="campana"></span><span>Avisos</span></a>
 </nav>
 
 <footer class="pie">
@@ -199,8 +212,8 @@
 </footer>
 
 <script src="lib/supabase.js"></script>
-<script src="comun.js?v=1"></script>
-<script src="render.js?v=1"></script>
-<script src="app.js?v=1"></script>
+<script src="comun.js?v=2"></script>
+<script src="render.js?v=2"></script>
+<script src="app.js?v=2"></script>
 </body>
 </html>

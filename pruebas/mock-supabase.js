@@ -43,6 +43,7 @@
       { slug: "privacidad", contenido: "Esta web es solo informativa." },
     ],
     admins: [{ email: "prueba@example.com" }, { email: "otro@example.com" }],
+    visitas: [...Array(20)].map((_, i) => ({ dia: dia(-(i % 14)), seccion: ["total", "avisos", "actualidad", "actas", "app"][i % 5], n: 3 + (i * 7) % 11 })),
     papelera: [{ id: 1, tabla: "avisos", datos: { id: 9, titulo: "Aviso borrado de prueba" }, borrado: hace(4), por: "prueba@example.com" }],
   };
   let sig = 100;
@@ -60,6 +61,7 @@
       order(c, o = {}) { orden.push([c, o.ascending !== false]); return q; },
       limit(n) { lim = n; return q; },
       maybeSingle() { uno = true; return q; },
+      single() { uno = true; return q; },
       insert(v) { modo = "insert"; datos = v; return q; },
       update(v) { modo = "update"; datos = v; return q; },
       upsert(v) { modo = "upsert"; datos = v; return q; },
@@ -68,7 +70,7 @@
     };
     const ejecuta = () => {
       const T = (DB[tabla] ||= []);
-      if (modo === "insert") { [].concat(datos).forEach((d) => T.push({ id: sig++, creado: new Date().toISOString(), ...d })); return { data: null, error: null }; }
+      if (modo === "insert") { const nuevos = [].concat(datos).map((d) => ({ id: sig++, creado: new Date().toISOString(), ...d })); T.push(...nuevos); return { data: uno ? nuevos[0] : nuevos, error: null }; }
       if (modo === "upsert") { [].concat(datos).forEach((d) => { const i = T.findIndex((r) => r.slug === d.slug); if (i >= 0) T[i] = { ...T[i], ...d }; else T.push(d); }); return { data: null, error: null }; }
       const casa = (r) => filtros.every((f) => f(r));
       if (modo === "update") { T.filter(casa).forEach((r) => Object.assign(r, datos)); return { data: null, error: null }; }
@@ -85,6 +87,8 @@
     from: consulta,
     rpc: async (n, a) => {
       if (n === "is_admin") return { data: !!SES, error: null };
+      if (n === "contar_suscritos") return { data: 2, error: null };
+      if (n === "clave_push_publica") return { data: "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U", error: null };
       if (n === "enviar_buzon") { if ((a.p_texto || "").length < 5) return { data: null, error: { message: "El mensaje es demasiado corto." } }; DB.buzon.push({ id: sig++, tipo: a.p_tipo, texto: a.p_texto, dia: new Date().toISOString().slice(0, 10), leido: false, archivado: false }); return { data: "ok", error: null }; }
       if (n === "votar_encuesta") { const v = DB.encuesta_votos.find((x) => x.encuesta_id === a.p_id && x.opcion === a.p_opcion); if (v) v.n++; else DB.encuesta_votos.push({ encuesta_id: a.p_id, opcion: a.p_opcion, n: 1 }); return { data: "ok", error: null }; }
       if (n === "recuperar_borrado") { const p = DB.papelera.find((x) => x.id === a.p_id); DB.papelera = DB.papelera.filter((x) => x !== p); DB[p.tabla].push(p.datos); return { data: p.tabla, error: null }; }
@@ -97,6 +101,7 @@
       signOut: async () => ({ error: null }), signUp: async () => ({ data: {}, error: null }),
       resetPasswordForEmail: async () => ({ error: null }), verifyOtp: async () => ({ error: null }), updateUser: async () => ({ error: null }),
     },
+    functions: { invoke: async (n, o) => ({ data: o?.body?.modo === "prueba" ? { push: { ok: 2, total: 2 } } : { enviado: true, push: { ok: 2, fallos: 0, total: 2 } }, error: null }) },
     storage: { from: () => ({ upload: async () => ({ error: null }), getPublicUrl: (r) => ({ data: { publicUrl: "https://ytxpubqyhnohhugpukdm.supabase.co/" + r } }), remove: async () => ({ error: null }) }) },
   };
   window.supabase = { createClient: () => cliente };

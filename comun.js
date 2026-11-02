@@ -6,7 +6,7 @@
 window.SUPABASE_URL = "https://ytxpubqyhnohhugpukdm.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_tmkeed90aj4Fv00UoTTy7Q_qBPUAaCj";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "1"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "2"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/";
 
 // ---- Utilidades ----
@@ -109,6 +109,8 @@ const IC = {
   recuperar: '<path d="M4 12a8 8 0 1 0 2.3-5.6L4 8.7"/><path d="M4 3v5.7h5.7"/>',
   subirOrden: '<path d="m6 15 6-6 6 6"/>',
   bajarOrden: '<path d="m6 9 6 6 6-6"/>',
+  campana: '<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4l2-2z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+  campanaNo: '<path d="M6 16V11a6 6 0 0 1 9.5-4.9M18 11v5l2 2H4l2-2"/><path d="M10 20a2 2 0 0 0 4 0M3 3l18 18"/>',
   sinred: '<path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0M12 19h.01M3 3l18 18"/>',
 };
 window.icono = (n, clase = "") =>

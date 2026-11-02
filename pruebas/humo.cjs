@@ -11,7 +11,7 @@ fs.mkdirSync(OUT, { recursive: true });
 (async () => {
   const srv = spawn("python3", ["-m", "http.server", String(PUERTO)], { cwd: RAIZ, stdio: "ignore" });
   await new Promise((r) => setTimeout(r, 900));
-  const b = await chromium.launch();
+  const b = await chromium.launch({ args: ["--lang=es-ES"], env: { ...process.env, LANG: "es_ES.UTF-8", LANGUAGE: "es_ES" } });
   const errores = [], fallos = [];
   const CASOS = [
     { nombre: "320", w: 320, h: 700 }, { nombre: "390", w: 390, h: 844 },
@@ -20,7 +20,7 @@ fs.mkdirSync(OUT, { recursive: true });
   ];
   try {
     for (const c of CASOS) {
-      const ctx = await b.newContext({ viewport: { width: c.w, height: c.h }, colorScheme: c.oscuro ? "dark" : "light", serviceWorkers: "block" });
+      const ctx = await b.newContext({ viewport: { width: c.w, height: c.h }, colorScheme: c.oscuro ? "dark" : "light", serviceWorkers: "block", locale: "es-ES", timezoneId: "Europe/Madrid" });
       await ctx.route("**/lib/supabase.js*", (r) => r.fulfill({ contentType: "application/javascript", body: MOCK }));
       if (c.letra) await ctx.addInitScript((l) => localStorage.setItem("comite-letra", l), c.letra);
       const p = await ctx.newPage();
@@ -41,7 +41,7 @@ fs.mkdirSync(OUT, { recursive: true });
       await ctx.close();
 
       // Panel: pantalla de entrar y con sesión de prueba
-      const ctx2 = await b.newContext({ viewport: { width: c.w, height: c.h }, colorScheme: c.oscuro ? "dark" : "light", serviceWorkers: "block" });
+      const ctx2 = await b.newContext({ viewport: { width: c.w, height: c.h }, colorScheme: c.oscuro ? "dark" : "light", serviceWorkers: "block", locale: "es-ES", timezoneId: "Europe/Madrid" });
       await ctx2.route("**/lib/supabase.js*", (r) => r.fulfill({ contentType: "application/javascript", body: MOCK }));
       const pe = await ctx2.newPage();
       pe.on("pageerror", (e) => errores.push(`${c.nombre} entrar: ${e.message}`));
@@ -74,6 +74,13 @@ fs.mkdirSync(OUT, { recursive: true });
       await pa.fill("#f-titulo", "Aviso de prueba"); await pa.fill("#f-contenido", "Texto");
       await pa.click("#ed-guardar"); await pa.waitForTimeout(500);
       if (!(await pa.evaluate(() => __DB.avisos.some((a) => a.titulo === "Aviso de prueba")))) fallos.push(`${c.nombre}: no guarda un aviso nuevo`);
+      const toast = await pa.textContent("#toast");
+      if (!/avisado a 2/.test(toast || "")) fallos.push(`${c.nombre}: al publicar no avisa a los móviles (${toast})`);
+      if (c.nombre === "pc") {
+        await pa.goto(BASE + "admin.html#inicio"); await pa.waitForTimeout(500);
+        await pa.click("#det-est summary"); await pa.waitForTimeout(400);
+        await pa.screenshot({ path: path.join(OUT, `panel-pc-estadisticas.png`), fullPage: true });
+      }
       if (c.nombre === "390") {
         await pa.goto(BASE + "admin.html#inicio"); await pa.waitForTimeout(400);
         await pa.click("#fab"); await pa.waitForTimeout(300);
@@ -86,6 +93,8 @@ fs.mkdirSync(OUT, { recursive: true });
     const pc = await ctx3.newPage();
     pc.on("pageerror", (e) => errores.push(`cartel: ${e.message}`));
     pc.on("console", (m) => { if (m.type() === "error") errores.push(`cartel: ${m.text()}`); });
+    await pc.goto(BASE + "guia.html"); await pc.waitForTimeout(600);
+    await pc.screenshot({ path: path.join(OUT, "guia.png") });
     await pc.goto(BASE + "cartel.html"); await pc.waitForTimeout(800);
     await pc.screenshot({ path: path.join(OUT, "cartel.png"), fullPage: true });
     await ctx3.close();

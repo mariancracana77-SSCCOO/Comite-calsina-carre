@@ -16,7 +16,7 @@ Web gratuita que **se instala como app** (PWA) para informar a toda la plantilla
 | **Sugerencias y preguntas** | Buzón **anónimo** y preguntas frecuentes |
 | **Nosotros** | Qué es el comité y quién lo forma (con teléfono o email solo si la persona quiere) |
 
-Además: lupa para buscar en toda la web, botón fijo «Contactar con el comité», compartir por WhatsApp, letra más grande (botón «Aa»), modo oscuro, funciona sin conexión con lo último guardado, y página de privacidad.
+Además: **avisos al móvil** (notificaciones; en iPhone, con la app instalada), lupa para buscar en toda la web, botón fijo «Contactar con el comité», compartir por WhatsApp, letra más grande (botón «Aa»), modo oscuro, funciona sin conexión con lo último guardado, y página de privacidad.
 
 ## El panel (para publicar sin tocar código)
 
@@ -31,6 +31,9 @@ Tiene la misma forma de trabajar que el panel de CCOO:
 - **Papelera**: lo borrado se puede recuperar durante 90 días.
 - **Cartel con QR**: cartel A4 para el tablón de anuncios.
 - **Accesos**: quién puede entrar en el panel.
+- **Avisos al móvil**: al publicar, llega una notificación a quien la haya activado en la web (casilla «Avisar al móvil al publicar»; al editar, «Volver a avisar al móvil de este cambio»). Los avisos programados avisan solos a su hora. En Inicio se ve cuántos móviles están apuntados y se puede mandar una prueba.
+- **Visitas y estadísticas** (abajo en Inicio): visitas por día y lo más visto. Solo números, sin saber quién entra.
+- **Guía del panel** (`guia.html`): cómo se hace cada cosa, con capturas. Enlazada desde el menú y desde Inicio.
 
 ### Entrar por primera vez
 1. Abre el panel, despliega «¿Problemas para entrar?» y pulsa **«Primera vez: crear la cuenta»** (con el email autorizado y la contraseña que quieras).
@@ -60,4 +63,5 @@ Abre la web y el panel con datos de prueba (sin tocar la base de datos real) en 
 
 ## Versiones
 
+- **v2**: avisos al móvil (notificaciones), visitas y estadísticas en el panel, guía del panel.
 - **v1**: primera versión: web con los 6 apartados, consultas, documentos, buscador, panel como el de CCOO, papelera, cartel con QR, marca del comité (kit HD).

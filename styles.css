@@ -314,3 +314,17 @@ body:not(.panel) { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .barra-buzon { border-color: var(--borde); } }
 @media (min-width: 980px) { .barra-fija { left: 50%; right: auto; width: 640px; transform: translateX(-50%); border: 1px solid var(--borde); border-bottom: 0; border-radius: 16px 16px 0 0; } }
 .instalar { margin-bottom: 0; }
+
+/* ---------- Avisos al móvil ---------- */
+.push-caja { border: 2px solid var(--azul); margin-bottom: 14px; display: grid; gap: 12px; }
+.push-cab { display: flex; gap: 12px; align-items: flex-start; }
+.push-cab .ic { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 12px; background: var(--cab); color: var(--celeste); }
+.push-cab h2 { margin: 0 0 2px; font-family: "Montserrat", sans-serif; font-size: 1.02rem; }
+.push-cab p { margin: 0; color: var(--suave); font-size: .92rem; }
+#push-off, #push-on { display: grid; gap: 10px; }
+#push-on[hidden], #push-off[hidden] { display: none; }
+.push-ok { display: flex; gap: 8px; align-items: center; margin: 0; font-weight: 700; color: var(--verde); }
+.push-caja .btn .ic, .push-caja .btn-linea .ic { display: inline-grid; }
+.barra-buzon.activo { border-color: var(--azul); color: var(--azul); }
+.solo-ancho { display: none; }
+@media (min-width: 440px) { .solo-ancho { display: inline; } }

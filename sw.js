@@ -1,12 +1,12 @@
 // Permite instalar la web como app y abrirla sin conexión.
 // Cambiar VERSION junto con ?v= en los HTML y VERSION_WEB en comun.js.
-const VERSION = "1";
+const VERSION = "2";
 const CACHE = "comite-v" + VERSION;
 const ARCHIVOS = [
-  "./", "index.html", "admin.html",
+  "./", "index.html", "admin.html", "guia.html",
   "styles.css?v=" + VERSION, "admin.css?v=" + VERSION, "fuentes.css?v=" + VERSION,
   "comun.js?v=" + VERSION, "render.js?v=" + VERSION, "app.js?v=" + VERSION, "admin.js?v=" + VERSION, "lib/supabase.js",
-  "manifest.json", "img/icon-192.png", "img/icon-512.png", "img/favicon-32.png", "img/cabecera-900.webp", "img/apple-touch-icon.png",
+  "manifest.json", "img/icon-192.png", "img/icon-512.png", "img/favicon-32.png", "img/badge-96.png", "img/cabecera-900.webp", "img/apple-touch-icon.png",
   "fuentes/inter-latin-400-normal.woff2", "fuentes/inter-latin-600-normal.woff2", "fuentes/inter-latin-700-normal.woff2",
   "fuentes/montserrat-latin-700-normal.woff2", "fuentes/montserrat-latin-800-normal.woff2",
 ];
@@ -32,4 +32,25 @@ self.addEventListener("fetch", (e) => {
       return r;
     }).catch(() => caches.match(e.request).then((r) => r || (e.request.mode === "navigate" ? caches.match("index.html") : Response.error())))
   );
+});
+
+// ---------- Avisos al móvil ----------
+self.addEventListener("push", (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (_) { d = { titulo: "Comité de empresa", cuerpo: e.data ? e.data.text() : "" }; }
+  e.waitUntil(self.registration.showNotification(d.titulo || "Comité de empresa", {
+    body: d.cuerpo || "", icon: "img/icon-192.png", badge: "img/badge-96.png", lang: "es",
+    tag: d.etiqueta || undefined, renotify: !!d.etiqueta, data: { url: d.url || "./" },
+  }));
+});
+
+// Al tocar el aviso: abre la web en lo que se ha publicado (o la trae delante si ya estaba abierta)
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const url = new URL(e.notification.data?.url || "./", self.registration.scope).href;
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((ventanas) => {
+    const misma = ventanas.find((v) => v.url.startsWith(self.registration.scope) && !v.url.includes("admin.html"));
+    if (misma) return misma.focus().then((v) => v.navigate ? v.navigate(url) : v);
+    return self.clients.openWindow(url);
+  }));
 });

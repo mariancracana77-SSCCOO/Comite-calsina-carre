@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="robots" content="noindex">
+<title>Guía del panel · Comité Calsina Carré</title>
+<meta name="theme-color" content="#0B1E3C">
+<link rel="icon" href="img/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="fuentes.css?v=2">
+<link rel="stylesheet" href="styles.css?v=2">
+<style>
+  body { padding-bottom: 40px; }
+  .guia { max-width: 820px; margin: 0 auto; padding: 8px 16px 40px; }
+  .guia h1 { font-family: "Montserrat", sans-serif; font-weight: 800; font-size: 1.7rem; text-transform: uppercase; color: var(--azul-osc); margin: 22px 0 4px; }
+  .guia h2 { font-family: "Montserrat", sans-serif; font-weight: 800; font-size: 1.2rem; color: var(--azul-osc); margin: 0 0 8px; display: flex; gap: 10px; align-items: center; }
+  .guia h2 .num { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--cab); color: var(--celeste); font-size: 1rem; }
+  .guia section { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 16px; padding: 18px; margin: 16px 0; box-shadow: var(--sombra); }
+  .guia ol, .guia ul { padding-left: 1.3em; margin: 8px 0; }
+  .guia li { margin: 6px 0; }
+  .guia figure { margin: 14px 0 4px; }
+  .guia figure img { display: block; max-width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--borde); box-shadow: var(--sombra); }
+  .guia figure.movil img { max-width: 300px; }
+  .guia figcaption { color: var(--suave); font-size: .85rem; margin-top: 6px; }
+  .dos { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+  .truco { background: var(--azul-claro); color: var(--azul-osc); border-radius: 12px; padding: 12px 14px; margin: 10px 0 0; }
+  .indice { columns: 2; column-gap: 24px; padding-left: 1.2em; }
+  @media (max-width: 520px) { .indice { columns: 1; } }
+  .volver { display: inline-flex; margin-top: 8px; }
+  body:not(.panel) { padding-bottom: 40px; }
+</style>
+</head>
+<body>
+<header class="cabecera">
+  <div class="cab-fila">
+    <a class="marca" href="admin.html">
+      <span class="marca-logo"><img src="img/icon-192.png" alt="" width="48" height="48"></span>
+      <span class="marca-txt"><b>Guía del panel</b><small>Comité de empresa</small></span>
+    </a>
+  </div>
+</header>
+
+<main class="guia">
+  <a class="btn volver" href="admin.html">Volver al panel</a>
+  <h1>Cómo publicar en la web del comité</h1>
+  <p class="sub-vista">Todo se hace desde el panel, en el móvil o en el ordenador. No hace falta tocar nada más.</p>
+
+  <ol class="indice">
+    <li><a href="#g-entrar">Entrar</a></li>
+    <li><a href="#g-inicio">La pantalla de Inicio</a></li>
+    <li><a href="#g-publicar">Publicar algo</a></li>
+    <li><a href="#g-aviso">Avisos: urgentes y programados</a></li>
+    <li><a href="#g-reunion">Reuniones (y repetirlas)</a></li>
+    <li><a href="#g-acta">Actas y documentos</a></li>
+    <li><a href="#g-consulta">Consultas a la plantilla</a></li>
+    <li><a href="#g-buzon">El buzón anónimo</a></li>
+    <li><a href="#g-movil">Avisos al móvil</a></li>
+    <li><a href="#g-cambiar">Cambiar o borrar</a></li>
+    <li><a href="#g-otros">Miembros, textos, cartel y accesos</a></li>
+    <li><a href="#g-instalar">Instalar el panel en el móvil</a></li>
+  </ol>
+
+  <section id="g-entrar">
+    <h2><span class="num">1</span>Entrar</h2>
+    <ol>
+      <li>Abre <b>admin.html</b> (abajo del todo de la web pone «Acceso del comité»).</li>
+      <li>Escribe tu email y tu contraseña y pulsa <b>Entrar</b>.</li>
+      <li><b>La primera vez</b>: escribe tu email y la contraseña que quieras, abre «¿Problemas para entrar?» y pulsa <b>«Primera vez: crear la cuenta»</b>. Te llega un email: pulsa su botón y ya puedes entrar.</li>
+      <li><b>Si olvidas la contraseña</b>: «¿Problemas para entrar?» → «He olvidado la contraseña». Te llega un email con un botón (o un código) para poner otra.</li>
+    </ol>
+    <figure class="movil"><img src="img/guia/entrar.webp" alt="Pantalla de entrar del panel" loading="lazy" width="390" height="700"><figcaption>La pantalla de entrar.</figcaption></figure>
+  </section>
+
+  <section id="g-inicio">
+    <h2><span class="num">2</span>La pantalla de Inicio</h2>
+    <p>Es lo primero que ves. Arriba, botones grandes con lo que más se hace: publicar un aviso, añadir una reunión, subir un acta… Debajo: las reuniones de los próximos 14 días, los avisos programados, cuántos móviles tienen los avisos activados y lo último que has publicado (tócalo para cambiarlo).</p>
+    <ul>
+      <li><b>En el ordenador</b>, el menú está a la izquierda.</li>
+      <li><b>En el móvil</b>, el menú está abajo (Inicio, Avisos, Reuniones, Actas y <b>Más</b> para el resto), y el botón azul <b>«+ Nuevo»</b> sirve para publicar.</li>
+    </ul>
+    <div class="dos">
+      <figure class="movil"><img src="img/guia/inicio-movil.webp" alt="Inicio del panel en el móvil" loading="lazy" width="390" height="844"><figcaption>Inicio en el móvil.</figcaption></figure>
+      <figure class="movil"><img src="img/guia/nuevo-movil.webp" alt="Menú del botón Nuevo" loading="lazy" width="390" height="844"><figcaption>Al tocar «+ Nuevo».</figcaption></figure>
+    </div>
+    <figure><img src="img/guia/inicio-pc.webp" alt="Inicio del panel en el ordenador" loading="lazy" width="900" height="605"><figcaption>Inicio en el ordenador.</figcaption></figure>
+    <p class="truco">Abajo del todo de Inicio está <b>«Visitas y estadísticas»</b>: cuánta gente entra y qué es lo más visto. No se sabe quién entra, solo cuántos.</p>
+  </section>
+
+  <section id="g-publicar">
+    <h2><span class="num">3</span>Publicar algo</h2>
+    <ol>
+      <li>Toca el botón de lo que quieras publicar (o «+ Nuevo»).</li>
+      <li>Rellena el formulario. Lo que pone <b>(obligatorio)</b> hay que rellenarlo.</li>
+      <li>Para poner algo en negrita, selecciónalo y pulsa <b>N Negrita</b>. Para una lista, pulsa <b>• Lista</b>.</li>
+      <li>Para adjuntar un PDF o fotos, toca <b>«Toca para elegir archivos»</b> (en el ordenador también puedes arrastrarlos).</li>
+      <li>Mira <b>«Así lo verán los trabajadores»</b>: en el ordenador sale a la derecha; en el móvil, en la pestaña <b>Vista previa</b>.</li>
+      <li>Pulsa <b>Publicar</b>. Ya está en la web.</li>
+    </ol>
+    <figure><img src="img/guia/editor-pc.webp" alt="Editor con vista previa" loading="lazy" width="900" height="605"><figcaption>A la izquierda se escribe; a la derecha se ve cómo quedará.</figcaption></figure>
+    <p class="truco">Si cierras sin guardar, el panel te pregunta antes, para que no pierdas lo escrito.</p>
+  </section>
+
+  <section id="g-aviso">
+    <h2><span class="num">4</span>Avisos: urgentes y programados</h2>
+    <ul>
+      <li><b>Urgente</b>: marca la casilla y el aviso sale destacado en rojo arriba en la portada durante 14 días.</li>
+      <li><b>Programar</b>: en «Programar para más tarde» elige día y hora. No se verá hasta entonces, y a esa hora se avisa a los móviles. El botón pasa a decir <b>Programar</b>.</li>
+      <li>Los avisos programados salen en Inicio, en «Avisos programados».</li>
+    </ul>
+  </section>
+
+  <section id="g-reunion">
+    <h2><span class="num">5</span>Reuniones (y repetirlas)</h2>
+    <p>Pon el título, el tipo (comité, empresa, asamblea), el día, la hora y el lugar. En la web sale en el calendario, y la próxima sale en la portada con los días que faltan. Los trabajadores pueden pulsar «Añadir a mi calendario».</p>
+    <p class="truco"><b>Reunión que se repite cada mes</b>: abre la última, pulsa <b>Duplicar</b>, cambia el día y guarda.</p>
+    <figure class="movil"><img src="img/guia/editor-reunion.webp" alt="Editor de reuniones en el móvil" loading="lazy" width="390" height="844"><figcaption>Editar una reunión en el móvil.</figcaption></figure>
+  </section>
+
+  <section id="g-acta">
+    <h2><span class="num">6</span>Actas y documentos</h2>
+    <ul>
+      <li><b>Actas</b>: título, fecha, un resumen y los acuerdos (uno por línea). Adjunta el acta en PDF o fotos de las hojas.</li>
+      <li><b>Documentos</b>: convenio, calendario laboral, tablas salariales… Se agrupan por categoría. Con las flechas de la lista cambias el orden en que salen.</li>
+    </ul>
+  </section>
+
+  <section id="g-consulta">
+    <h2><span class="num">7</span>Consultas a la plantilla</h2>
+    <p>Para preguntar algo y que voten de forma anónima (un voto por móvil). Escribe la pregunta y las opciones, <b>una por línea</b>. Si pones un «Último día para votar», se cierra sola.</p>
+    <p>Los resultados se ven en la lista de Consultas y, al abrir una, en la vista previa (con el número de votos de cada opción).</p>
+    <figure class="movil"><img src="img/guia/consultas.webp" alt="Lista de consultas" loading="lazy" width="390" height="844"><figcaption>Las consultas, con los votos.</figcaption></figure>
+  </section>
+
+  <section id="g-buzon">
+    <h2><span class="num">8</span>El buzón anónimo</h2>
+    <p>Lo que la plantilla escribe en «Sugerencias y preguntas» llega aquí. Es anónimo: no se sabe quién lo manda. Cuando hay mensajes sin leer, sale un número rojo en el menú.</p>
+    <ul>
+      <li><b>Marcar leído</b> y <b>Archivar</b> para tenerlo ordenado.</li>
+      <li><b>Responder en la web</b> (en las preguntas): abre una pregunta frecuente con la pregunta ya escrita; solo tienes que poner la respuesta y publicar.</li>
+    </ul>
+    <figure class="movil"><img src="img/guia/buzon.webp" alt="Buzón anónimo" loading="lazy" width="390" height="844"><figcaption>El buzón en el móvil.</figcaption></figure>
+  </section>
+
+  <section id="g-movil">
+    <h2><span class="num">9</span>Avisos al móvil</h2>
+    <p>Los trabajadores que quieran pueden activar los avisos en la web (apartado Avisos o la campana de abajo). A partir de ahí les llega una notificación cuando publicas.</p>
+    <ul>
+      <li>Al publicar algo nuevo, la casilla <b>«Avisar al móvil al publicar»</b> viene marcada. Desmárcala si no quieres avisar.</li>
+      <li>Si cambias algo importante de lo ya publicado, marca <b>«Volver a avisar al móvil de este cambio»</b>: llegará como «Cambio: …».</li>
+      <li>En Inicio ves cuántos móviles tienen los avisos y puedes <b>mandar un aviso de prueba</b> (llega a todos).</li>
+    </ul>
+    <figure class="movil"><img src="img/guia/avisos-web.webp" alt="Activar los avisos en la web" loading="lazy" width="390" height="844"><figcaption>Lo que ven los trabajadores para activar los avisos.</figcaption></figure>
+    <p class="truco">En iPhone, los avisos solo funcionan si han instalado la app (Safari → Compartir → «Añadir a pantalla de inicio»).</p>
+  </section>
+
+  <section id="g-cambiar">
+    <h2><span class="num">10</span>Cambiar o borrar</h2>
+    <ul>
+      <li>Toca cualquier cosa de una lista para abrirla, cambia lo que quieras y pulsa <b>Guardar cambios</b>.</li>
+      <li><b>Borrar</b> está abajo a la izquierda del editor.</li>
+      <li>¿Borrado sin querer? En <b>Papelera</b> está todo lo borrado durante 90 días: pulsa <b>Recuperar</b> y vuelve a la web tal cual.</li>
+    </ul>
+  </section>
+
+  <section id="g-otros">
+    <h2><span class="num">11</span>Miembros, textos, cartel y accesos</h2>
+    <ul>
+      <li><b>Miembros</b>: quién forma el comité. Teléfono y email solo si esa persona está de acuerdo.</li>
+      <li><b>Textos de la web</b>: la bienvenida de la portada, «Nosotros» y la privacidad.</li>
+      <li><b>Cartel con QR</b>: un cartel A4 para el tablón. Ábrelo y pulsa «Imprimir» (o guárdalo en PDF para mandarlo por WhatsApp).</li>
+      <li><b>Accesos</b>: quién puede entrar al panel. Para dar acceso a otra persona, escribe su email; ella entra con «Primera vez: crear la cuenta».</li>
+    </ul>
+  </section>
+
+  <section id="g-instalar">
+    <h2><span class="num">12</span>Instalar el panel en el móvil</h2>
+    <p>Así lo tienes a un toque, con el logo del comité en la pantalla de inicio:</p>
+    <ul>
+      <li><b>Android</b>: en Inicio del panel, botón <b>Instalar</b> (o menú ⋮ de Chrome → «Instalar aplicación»).</li>
+      <li><b>iPhone</b>: en Safari, <b>Compartir</b> → <b>«Añadir a pantalla de inicio»</b>.</li>
+    </ul>
+    <p class="truco">Arriba a la derecha del panel tienes <b>Aa</b> para letra más grande, la luna para el modo oscuro y el ojo para ver la web como un trabajador.</p>
+  </section>
+
+  <a class="btn volver" href="admin.html">Volver al panel</a>
+</main>
+</body>
+</html>

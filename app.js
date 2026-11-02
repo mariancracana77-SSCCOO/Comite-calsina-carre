@@ -2,6 +2,7 @@
 (function () {
   const $ = (id) => document.getElementById(id);
   const D = { actualidad: [], avisos: [], reuniones: [], actas: [], preguntas: [], miembros: [], encuestas: [], votos: {}, documentos: [], paginas: {} };
+  const instalada = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
   const VISTAS = ["actualidad", "avisos", "reuniones", "actas", "buzon", "nosotros", "buscar", "privacidad"];
   const PESTANA_DE = { buscar: null, privacidad: null };
 
@@ -27,6 +28,7 @@
     const h = (hash || "").replace(/^#/, "");
     let vista = VISTAS.includes(h) ? h : "actualidad", destino = null;
     if (h === "documentos") { vista = "actas"; ponSegmento("documentos"); }
+    if (h === "avisos-movil") { vista = "avisos"; }
     const m = h.match(/^(noticia|aviso|reunion|acta|consulta|documento)-(\d+)$/);
     if (m) {
       vista = { noticia: "actualidad", aviso: "avisos", reunion: "reuniones", acta: "actas", consulta: "actualidad", documento: "actas" }[m[1]];
@@ -50,7 +52,10 @@
         const el = $(destino);
         if (el) { el.scrollIntoView({ block: "start" }); el.classList.add("resalta"); setTimeout(() => el.classList.remove("resalta"), 2200); }
       });
+    } else if (h === "avisos-movil" && !$("push-caja").hidden) {
+      requestAnimationFrame(() => { $("push-caja").scrollIntoView({ block: "start" }); $("push-caja").classList.add("resalta"); setTimeout(() => $("push-caja").classList.remove("resalta"), 2200); });
     } else window.scrollTo(0, 0);
+    cuentaVisita(vista);
     if (foco && vista !== "buscar") $("contenido").focus({ preventScroll: true });
   };
   window.addEventListener("hashchange", () => irA(location.hash, { foco: true }));
@@ -356,8 +361,84 @@
     else if (oculta && Date.now() - oculta > 5 * 60000) arranca();
   });
 
+  // ---------- Estadísticas (solo números por día; sin datos de quién entra) ----------
+  // No cuenta en el móvil de quien publica (el que ha entrado alguna vez en el panel)
+  const cuentaVisita = (vista) => {
+    if (TEMA.lee("comite-admin-email") || /prueba/.test(location.search)) return;
+    const hoy = hoyISO();
+    try {
+      if (TEMA.lee("comite-visita-dia") !== hoy) {
+        TEMA.guarda("comite-visita-dia", hoy);
+        sb.rpc("contar_visita", { p_seccion: "total" }).then(() => {}, () => {});
+        if (instalada) sb.rpc("contar_visita", { p_seccion: "app" }).then(() => {}, () => {});
+      }
+      const k = "comite-vista-" + vista, ses = sessionStorage.getItem(k);
+      if (!ses && ["actualidad", "avisos", "reuniones", "actas", "buzon", "nosotros", "buscar"].includes(vista)) {
+        sessionStorage.setItem(k, "1");
+        sb.rpc("contar_visita", { p_seccion: vista === "actas" && !$("bloque-documentos").hidden ? "documentos" : vista }).then(() => {}, () => {});
+      }
+    } catch (_) {}
+  };
+
+  // ---------- Avisos al móvil (notificaciones) ----------
+  const PUSH_OK = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const claveBytes = (b64) => { const p = "=".repeat((4 - (b64.length % 4)) % 4), s = atob((b64 + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(s, (c) => c.charCodeAt(0)); };
+  const pintaPush = (activo) => {
+    $("push-off").hidden = !!activo; $("push-on").hidden = !activo;
+    $("barra-campana").classList.toggle("activo", !!activo);
+  };
+  const preparaPush = async () => {
+    const caja = $("push-caja");
+    if (!PUSH_OK) {
+      // iPhone: los avisos solo funcionan con la app instalada (iOS 16.4 o más nuevo)
+      if (esIOS && !instalada) {
+        caja.hidden = false; $("push-off").hidden = true;
+        $("push-txt").textContent = "En iPhone, primero instala la app: en Safari pulsa Compartir y luego «Añadir a pantalla de inicio». Ábrela desde el icono y aquí podrás activar los avisos.";
+      }
+      return;
+    }
+    caja.hidden = false;
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      pintaPush(sub && Notification.permission === "granted");
+    } catch (_) { pintaPush(false); }
+  };
+  $("push-activar").addEventListener("click", async () => {
+    const est = $("push-estado");
+    estado(est, "");
+    if (!$("push-acepto").checked) return estado(est, "Marca la casilla para poder activarlos.", "mal");
+    // El permiso se pide en el mismo toque (si no, algunos móviles no lo enseñan)
+    const permiso = await Notification.requestPermission();
+    if (permiso !== "granted") return estado(est, "El móvil no ha dado permiso. Puedes cambiarlo en los ajustes del navegador o de la app: Notificaciones → Permitir.", "mal");
+    estado(est, "Activando…");
+    try {
+      const [{ data: clave, error }, reg] = await Promise.all([sb.rpc("clave_push_publica"), navigator.serviceWorker.ready]);
+      if (error || !clave) throw error || new Error("Los avisos todavía no están preparados. Prueba más tarde.");
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: claveBytes(clave) });
+      const j = sub.toJSON();
+      const r = await sb.rpc("suscribir_push", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
+      if (r.error) throw r.error;
+      pintaPush(true);
+      estado(est, "Listo. Te avisaremos cuando el comité publique algo.", "bien");
+    } catch (e) {
+      estado(est, /fetch|network/i.test(String(e?.message)) ? "No hay conexión. Prueba de nuevo." : (e?.message || "No se han podido activar. Prueba de nuevo."), "mal");
+    }
+  });
+  $("push-desactivar").addEventListener("click", async () => {
+    const est = $("push-estado");
+    try {
+      const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
+      if (sub) { await sb.rpc("desuscribir_push", { p_endpoint: sub.endpoint }); await sub.unsubscribe(); }
+      pintaPush(false); $("push-acepto").checked = false;
+      estado(est, "Avisos desactivados en este móvil.", "bien");
+    } catch (e) { estado(est, "No se han podido desactivar. Prueba de nuevo.", "mal"); }
+  });
+  const estado = (el, txt, tipo = "") => { el.textContent = txt; el.className = "estado" + (tipo ? " " + tipo : ""); };
+
   // ---------- Instalar como app ----------
-  const instalada = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
   const noQuiere = () => TEMA.lee("comite-no-instalar") === "1";
   let pideInstalar = null;
   window.addEventListener("beforeinstallprompt", (e) => {
@@ -378,4 +459,5 @@
 
   arranca();
   registraSW();
+  preparaPush();
 })();

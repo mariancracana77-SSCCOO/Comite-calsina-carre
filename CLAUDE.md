@@ -9,7 +9,7 @@ La gestiona desde el panel el padre de Lorena (usuario GitHub `mariancracana77-S
 
 - Web: https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/ (GitHub Pages desde `main`, raíz)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **1**
+- Versión actual: **2**
 
 ## Reglas (las mismas que en CCOO)
 - No publicar en `main` sin que Lorena lo confirme. Trabajar en la rama indicada.
@@ -29,6 +29,7 @@ Kit visual HD del comité (CC metálico + camión + personas). Paleta: `#0B1E3C`
 - `comun.js`: conexión Supabase, `esc`, `urlSegura`, `textoHTML` (párrafos, `- ` listas, `**negrita**`), fechas, adjuntos, iconos, tema/letra, `.ics`, compartir, aviso de versión nueva.
 - `admin.html` + `admin.js` + `admin.css`: panel. `SECCIONES` define campos de cada tabla (tipos: texto, largo, fecha, hora, fechahora, si, opcion, numero, tel, email, url, archivos, nota). `MENU`/`BARRA`: menú lateral (PC) y barra de abajo (móvil). Páginas especiales: inicio, buzon, textos, papelera, cartel, accesos.
 - `cartel.html` + `cartel.js`: cartel A4 con QR (`lib/qr.js`, MIT).
+- `guia.html` + `img/guia/`: guía del panel para el padre, con capturas hechas con los datos de prueba.
 - `sw.js`: caché para instalar y usar sin conexión (los datos de Supabase siempre van a la red).
 - `pruebas/`: `mock-supabase.js` (datos de prueba en memoria; `localStorage prueba-sesion = 1` entra al panel) y `humo.cjs`.
 
@@ -45,11 +46,12 @@ Cambiar el número en: `?v=N` de los HTML, `VERSION_WEB` en `comun.js` y `VERSIO
 - Tablas: `admins`, `actualidad` (publicado), `avisos` (urgente, publicar_en), `reuniones`, `actas`, `preguntas` (orden), `miembros` (orden), `encuestas` (opciones una por línea, publicada, cierra), `encuesta_votos` (solo por RPC), `documentos` (categoria, orden, enlace), `buzon` (solo admin lee), `paginas` (bienvenida, nosotros, privacidad), `papelera`.
 - RLS en todas: lectura pública de lo publicado; escritura solo `is_admin()`. Trigger `solo_admins_registran` en `auth.users`.
 - RPC públicas: `enviar_buzon` (anónimo, rechaza emails/teléfonos, tope 40/día), `votar_encuesta` (tope 3000). Admin: `recuperar_borrado`. Trigger `a_la_papelera` guarda lo borrado 90 días.
+- Avisos al móvil: función `notificar` (copia en `herramientas/funciones/notificar.ts`; `verify_jwt` desactivado, la autenticación va dentro: admin con su sesión, o la tarea con `x-cron-secret`). Las claves VAPID las crea la función la primera vez y están en `config_privada` (sin políticas: nadie las lee desde fuera); la pública la da la RPC `clave_push_publica`. Tabla `push_subs` (sin políticas; RPC `suscribir_push`/`desuscribir_push`, tope 5000; `contar_suscritos` solo admin). Columnas `notificar`/`notificado` en avisos, actualidad, reuniones, actas, encuestas y documentos. Tarea pg_cron `notificar-pendientes` cada 10 min (avisos programados que ya tocan y pendientes de los últimos 2 días). El panel llama a la función al publicar (`avisarMoviles`); campos `notificar` (solo al crear) y `_cambio` (solo al editar; las columnas con «_» no se guardan). `sw.js` enseña la notificación y al tocarla abre `#aviso-N`, etc.
+- Estadísticas: tabla `visitas` (dia, seccion, n; solo admin lee) y RPC pública `contar_visita` (secciones fijas). La web cuenta una visita «total» al día por móvil y una por apartado por sesión; no cuenta si ese navegador ha entrado al panel (`comite-admin-email`).
 - Storage: bucket público `documentos` (20 MB); subir/borrar solo admin.
 - En migraciones, la palabra `delete` puede pedir confirmación: montarla con `'del' || 'ete'`. Probar sin dejar rastro con un `do $$ … raise exception 'RESULTADO …' $$`.
 
 ## Pendiente / ideas
 - Configurar en Supabase la «Site URL» del panel (lo hace Lorena; ver README).
-- Avisos al móvil (notificaciones push) como en CCOO: necesita claves VAPID y una función en Supabase.
-- Estadísticas de visitas en el Inicio del panel.
-- Guía del panel para el padre.
+- Canal de Telegram como en CCOO (si lo piden).
+- Guía (`guia.html`): al cambiar el panel, rehacer sus capturas con `pruebas/humo.cjs` (sale en español: navegador con `--lang=es-ES`) y actualizar el texto.
