@@ -15,18 +15,18 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Comité CC">
 <meta property="og:title" content="Comité de Empresa Calsina Carré">
-<meta property="og:description" content="Actualidad, avisos, reuniones, actas y buzón para la plantilla.">
+<meta property="og:description" content="Info general, avisos, reuniones, actas y buzón para la plantilla.">
 <meta property="og:image" content="https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/img/og.png">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="fuentes.css?v=10">
-<link rel="stylesheet" href="styles.css?v=10">
+<link rel="stylesheet" href="fuentes.css?v=11">
+<link rel="stylesheet" href="styles.css?v=11">
 </head>
 <body>
 <a class="saltar" href="#contenido">Ir al contenido</a>
 
 <header class="cabecera">
   <div class="cab-fila">
-    <a class="marca" href="#actualidad" aria-label="Ir a Actualidad">
+    <a class="marca" href="#actualidad" aria-label="Ir a Info general">
       <span class="marca-logo"><img src="img/icon-192.png" alt="" width="48" height="48"></span>
       <span class="marca-txt"><b>Calsina Carré</b><small>Comité de empresa</small></span>
     </a>
@@ -38,12 +38,12 @@
   </div>
   <nav class="pestanas" aria-label="Apartados">
     <div class="pestanas-fila" id="pestanas">
-      <a href="#actualidad" data-vista="actualidad">Actualidad</a>
+      <a href="#actualidad" data-vista="actualidad">Info general</a>
       <a href="#avisos" data-vista="avisos">Avisos<span class="cuenta" data-cuenta="avisos" hidden></span></a>
       <a href="#reuniones" data-vista="reuniones">Calendario de reuniones</a>
       <a href="#actas" data-vista="actas">Actas</a>
       <a href="#buzon" data-vista="buzon">Sugerencias y preguntas</a>
-      <a href="#nosotros" data-vista="nosotros">Nosotros</a>
+      <a href="#nosotros" data-vista="nosotros" id="pest-nosotros">Nosotros</a>
     </div>
   </nav>
 </header>
@@ -57,7 +57,7 @@
 
 <main id="contenido" tabindex="-1">
   <!-- ACTUALIDAD (portada) -->
-  <section id="v-actualidad" class="vista" data-titulo="Actualidad">
+  <section id="v-actualidad" class="vista" data-titulo="Info general">
     <div class="hero">
       <div class="hero-in">
         <div class="hero-arte" aria-hidden="true"></div>
@@ -80,6 +80,7 @@
         <a href="#documentos"><span class="ic" data-ic="documento"></span><span>Documentos</span></a>
         <a href="#buzon"><span class="ic" data-ic="mensaje"></span><span>Buzón</span></a>
         <a href="#nosotros"><span class="ic" data-ic="personas"></span><span>El comité</span></a>
+        <span id="accesos-secciones" class="accesos-extra"></span>
       </nav>
       <div id="novedades"></div>
       <div class="portada-grid">
@@ -96,7 +97,7 @@
         </aside>
         <div class="col-principal">
           <div class="cab-bloque">
-            <h2 class="titulo-seccion">Actualidad</h2>
+            <h2 class="titulo-seccion">Info general</h2>
             <p class="sub-vista">Anuncios e información general para toda la plantilla.</p>
           </div>
           <div id="lista-actualidad" class="lista"><div class="esq"></div><div class="esq"></div></div>
@@ -227,6 +228,19 @@
       <div id="lista-miembros" class="miembros"></div>
     </div>
   </section>
+  <!-- SECCIONES QUE CREA EL COMITÉ (v11): una sola vista que se rellena con la sección elegida -->
+  <section id="v-seccion" class="vista" data-titulo="Sección" hidden>
+    <div class="cab-apartado">
+      <div class="cab-apartado-in">
+        <span class="ic" id="seccion-ic"></span>
+        <div><p class="miga" id="seccion-miga" hidden></p><h1 id="seccion-titulo"></h1><p id="seccion-desc"></p></div>
+      </div>
+    </div>
+    <div class="caja">
+      <div id="seccion-hijas" class="secciones-lista"></div>
+      <div id="seccion-pubs" class="lista"></div>
+    </div>
+  </section>
   <!-- BUSCAR -->
   <section id="v-buscar" class="vista" data-titulo="Buscar" hidden>
     <div class="cab-apartado">
@@ -313,7 +327,7 @@
     </div>
     <nav class="pie-col" aria-label="Apartados">
       <h2>Apartados</h2>
-      <a href="#actualidad">Actualidad</a><a href="#avisos">Avisos</a><a href="#reuniones">Calendario de reuniones</a><a href="#actas">Actas</a><a href="#documentos">Documentos útiles</a>
+      <a href="#actualidad">Info general</a><a href="#avisos">Avisos</a><a href="#reuniones">Calendario de reuniones</a><a href="#actas">Actas</a><a href="#documentos">Documentos útiles</a>
     </nav>
     <nav class="pie-col" aria-label="El comité">
       <h2>El comité</h2>
@@ -327,8 +341,8 @@
 </footer>
 
 <script src="lib/supabase.js"></script>
-<script src="comun.js?v=10"></script>
-<script src="render.js?v=10"></script>
-<script src="app.js?v=10"></script>
+<script src="comun.js?v=11"></script>
+<script src="render.js?v=11"></script>
+<script src="app.js?v=11"></script>
 </body>
 </html>

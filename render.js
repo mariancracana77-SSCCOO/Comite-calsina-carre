@@ -5,6 +5,22 @@
   const botonCompartir = (ancla, titulo, texto) =>
     `<button type="button" class="btn-linea" data-compartir="${ancla}" data-t="${esc(titulo)}" data-x="${esc(texto)}">${icono("compartir")}Compartir</button>`;
 
+  // v11: secciones que crea el padre (tabla apartados) y lo que publica dentro (tabla publicaciones)
+  const publicacion = (p) => `
+    <article class="tarjeta" id="publicacion-${p.id}">
+      <div class="meta">${nuevo(p.creado)}<span>${esc(fechaLarga(p.fecha || hoyISO()))}</span></div>
+      <h3>${esc(p.titulo || "Sin título")}</h3>
+      <div class="texto">${textoHTML(p.contenido)}</div>
+      ${adjuntosHTML(p.adjuntos)}
+      <div class="acciones">${botonCompartir("publicacion-" + p.id, p.titulo, p.contenido)}</div>
+    </article>`;
+  const seccion = (a, n = null) => `
+    <a class="tarjeta seccion-tarjeta" href="#seccion-${a.id}">
+      <span class="ic">${icono(a.icono || "carpeta")}</span>
+      <span class="seccion-txt"><b>${esc(a.titulo || "Sin título")}</b>${a.descripcion ? `<small>${esc(String(a.descripcion).replace(/\*\*/g, "").slice(0, 140))}</small>` : ""}${n != null ? `<small class="seccion-n">${n === 1 ? "1 publicación" : n + " publicaciones"}</small>` : ""}</span>
+      ${icono("flecha")}
+    </a>`;
+
   const noticia = (n) => `
     <article class="tarjeta" id="noticia-${n.id}">
       <div class="meta">${n.categoria && n.categoria !== "General" ? `<span class="etq">${esc(n.categoria)}</span>` : ""}${nuevo(n.creado)}<span>${esc(fechaLarga(n.fecha || hoyISO()))}</span></div>
@@ -132,5 +148,5 @@
     </article>`;
   };
 
-  window.R = { senal, noticia, aviso, reunion, acta, documento, consulta, pregunta, miembro, opciones, abierta };
+  window.R = { senal, publicacion, seccion, noticia, aviso, reunion, acta, documento, consulta, pregunta, miembro, opciones, abierta };
 })();

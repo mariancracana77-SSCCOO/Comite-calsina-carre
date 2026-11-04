@@ -503,3 +503,20 @@ img.inicial.foto { object-fit: cover; padding: 0; box-shadow: 0 0 0 2px var(--ta
 @media (min-width: 980px) { .aviso-privacidad { left: 50%; right: auto; width: 720px; transform: translateX(-50%); } }
 .destacado.con-senal { padding-bottom: 22px; }
 .destacado.con-senal::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 7px; background: linear-gradient(90deg, #ffcc33 0 16px, transparent 16px 30px) 8px 50% / 30px 2px repeat-x, #2a3442; }
+/* v11: secciones que crea el comité */
+.accesos-extra { display: contents; }
+.secciones-lista { display: grid; gap: 10px; margin-bottom: 18px; }
+.secciones-lista:empty { display: none; }
+@media (min-width: 760px) { .secciones-lista { grid-template-columns: repeat(2, 1fr); } }
+.seccion-tarjeta { display: flex; align-items: center; gap: 14px; text-decoration: none; color: var(--texto); }
+.seccion-tarjeta:hover { border-color: var(--azul); }
+.seccion-tarjeta > .ic { flex: none; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 12px; background: linear-gradient(145deg, #0B1E3C, #14386a); color: var(--celeste); }
+.seccion-tarjeta > .ic .ico { width: 24px; height: 24px; }
+.seccion-txt { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.seccion-txt b { font-family: "Montserrat", "Inter", sans-serif; font-size: 1.02rem; }
+.seccion-txt small { color: var(--suave); font-size: .88rem; }
+.seccion-txt .seccion-n { color: var(--azul); font-weight: 700; }
+.seccion-tarjeta > .ico:last-child { flex: none; color: var(--azul); }
+.cab-apartado .miga { margin: 0 0 4px; font-size: .9rem; }
+.miga a { display: inline-flex; align-items: center; gap: 4px; color: var(--celeste); text-decoration: none; font-weight: 700; }
+.miga a .ico { width: 16px; height: 16px; }

@@ -6,7 +6,7 @@
 window.SUPABASE_URL = "https://ytxpubqyhnohhugpukdm.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_tmkeed90aj4Fv00UoTTy7Q_qBPUAaCj";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "10"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "11"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/";
 
 // ---- Utilidades ----
@@ -117,6 +117,14 @@ const IC = {
   transpaleta: '<path d="M3.5 2.5 7.5 12"/><path d="M2 3.5 5 2"/><path d="M6 12h4.5v5H6z"/><path d="M10.5 15.5h11.5v1.5H10.5z"/><circle cx="8.2" cy="19.3" r="1.5"/><circle cx="20" cy="19.3" r="1.1"/>',
   reparto: '<path d="M2 7h11v9H2z"/><path d="M13 10h4l3.5 3.5V16H13z"/><path d="M5 10.5h5v3H5z"/><circle cx="6" cy="17.6" r="1.7"/><circle cx="17" cy="17.6" r="1.7"/>',
   surtidor: '<path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M2.5 21h13"/><path d="M7 6.5h4v4H7z"/><path d="M14 9h2a1.8 1.8 0 0 1 1.8 1.8v5.4a1.6 1.6 0 0 0 3.2 0V8.5L18 5.5"/>',
+  // v11: asistente de actas
+  magia: '<path d="m4 20 11-11"/><path d="m14 6 1-3 1 3 3 1-3 1-1 3-1-3-3-1z"/><path d="M19 13.5 19.6 15l1.4.6-1.4.5-.6 1.4-.5-1.4-1.5-.5 1.5-.6z"/>',
+  camara: '<path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/>',
+  // v11: iconos para las secciones que crea el padre
+  carpeta: '<path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H10l2 2.5h7.5A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/>',
+  euro: '<path d="M17.5 6.5A7 7 0 1 0 17.5 17.5"/><path d="M4 10h9M4 14h9"/>',
+  salud: '<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/>',
+  escudo: '<path d="M12 3 4.5 6v5.5c0 4.5 3.2 8 7.5 9.5 4.3-1.5 7.5-5 7.5-9.5V6z"/><path d="m9 12 2.2 2.2L15.5 10"/>',
   sinred: '<path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0M12 19h.01M3 3l18 18"/>',
 };
 window.icono = (n, clase = "") =>

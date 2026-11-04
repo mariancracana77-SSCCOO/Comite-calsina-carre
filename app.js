@@ -1,9 +1,9 @@
 // Web pública del Comité de Empresa Calsina Carré
 (function () {
   const $ = (id) => document.getElementById(id);
-  const D = { actualidad: [], avisos: [], reuniones: [], actas: [], preguntas: [], miembros: [], encuestas: [], votos: {}, documentos: [], paginas: {} };
+  const D = { actualidad: [], avisos: [], reuniones: [], actas: [], preguntas: [], miembros: [], encuestas: [], votos: {}, documentos: [], paginas: {}, apartados: [], publicaciones: [] };
   const instalada = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
-  const VISTAS = ["actualidad", "avisos", "reuniones", "actas", "buzon", "nosotros", "buscar", "privacidad", "aviso-legal", "cookies"];
+  const VISTAS = ["actualidad", "avisos", "reuniones", "actas", "buzon", "nosotros", "seccion", "buscar", "privacidad", "aviso-legal", "cookies"];
   const PESTANA_DE = { buscar: null, privacidad: null, "aviso-legal": null, cookies: null };
 
   // ---------- Iconos fijos del HTML ----------
@@ -29,13 +29,22 @@
     let vista = VISTAS.includes(h) ? h : "actualidad", destino = null;
     if (h === "documentos") { vista = "actas"; ponSegmento("documentos"); }
     if (h === "avisos-movil") { vista = "avisos"; }
-    const m = h.match(/^(noticia|aviso|reunion|acta|consulta|documento)-(\d+)$/);
+    // v11: secciones propias (#seccion-N) y lo publicado en ellas (#publicacion-N)
+    let pestSeccion = null;
+    const ms = h.match(/^(seccion|publicacion)-(\d+)$/);
+    if (ms) {
+      const pub = ms[1] === "publicacion" ? D.publicaciones.find((x) => String(x.id) === ms[2]) : null;
+      const idSec = pub ? pub.apartado_id : +ms[2];
+      vista = "seccion"; pestSeccion = pintaSeccion(idSec);
+      if (pub) destino = h;
+    }
+    const m = ms ? null : h.match(/^(noticia|aviso|reunion|acta|consulta|documento)-(\d+)$/);
     if (m) {
       vista = { noticia: "actualidad", aviso: "avisos", reunion: "reuniones", acta: "actas", consulta: "actualidad", documento: "actas" }[m[1]];
       destino = h;
     }
     VISTAS.forEach((v) => { $("v-" + v).hidden = v !== vista; });
-    const pest = vista in PESTANA_DE ? PESTANA_DE[vista] : vista;
+    const pest = vista === "seccion" ? pestSeccion : vista in PESTANA_DE ? PESTANA_DE[vista] : vista;
     document.querySelectorAll("#pestanas a").forEach((a) => {
       const sel = a.dataset.vista === pest;
       a.classList.toggle("activa", sel);
@@ -46,9 +55,9 @@
     if (vista === "avisos") marcaAvisosVistos();
     if (vista === "buscar") setTimeout(() => $("buscar-todo").focus(), 50);
     if (destino) {
-      if (m[1] === "reunion") { const r = D.reuniones.find((x) => String(x.id) === m[2]); if (r && r.fecha < hoyISO()) $("pasadas-caja").open = true; }
-      if (m[1] === "acta") { ponSegmento("actas"); filtroAno = "todos"; $("buscar-actas").value = ""; pintaActas(); }
-      if (m[1] === "documento") ponSegmento("documentos");
+      if (m && m[1] === "reunion") { const r = D.reuniones.find((x) => String(x.id) === m[2]); if (r && r.fecha < hoyISO()) $("pasadas-caja").open = true; }
+      if (m && m[1] === "acta") { ponSegmento("actas"); filtroAno = "todos"; $("buscar-actas").value = ""; pintaActas(); }
+      if (m && m[1] === "documento") ponSegmento("documentos");
       requestAnimationFrame(() => {
         const el = $(destino);
         if (el) { el.scrollIntoView({ block: "start" }); el.classList.add("resalta"); setTimeout(() => el.classList.remove("resalta"), 2200); }
@@ -124,6 +133,7 @@
     ["actas", "creado", "acta", "actas", "acta"],
     ["encuestas", "creado", "consulta", "consultas", "consulta"],
     ["documentos", "creado", "documento", "documentos", "documento"],
+    ["publicaciones", "creado", "publicación", "publicaciones", "publicacion"],
   ];
   const pintaNovedades = () => {
     if (!ultimaVisita) { $("novedades").innerHTML = ""; return; }
@@ -282,6 +292,40 @@
     $("lista-miembros").innerHTML = D.miembros.map(R.miembro).join("") || vacio("Pronto pondremos aquí quién forma el comité", "Mientras tanto, puedes escribirnos de forma anónima.", "personas", ["#buzon", "Ir al buzón anónimo"]);
   };
 
+  // ---------- Secciones que crea el comité (v11) ----------
+  // Las principales salen como pestañas (antes de «Nosotros») y en los accesos de la portada; las subsecciones, dentro de su sección.
+  const nombreSeccion = (id) => D.apartados.find((a) => a.id === id)?.titulo || "Sección";
+  const principales = () => D.apartados.filter((a) => !a.padre_id);
+  const pintaPestanasSecciones = () => {
+    document.querySelectorAll("#pestanas .pest-seccion").forEach((a) => a.remove());
+    $("pest-nosotros").insertAdjacentHTML("beforebegin", principales().map((a) => `<a href="#seccion-${a.id}" data-vista="seccion-${a.id}" class="pest-seccion">${esc(a.titulo)}</a>`).join(""));
+    $("accesos-secciones").innerHTML = principales().map((a) => `<a href="#seccion-${a.id}"><span class="ic">${icono(a.icono || "carpeta")}</span><span>${esc(a.titulo)}</span></a>`).join("");
+  };
+  // Pinta la sección y devuelve la pestaña que hay que marcar (la de la sección principal)
+  const pintaSeccion = (id) => {
+    const a = D.apartados.find((x) => x.id === id), v = $("v-seccion");
+    if (!a) {
+      $("seccion-ic").innerHTML = icono("carpeta"); $("seccion-titulo").textContent = "Sección no disponible"; $("seccion-miga").hidden = true;
+      $("seccion-desc").textContent = "Esta sección ya no está en la web o se ha ocultado.";
+      $("seccion-hijas").innerHTML = ""; $("seccion-pubs").innerHTML = vacio("No hay nada aquí", "Vuelve a la portada para ver lo último del comité.", "carpeta", ["#actualidad", "Ir a Info general"]);
+      v.dataset.titulo = "Sección"; return null;
+    }
+    const padre = a.padre_id ? D.apartados.find((x) => x.id === a.padre_id) : null;
+    $("seccion-ic").innerHTML = icono(a.icono || "carpeta");
+    $("seccion-titulo").textContent = a.titulo;
+    $("seccion-desc").textContent = String(a.descripcion || "").replace(/\*\*/g, "");
+    $("seccion-desc").hidden = !a.descripcion;
+    $("seccion-miga").hidden = !padre;
+    $("seccion-miga").innerHTML = padre ? `<a href="#seccion-${padre.id}">${icono("atras")}${esc(padre.titulo)}</a>` : "";
+    const hijas = D.apartados.filter((x) => x.padre_id === a.id);
+    const cuenta = (sid) => D.publicaciones.filter((p) => p.apartado_id === sid).length;
+    $("seccion-hijas").innerHTML = hijas.map((h) => R.seccion(h, cuenta(h.id))).join("");
+    const pubs = D.publicaciones.filter((p) => p.apartado_id === a.id);
+    $("seccion-pubs").innerHTML = pubs.map(R.publicacion).join("") || (hijas.length ? "" : vacio("Todavía no hay nada en esta sección", "Cuando el comité publique algo aquí, lo verás en esta página.", a.icono || "carpeta", ["#avisos-movil", "Avisarme cuando haya novedades"]));
+    v.dataset.titulo = a.titulo;
+    return "seccion-" + (padre ? padre.id : a.id);
+  };
+
   // ---------- Buscar en toda la web ----------
   const sinAcentos = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   const buscar = () => {
@@ -291,7 +335,9 @@
     const casa = (...t) => { const s = sinAcentos(t.join(" ")); return palabras.every((p) => s.includes(p)); };
     const res = [
       ...D.avisos.filter((x) => casa(x.titulo, x.contenido)).map((x) => ["Aviso", x.titulo, "aviso-" + x.id, x.fecha]),
-      ...D.actualidad.filter((x) => casa(x.titulo, x.contenido, x.categoria)).map((x) => ["Actualidad", x.titulo, "noticia-" + x.id, x.fecha]),
+      ...D.actualidad.filter((x) => casa(x.titulo, x.contenido, x.categoria)).map((x) => ["Info general", x.titulo, "noticia-" + x.id, x.fecha]),
+      ...D.apartados.filter((x) => casa(x.titulo, x.descripcion)).map((x) => ["Sección", x.titulo, "seccion-" + x.id, null]),
+      ...D.publicaciones.filter((x) => casa(x.titulo, x.contenido, (x.adjuntos || []).map((a) => a.nombre).join(" "))).map((x) => [nombreSeccion(x.apartado_id), x.titulo, "publicacion-" + x.id, x.fecha]),
       ...D.reuniones.filter((x) => casa(x.titulo, x.descripcion, x.lugar, x.tipo)).map((x) => ["Reunión", x.titulo, "reunion-" + x.id, x.fecha]),
       ...D.actas.filter((x) => casa(x.titulo, x.resumen, x.acuerdos, x.tipo)).map((x) => ["Acta", x.titulo, "acta-" + x.id, x.fecha]),
       ...D.documentos.filter((x) => casa(x.titulo, x.descripcion, x.categoria, (x.adjuntos || []).map((a) => a.nombre).join(" "))).map((x) => ["Documento", x.titulo, "documento-" + x.id, null]),
@@ -316,7 +362,7 @@
   });
 
   // ---------- Carga de datos ----------
-  const pintaTodo = () => { pintaActualidad(); pintaAvisos(); pintaReuniones(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaNosotros(); };
+  const pintaTodo = () => { pintaPestanasSecciones(); pintaActualidad(); pintaAvisos(); pintaReuniones(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaNosotros(); };
   const guardaCopia = () => TEMA.guarda("comite-copia", JSON.stringify({ t: Date.now(), D }));
   const leeCopia = () => { try { return JSON.parse(TEMA.lee("comite-copia") || "null"); } catch (_) { return null; } };
 
@@ -332,6 +378,8 @@
       sb.from("documentos").select("*").order("categoria").order("orden").order("id"),
       sb.from("encuesta_votos").select("*"),
       sb.from("paginas").select("*"),
+      sb.from("apartados").select("*").eq("visible", true).order("orden").order("id"),
+      sb.from("publicaciones").select("*").eq("publicado", true).order("fecha", { ascending: false }).order("id", { ascending: false }),
     ]);
     const fallo = r.find((x) => x.error);
     if (fallo) throw fallo.error;
@@ -342,6 +390,11 @@
     D.votos = {};
     (r[8].data || []).forEach((v) => { (D.votos[v.encuesta_id] ||= {})[v.opcion] = v.n; });
     D.paginas = Object.fromEntries((r[9].data || []).map((p) => [p.slug, p.contenido]));
+    // Secciones: solo las visibles cuyo padre (si lo tienen) también se ve; publicaciones de esas secciones
+    const vis = new Set((r[10].data || []).map((a) => a.id));
+    D.apartados = (r[10].data || []).filter((a) => !a.padre_id || vis.has(a.padre_id));
+    const ok = new Set(D.apartados.map((a) => a.id));
+    D.publicaciones = (r[11].data || []).filter((p) => ok.has(p.apartado_id));
   };
 
   let primeraCarga = true;
@@ -366,6 +419,7 @@
     pintaTodo();
     if (primeraCarga) irA(location.hash);
     if (!$("v-buscar").hidden) buscar();
+    if (!primeraCarga && !$("v-seccion").hidden) { const mm = location.hash.match(/^#(seccion|publicacion)-(\d+)$/); if (mm) pintaSeccion(mm[1] === "seccion" ? +mm[2] : D.publicaciones.find((p) => String(p.id) === mm[2])?.apartado_id); }
     primeraCarga = false;
   };
   window.addEventListener("online", arranca);
@@ -388,9 +442,9 @@
         if (instalada) sb.rpc("contar_visita", { p_seccion: "app" }).then(() => {}, () => {});
       }
       const k = "comite-vista-" + vista, ses = sessionStorage.getItem(k);
-      if (!ses && ["actualidad", "avisos", "reuniones", "actas", "buzon", "nosotros", "buscar"].includes(vista)) {
+      if (!ses && ["actualidad", "avisos", "reuniones", "actas", "buzon", "nosotros", "buscar", "seccion"].includes(vista)) {
         sessionStorage.setItem(k, "1");
-        sb.rpc("contar_visita", { p_seccion: vista === "actas" && !$("bloque-documentos").hidden ? "documentos" : vista }).then(() => {}, () => {});
+        sb.rpc("contar_visita", { p_seccion: vista === "seccion" ? "secciones" : vista === "actas" && !$("bloque-documentos").hidden ? "documentos" : vista }).then(() => {}, () => {});
       }
     } catch (_) {}
   };
