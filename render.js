@@ -14,14 +14,25 @@
       <div class="acciones">${botonCompartir("noticia-" + n.id, n.titulo, n.contenido)}</div>
     </article>`;
 
+  // Avisos con estilo de señal de tráfico (lo eligió el padre): triángulo azul con «i» o, si es urgente o
+  // está destacado hoy, triángulo rojo con «!» y franja de rayas rojas y blancas arriba, como las de obras.
+  const senal = (rojo) => `<svg class="senal${rojo ? " roja" : ""}" viewBox="0 0 48 44" aria-hidden="true"><path class="senal-fondo" d="M24 4 45 40H3z"/>${rojo
+    ? '<path class="senal-signo" d="M24 17v10"/><circle class="senal-punto" cx="24" cy="33.5" r="2.6"/>'
+    : '<circle class="senal-punto" cx="24" cy="18" r="2.6"/><path class="senal-signo" d="M24 24v10"/>'}</svg>`;
   // Destacado hoy («Destacar en la portada el día»): ese día se ve en rojo, como un urgente
-  const aviso = (a) => { const hoy = a.destacar_dia && a.destacar_dia === hoyISO(); return `
-    <article class="tarjeta aviso${a.urgente || hoy ? " urgente" : ""}" id="aviso-${a.id}">
-      <div class="meta">${hoy ? `<span class="etq rojo">${icono("alerta")}Destacado hoy</span>` : a.urgente ? `<span class="etq rojo">${icono("alerta")}Urgente</span>` : ""}${nuevo(a.fecha)}<span>${esc(fechaLarga(a.fecha || new Date()))}</span></div>
-      <h3>${esc(a.titulo || "Sin título")}</h3>
-      <div class="texto">${textoHTML(a.contenido)}</div>
-      ${adjuntosHTML(a.adjuntos)}
-      <div class="acciones">${botonCompartir("aviso-" + a.id, a.titulo, a.contenido)}</div>
+  const aviso = (a) => { const hoy = a.destacar_dia && a.destacar_dia === hoyISO(), rojo = a.urgente || hoy; return `
+    <article class="tarjeta aviso${rojo ? " urgente" : ""}" id="aviso-${a.id}">
+      ${rojo ? '<div class="rayas" aria-hidden="true"></div>' : ""}
+      <div class="aviso-cuerpo">
+        ${senal(rojo)}
+        <div class="aviso-txt">
+          <div class="meta">${hoy ? '<span class="etq rojo">Destacado hoy</span>' : a.urgente ? '<span class="etq rojo">Urgente</span>' : '<span class="etq azul">Aviso</span>'}${nuevo(a.fecha)}<span>${esc(fechaLarga(a.fecha || new Date()))}</span></div>
+          <h3>${esc(a.titulo || "Sin título")}</h3>
+          <div class="texto">${textoHTML(a.contenido)}</div>
+          ${adjuntosHTML(a.adjuntos)}
+          <div class="acciones">${botonCompartir("aviso-" + a.id, a.titulo, a.contenido)}</div>
+        </div>
+      </div>
     </article>`; };
 
   const reunion = (r) => {
@@ -113,5 +124,5 @@
     </article>`;
   };
 
-  window.R = { noticia, aviso, reunion, acta, documento, consulta, pregunta, miembro, opciones, abierta };
+  window.R = { senal, noticia, aviso, reunion, acta, documento, consulta, pregunta, miembro, opciones, abierta };
 })();

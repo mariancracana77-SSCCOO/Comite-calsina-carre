@@ -26,6 +26,9 @@ Kit visual HD del comité (CC metálico + camión + personas). Paleta: `#0B1E3C`
 ## Actualidad (anuncios) y Avisos: no son lo mismo
 Lo explicó el padre. **Actualidad = anuncios**: información general para todos, sin destacar (p. ej. «la reunión de hoy acordó que desde mañana el turno 3 tiene 25 minutos de pausa en vez de 20»). **Avisos** = lo importante que hay que destacar (huelga general la semana que viene, mañana festivo, elecciones, último día del mes para algo). En la interfaz se llama «Actualidad» y sus entradas son «anuncios» (la tabla sigue siendo `actualidad` y el ancla `#noticia-N`).
 
+## Avisos con estilo de señal de tráfico (v10)
+Lo eligió el padre («que sea original»): `R.senal(rojo)` en `render.js` dibuja el triángulo (azul con «i»; rojo con «!» si es urgente o destacado hoy) y los urgentes llevan `.rayas` arriba (rojo y blanco, como las de obras). El aviso urgente de la portada usa lo mismo (`.destacado.con-senal`).
+
 ## Traído de CCOO en la v10
 - **Destacar un aviso un día** (como CCOO v102–103): columna `avisos.destacar_dia` (date) + `destacado_avisado`. Ese día el aviso sale en rojo arriba en la portada («Destacado hoy») y en su lista; la tarea `notificar` (cron) manda «DESTACADO HOY: …» una vez, a partir de las 8:00 de Madrid. Si se cambia el día, `alGuardar` pone `destacado_avisado = false` (o `true` si es nuevo, de hoy, y ya avisa al publicar). Campo tipo fecha con opción `quitar` → botón «Quitar el destacado» (`data-vaciar`). No toca `urgente`.
 - **Copia de seguridad** en Ajustes (`#accesos-copia` baja hasta ella): «Descargar copia con archivos» (ZIP con `lib/jszip.min.js`, MIT, cargado solo al usarlo) o «Solo los textos» (JSON). Guarda la fecha en `paginas.ultima_copia`; Inicio la recuerda si nunca se hizo o hace más de 31 días. Lleva el buzón: si se añaden tablas, añadirlas a `TABLAS_COPIA`.

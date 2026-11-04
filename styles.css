@@ -229,7 +229,22 @@ main { outline: none; }
 .etq.rojo { background: var(--rojo); color: #fff; }
 .etq.nuevo { background: #e8f5e9; color: #1b5e20; }
 .etq.azul { background: var(--azul-claro); color: var(--azul-osc); }
-.aviso.urgente { border-color: var(--rojo); border-left-width: 6px; }
+/* Avisos: estilo señal de tráfico */
+.aviso { position: relative; overflow: hidden; }
+.aviso-cuerpo { display: flex; gap: 14px; align-items: flex-start; }
+.aviso-txt { flex: 1; min-width: 0; }
+.senal { flex: none; width: 46px; height: 42px; margin-top: 2px; filter: drop-shadow(0 2px 3px rgba(11, 30, 60, .18)); }
+.senal-fondo { fill: #fff; stroke: var(--azul); stroke-width: 5; stroke-linejoin: round; }
+.senal-signo { stroke: #0B1E3C; stroke-width: 4.2; stroke-linecap: round; fill: none; }
+.senal-punto { fill: #0B1E3C; }
+.senal.roja .senal-fondo { stroke: #d32f2f; }
+.rayas { height: 10px; margin: -16px -16px 14px; background: repeating-linear-gradient(-45deg, #d32f2f 0 12px, #fff 12px 24px); border-bottom: 1px solid rgba(211, 47, 47, .35); }
+.aviso.urgente { border-color: var(--rojo); }
+.destacado.con-senal { position: relative; overflow: hidden; display: grid; grid-template-columns: auto 1fr; column-gap: 14px; row-gap: 4px; align-items: start; border-left: 1px solid var(--rojo); padding-top: 0; }
+.destacado.con-senal .rayas { grid-column: 1 / -1; margin: 0 -16px 10px; }
+.destacado.con-senal .senal { grid-row: 2 / span 4; }
+.destacado.con-senal > :not(.rayas):not(.senal) { grid-column: 2; }
+@media (max-width: 360px) { .senal { width: 38px; height: 35px; } .aviso-cuerpo { gap: 10px; } }
 .acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .resalta { animation: resalta 2s ease; }
 @keyframes resalta { 0%, 40% { box-shadow: 0 0 0 4px var(--celeste); } 100% { box-shadow: var(--sombra); } }

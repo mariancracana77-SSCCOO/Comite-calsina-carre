@@ -147,8 +147,9 @@
     const urg = hoyDest || D.avisos.find((a) => a.urgente && Date.now() - new Date(a.fecha) < 14 * 86400000);
     const txtCorto = (t, n) => { t = String(t || "").replace(/\*\*/g, "").replace(/\s+/g, " ").trim(); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
     $("urgente").innerHTML = urg ? `
-      <a class="destacado urgente" href="#aviso-${urg.id}">
-        <span class="destacado-etq">${icono("alerta")}${urg === hoyDest ? "Destacado hoy" : "Aviso urgente"}</span>
+      <a class="destacado urgente con-senal" href="#aviso-${urg.id}">
+        <span class="rayas" aria-hidden="true"></span>${R.senal(true)}
+        <span class="destacado-etq">${urg === hoyDest ? "Destacado hoy" : "Aviso urgente"}</span>
         <b>${esc(urg.titulo)}</b>
         ${urg.contenido ? `<span class="destacado-txt">${esc(txtCorto(urg.contenido, 150))}</span>` : ""}
         <span class="destacado-ir">Leer el aviso${icono("flecha")}</span>
