@@ -9,7 +9,7 @@ La gestiona desde el panel el padre de Lorena (usuario GitHub `mariancracana77-S
 
 - Web: https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/ (GitHub Pages desde `main`, raíz)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **2**
+- Versión actual: **3**
 
 ## Reglas (las mismas que en CCOO)
 - No publicar en `main` sin que Lorena lo confirme. Trabajar en la rama indicada.
@@ -21,13 +21,13 @@ La gestiona desde el panel el padre de Lorena (usuario GitHub `mariancracana77-S
 - Móvil (320–412 px) y PC, letra muy grande y modo oscuro deben seguir funcionando.
 
 ## Marca
-Kit visual HD del comité (CC metálico + camión + personas). Paleta: `#0B1E3C` azul noche, `#0E5FAE` azul, `#00C6FF` cian, `#E6EEF7` hielo, blanco. Letras: Montserrat (títulos) e Inter (texto), alojadas en `fuentes/` (`fuentes.css`). Imágenes en `img/`: `icon-192/512.png` (esquinas transparentes), `icon-maskable-512.png` y `apple-touch-icon.png` (a sangre), `favicon-32/64.png` (solo el CC), `cabecera-900/1600.webp` (banner de la portada y del cartel), `og.png`.
+Kit visual HD del comité (CC metálico + camión + personas). Paleta: `#0B1E3C` azul noche, `#0E5FAE` azul, `#00C6FF` cian, `#E6EEF7` hielo, blanco. Letras: Montserrat (títulos) e Inter (texto), alojadas en `fuentes/` (`fuentes.css`). Imágenes en `img/`: `icon-192/512.png` (esquinas transparentes), `icon-maskable-512.png` y `apple-touch-icon.png` (a sangre), `favicon-32/64.png` (solo el CC), `hero-arte.webp` (CC + camión, fondo del bloque azul de la portada), `cabecera-900/1600.webp` (banner del cartel), `og.png`.
 
 ## Archivos
 - `index.html` + `app.js`: web pública. Vistas `#actualidad` (portada), `#avisos`, `#reuniones`, `#actas` (con segmento «Documentos útiles», `#documentos`), `#buzon`, `#nosotros`, `#buscar`, `#privacidad`. Enlaces directos `#aviso-N`, `#noticia-N`, `#reunion-N`, `#acta-N`, `#consulta-N`, `#documento-N`. localStorage (todo con try/catch en `TEMA.lee/guarda`): `comite-tema`, `comite-letra`, `comite-avisos-vistos`, `comite-ultima-visita`, `comite-votos`, `comite-copia` (copia sin conexión), `comite-no-instalar`.
 - `render.js`: tarjetas (`R.aviso`, `R.noticia`, `R.reunion`, `R.acta`, `R.documento`, `R.consulta`, `R.pregunta`, `R.miembro`) que usan la web **y la vista previa del panel**. Cambiar aquí para que las dos coincidan.
 - `comun.js`: conexión Supabase, `esc`, `urlSegura`, `textoHTML` (párrafos, `- ` listas, `**negrita**`), fechas, adjuntos, iconos, tema/letra, `.ics`, compartir, aviso de versión nueva.
-- `admin.html` + `admin.js` + `admin.css`: panel. `SECCIONES` define campos de cada tabla (tipos: texto, largo, fecha, hora, fechahora, si, opcion, numero, tel, email, url, archivos, nota). `MENU`/`BARRA`: menú lateral (PC) y barra de abajo (móvil). Páginas especiales: inicio, buzon, textos, papelera, cartel, accesos.
+- `admin.html` + `admin.js` + `admin.css`: panel. `SECCIONES` define campos de cada tabla (tipos: texto, largo, fecha, hora, fechahora, si, opcion, numero, tel, email, url, archivos, nota). `MENU`/`BARRA`: menú lateral (PC) y barra de abajo (móvil). Páginas especiales: inicio, buzon, textos, papelera, cartel, accesos (sale como «Ajustes»: correos con acceso).
 - `cartel.html` + `cartel.js`: cartel A4 con QR (`lib/qr.js`, MIT).
 - `guia.html` + `img/guia/`: guía del panel para el padre, con capturas hechas con los datos de prueba.
 - `sw.js`: caché para instalar y usar sin conexión (los datos de Supabase siempre van a la red).

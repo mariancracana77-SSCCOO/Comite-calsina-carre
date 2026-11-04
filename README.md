@@ -30,7 +30,7 @@ Tiene la misma forma de trabajar que el panel de CCOO:
 - **Consultas**: votaciones anónimas a la plantilla, con resultados.
 - **Papelera**: lo borrado se puede recuperar durante 90 días.
 - **Cartel con QR**: cartel A4 para el tablón de anuncios.
-- **Accesos**: quién puede entrar en el panel.
+- **Ajustes**: correos con acceso al panel.
 - **Avisos al móvil**: al publicar, llega una notificación a quien la haya activado en la web (casilla «Avisar al móvil al publicar»; al editar, «Volver a avisar al móvil de este cambio»). Los avisos programados avisan solos a su hora. En Inicio se ve cuántos móviles están apuntados y se puede mandar una prueba.
 - **Visitas y estadísticas** (abajo en Inicio): visitas por día y lo más visto. Solo números, sin saber quién entra.
 - **Guía del panel** (`guia.html`): cómo se hace cada cosa, con capturas. Enlazada desde el menú y desde Inicio.
@@ -39,7 +39,7 @@ Tiene la misma forma de trabajar que el panel de CCOO:
 1. Abre el panel, despliega «¿Problemas para entrar?» y pulsa **«Primera vez: crear la cuenta»** (con el email autorizado y la contraseña que quieras).
 2. Llega un email: pulsa el botón para confirmar. Después ya se entra con email y contraseña.
 
-Emails autorizados al principio: los mismos dos administradores del panel de CCOO. Se cambian desde **Accesos**.
+Emails autorizados al principio: los mismos dos administradores del panel de CCOO. Se cambian desde **Ajustes**.
 
 ## Cosas que tenéis que hacer vosotros (una vez)
 
@@ -63,5 +63,6 @@ Abre la web y el panel con datos de prueba (sin tocar la base de datos real) en 
 
 ## Versiones
 
+- **v3**: portada nueva más profesional (bloque azul con la marca, accesos rápidos, columna con lo urgente y la próxima reunión); «Accesos» del panel pasa a «Ajustes»; el nombre ya no se repite en la ventana de la app.
 - **v2**: avisos al móvil (notificaciones), visitas y estadísticas en el panel, guía del panel.
 - **v1**: primera versión: web con los 6 apartados, consultas, documentos, buscador, panel como el de CCOO, papelera, cartel con QR, marca del comité (kit HD).
