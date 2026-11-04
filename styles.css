@@ -448,17 +448,6 @@ textarea, .campo input, .campo select, .campo textarea {
   .marca-logo img { width: 40px; height: 40px; }
 }
 
-/* ---------- Lo que tiene la empresa, dentro del bloque azul de la portada ---------- */
-.hero-empresa { list-style: none; margin: 22px 0 0; padding: 14px 0 0; display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid rgba(255, 255, 255, .14); max-width: 480px; }
-.hero-empresa li { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 4px; font-size: .74rem; font-weight: 600; line-height: 1.2; text-align: center; color: rgba(255, 255, 255, .86); }
-.hero-empresa li + li { border-left: 1px solid rgba(0, 198, 255, .25); }
-.hero-empresa .ic { display: inline-grid; color: var(--celeste); }
-.hero-empresa .ic .ico { width: 26px; height: 26px; stroke-width: 1.8; }
-@media (max-width: 759px) {
-  .hero-empresa { margin-top: 20px; max-width: none; }
-  .hero-empresa li { padding: 0 2px; font-size: .62rem; gap: 5px; }
-  .hero-empresa .ic .ico { width: 24px; height: 24px; }
-}
 
 /* Foto de los miembros */
 img.inicial.foto { object-fit: cover; padding: 0; box-shadow: 0 0 0 2px var(--tarjeta), 0 0 0 4px rgba(0, 198, 255, .45); }
