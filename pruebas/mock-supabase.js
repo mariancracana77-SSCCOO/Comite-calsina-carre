@@ -120,7 +120,7 @@
     },
     functions: { invoke: async (n, o) => {
       const b = o?.body || {};
-      if (n === "generar-acta") { window.__IA = b; return { data: { acta: { titulo: "Reunión del comité de noviembre", tipo: "Reunión del comité", fecha: "2026-11-03", resumen: "Se habló de los turnos de verano y de la ropa de trabajo.", acuerdos: "- Pedir a la empresa la jornada intensiva\n- Revisar los vestuarios", avisos: "" } }, error: null }; }
+      if (n === "generar-acta") { window.__IA = b; return { data: { acta: { titulo: "Reunión del comité de noviembre", tipo: "Reunión del comité", fecha: "2026-11-03", resumen: "Se habló de los turnos de verano y de la ropa de trabajo." + (/\[PERSONA 1\]/.test(b.notas) ? " [PERSONA 1] pidió la jornada intensiva." : ""), acuerdos: "- Pedir a la empresa la jornada intensiva\n- Revisar los vestuarios", avisos: "" } }, error: null }; }
       if (n === "cuenta") {
         if (b.accion === "estado") return { data: { quedan: 0, cuentas: { "prueba@example.com": true, "otro@example.com": false } }, error: null };
         if (b.accion === "codigos") return { data: { codigos: ["ABCDE-23456", "FGHJK-78923", "LMNPQ-45678", "RSTUV-92345", "WXYZA-56789", "BCDEF-34567", "GHJKL-89234", "MNPQR-67893"] }, error: null };
