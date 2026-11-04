@@ -6,7 +6,7 @@
 window.SUPABASE_URL = "https://ytxpubqyhnohhugpukdm.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_tmkeed90aj4Fv00UoTTy7Q_qBPUAaCj";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "3"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "4"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/";
 
 // ---- Utilidades ----
@@ -111,6 +111,11 @@ const IC = {
   bajarOrden: '<path d="m6 9 6 6 6-6"/>',
   campana: '<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4l2-2z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
   campanaNo: '<path d="M6 16V11a6 6 0 0 1 9.5-4.9M18 11v5l2 2H4l2-2"/><path d="M10 20a2 2 0 0 0 4 0M3 3l18 18"/>',
+  camion: '<path d="M1.5 6H13v9.5H1.5z"/><path d="M14.5 9h3.1l3.4 3.8v2.7h-6.5z"/><path d="M13 15.5h1.5"/><circle cx="4.6" cy="17.6" r="1.6"/><circle cx="8.6" cy="17.6" r="1.6"/><circle cx="18" cy="17.6" r="1.6"/>',
+  toro: '<path d="M2.5 16.5V11h11.5v5.5"/><path d="M5 11V4.5h6.5L13 11"/><path d="M17 3v15.5h5.5"/><path d="M14 13.5h3"/><circle cx="5.5" cy="17.5" r="2.2"/><circle cx="12" cy="18" r="1.6"/>',
+  transpaleta: '<path d="M3.5 2.5 7.5 12"/><path d="M2 3.5 5 2"/><path d="M6 12h4.5v5H6z"/><path d="M10.5 15.5h11.5v1.5H10.5z"/><circle cx="8.2" cy="19.3" r="1.5"/><circle cx="20" cy="19.3" r="1.1"/>',
+  reparto: '<path d="M2 7h11v9H2z"/><path d="M13 10h4l3.5 3.5V16H13z"/><path d="M5 10.5h5v3H5z"/><circle cx="6" cy="17.6" r="1.7"/><circle cx="17" cy="17.6" r="1.7"/>',
+  surtidor: '<path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M2.5 21h13"/><path d="M7 6.5h4v4H7z"/><path d="M14 9h2a1.8 1.8 0 0 1 1.8 1.8v5.4a1.6 1.6 0 0 0 3.2 0V8.5L18 5.5"/>',
   sinred: '<path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0M12 19h.01M3 3l18 18"/>',
 };
 window.icono = (n, clase = "") =>

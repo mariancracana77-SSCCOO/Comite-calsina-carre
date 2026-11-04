@@ -63,6 +63,7 @@ Abre la web y el panel con datos de prueba (sin tocar la base de datos real) en 
 
 ## Versiones
 
+- **v4**: gasolinera de la empresa junto al camión en la portada; fila de iconos con lo que tiene la empresa (transporte, almacén, carga y descarga, distribución, gasolinera) en el bloque azul; pie de página completo (logo, enlaces y aviso legal) y cabecera azul con icono en cada apartado; en PC, el calendario con las próximas reuniones al lado.
 - **v3**: portada nueva más profesional (bloque azul con la marca, accesos rápidos, columna con lo urgente y la próxima reunión); «Accesos» del panel pasa a «Ajustes»; el nombre ya no se repite en la ventana de la app.
 - **v2**: avisos al móvil (notificaciones), visitas y estadísticas en el panel, guía del panel.
 - **v1**: primera versión: web con los 6 apartados, consultas, documentos, buscador, panel como el de CCOO, papelera, cartel con QR, marca del comité (kit HD).
