@@ -42,6 +42,15 @@
       { slug: "nosotros", contenido: "El comité de empresa representa a toda la plantilla de Calsina Carré." },
       { slug: "privacidad", contenido: "Esta web es solo informativa." },
     ],
+    apartados: [
+      { id: 1, titulo: "Salud laboral", descripcion: "Riesgos, EPIs y revisiones médicas.", icono: "salud", orden: 10, visible: true, padre_id: null, creado: hace(300), actualizado: hace(300) },
+      { id: 2, titulo: "Revisiones médicas", descripcion: "Fechas y cómo pedir cita.", icono: "calendario", orden: 10, visible: true, padre_id: 1, creado: hace(200), actualizado: hace(200) },
+      { id: 3, titulo: "Formación", descripcion: "", icono: "acta", orden: 20, visible: false, padre_id: null, creado: hace(100), actualizado: hace(100) },
+    ],
+    publicaciones: [
+      { id: 1, apartado_id: 1, titulo: "Nuevos guantes anticorte en el almacén", contenido: "Ya se pueden pedir en almacén.\n\n- Talla M, L y XL\n- **Obligatorios** en la zona de carga", fecha: dia(-2), adjuntos: [], publicado: true, notificar: true, notificado: true, creado: hace(30), actualizado: hace(30) },
+      { id: 2, apartado_id: 2, titulo: "Revisión médica anual: del 10 al 20", contenido: "Pide cita en la oficina.", fecha: dia(-5), adjuntos: [], publicado: true, notificar: true, notificado: true, creado: hace(120), actualizado: hace(120) },
+    ],
     admins: [{ email: "prueba@example.com" }, { email: "otro@example.com" }],
     visitas: [...Array(20)].map((_, i) => ({ dia: dia(-(i % 14)), seccion: ["total", "avisos", "actualidad", "actas", "app"][i % 5], n: 3 + (i * 7) % 11 })),
     papelera: [{ id: 1, tabla: "avisos", datos: { id: 9, titulo: "Aviso borrado de prueba" }, borrado: hace(4), por: "prueba@example.com" }],

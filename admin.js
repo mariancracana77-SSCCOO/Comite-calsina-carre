@@ -16,7 +16,7 @@
     avisos: {
       nombre: "Avisos", uno: "aviso", nuevo: "Nuevo aviso", ic: "megafono", tabla: "avisos", ancla: "aviso",
       orden: [["fecha", false]],
-      ayuda: "Lo importante que hay que destacar: huelga, festivo, elecciones, último día para entregar algo… Si marcas «Urgente», sale destacado arriba en la portada durante 14 días. Con «Destacar en la portada el día» sale arriba solo ese día y llega «DESTACADO HOY» a los móviles. Para información general sin destacar, usa «Actualidad» (anuncios).",
+      ayuda: "Lo importante que hay que destacar: huelga, festivo, elecciones, último día para entregar algo… Si marcas «Urgente», sale destacado arriba en la portada durante 14 días. Con «Destacar en la portada el día» sale arriba solo ese día y llega «DESTACADO HOY» a los móviles. Para información general sin destacar, usa «Info general» (anuncios).",
       campos: [
         ["titulo", "Título", "texto", { req: true, ph: "Ej.: Cambio de turnos en noviembre" }],
         ["contenido", "Texto del aviso", "largo"],
@@ -39,7 +39,7 @@
       },
     },
     actualidad: {
-      nombre: "Actualidad", uno: "anuncio", nuevo: "Nuevo anuncio", ic: "periodico", tabla: "actualidad", ancla: "noticia",
+      nombre: "Info general", uno: "anuncio", nuevo: "Nuevo anuncio", ic: "periodico", tabla: "actualidad", ancla: "noticia",
       orden: [["fecha", false], ["id", false]],
       ayuda: "Anuncios: información general para toda la plantilla, sin destacar. Por ejemplo: «Desde mañana el turno 3 tiene 25 minutos de pausa en vez de 20». Salen en la portada. Si es algo importante que hay que destacar (huelga, festivo, elecciones), usa mejor «Avisos».",
       campos: [
@@ -167,10 +167,62 @@
     },
   };
 
+  // ================== SECCIONES PROPIAS (v11) ==================
+  // El padre crea sus secciones (y subsecciones, un nivel) y publica dentro. APS: todas, para las listas desplegables.
+  let APS = [];
+  const cargaAps = async () => { const { data } = await sb.from("apartados").select("id, titulo, padre_id, orden, visible").order("orden").order("id"); APS = data || []; return APS; };
+  const nombreAp = (id) => { const a = APS.find((x) => x.id === id); if (!a) return "Sección borrada"; const p = a.padre_id && APS.find((x) => x.id === a.padre_id); return (p ? p.titulo + " › " : "") + a.titulo; };
+  // Secciones en orden: cada principal seguida de sus subsecciones
+  const apsEnOrden = (lista) => { const out = []; lista.filter((a) => !a.padre_id || !lista.some((p) => p.id === a.padre_id)).forEach((a) => { out.push(a); lista.filter((h) => h.padre_id === a.id).forEach((h) => out.push(h)); }); return out; };
+  const ICONOS_SECCION = [["carpeta", "Carpeta"], ["documento", "Documento"], ["periodico", "Periódico"], ["megafono", "Megáfono"], ["calendario", "Calendario"],
+    ["acta", "Hoja"], ["euro", "Dinero"], ["salud", "Salud"], ["escudo", "Seguridad"], ["reloj", "Reloj"], ["personas", "Personas"], ["mensaje", "Mensaje"],
+    ["lugar", "Lugar"], ["telefono", "Teléfono"], ["campana", "Campana"], ["ayuda", "Ayuda"], ["alerta", "Alerta"], ["grafica", "Gráfica"], ["archivo", "Caja"]];
+  Object.assign(SECCIONES, {
+    apartados: {
+      nombre: "Secciones", uno: "sección", nuevo: "Nueva sección", ic: "carpeta", tabla: "apartados", ancla: "seccion",
+      orden: [["orden", true], ["id", true]], ordenable: true,
+      ayuda: "Crea tus propias secciones para la web (por ejemplo «Salud laboral», «Vacaciones» o «Formación»). Las principales salen como pestañas arriba y en la portada. Una subsección va dentro de otra sección. Luego publica dentro desde «Publicar en secciones».",
+      campos: [
+        ["titulo", "Nombre de la sección", "texto", { req: true, ph: "Ej.: Salud laboral" }],
+        ["padre_id", "¿Dónde va?", "opcion", { num: true, lista: (orig) => [["", "Es una sección principal (sale como pestaña)"], ...APS.filter((a) => !a.padre_id && a.id !== orig?.id).map((a) => [a.id, "Dentro de «" + a.titulo + "» (subsección)"])], ayuda: "Una subsección sale dentro de la sección que elijas." }],
+        ["descripcion", "Explicación corta (opcional)", "largo", { ayuda: "Sale debajo del nombre. Por ejemplo: «Riesgos, EPIs y revisiones médicas»." }],
+        ["icono", "Dibujo", "opcion", { lista: ICONOS_SECCION, def: "carpeta" }],
+        ["visible", "Se ve en la web", "si", { def: true, ayuda: "Si la quitas, la sección y lo que tiene dentro dejan de verse, pero no se borra nada." }],
+      ],
+      validar: (v) => v.padre_id && ED?.orig && APS.some((a) => a.padre_id === ED.orig.id) ? "Esta sección tiene subsecciones dentro: no puede ir dentro de otra." : "",
+      chips: (x) => [x.padre_id ? "Dentro de «" + nombreAp(x.padre_id) + "»" : "Principal", !x.visible && "Oculta"],
+      sub: (x) => resumen(x.descripcion),
+      previa: (x) => R.seccion({ ...x, id: x.id || 0 }) + `<p class="nota-campo">${x.padre_id ? "Así sale dentro de su sección." : "Así sale. Además, sale como pestaña arriba y en los accesos de la portada."}</p>`,
+      alGuardar: (v) => { if (!ED.orig) v.orden = (Math.max(0, ...APS.filter((a) => (a.padre_id || null) === (v.padre_id || null)).map((a) => a.orden || 0)) || 0) + 10; },
+      antes: cargaAps,
+    },
+    publicaciones: {
+      nombre: "Publicar en secciones", uno: "publicación", nuevo: "Nueva publicación", ic: "documento", tabla: "publicaciones", ancla: "publicacion",
+      orden: [["fecha", false], ["id", false]],
+      ayuda: "Lo que publicas dentro de tus secciones. Elige en qué sección va. Si todavía no tienes secciones, créalas primero en «Secciones».",
+      campos: [
+        ["apartado_id", "Sección", "opcion", { num: true, req: true, lista: () => apsEnOrden(APS).map((a) => [a.id, nombreAp(a.id) + (a.visible ? "" : " (oculta)")]) }],
+        ["titulo", "Título", "texto", { req: true, ph: "Ej.: Revisión médica anual" }],
+        ["fecha", "Fecha", "fecha", { def: () => hoyISO(), req: true }],
+        ["contenido", "Texto", "largo"],
+        ["adjuntos", "Fotos y documentos", "archivos"],
+        ["publicado", "Se ve en la web", "si", { def: true }],
+        ["notificar", "Avisar al móvil al publicar", "si", { def: true, soloNuevo: true, ayuda: "Llega una notificación a los móviles que tienen los avisos activados." }],
+        ["_cambio", "Volver a avisar al móvil de este cambio", "si", { def: false, soloEditar: true }],
+      ],
+      validar: (v) => !APS.length ? "Primero crea una sección en «Secciones»." : !v.apartado_id ? "Elige en qué sección va." : "",
+      chips: (x) => [nombreAp(x.apartado_id), !x.publicado && "Oculta"],
+      sub: (x) => resumen(x.contenido),
+      previa: (x) => R.publicacion(x),
+      antes: cargaAps,
+    },
+  });
+
   // ================== MENÚ ==================
   const MENU = [
     [null, [["inicio", "Inicio", "inicio"], ["avisos"], ["actualidad"], ["reuniones"], ["actas"]]],
     ["La plantilla", [["buzon", "Buzón anónimo", "mensaje"], ["encuestas"], ["preguntas"]]],
+    ["Tus secciones", [["apartados"], ["publicaciones"]]],
     ["El comité", [["miembros", "Miembros", "personas"], ["documentos"], ["textos", "Textos de la web", "texto"]]],
     ["Herramientas", [["cartel", "Cartel con QR", "qr"], ["papelera", "Papelera", "borrar"], ["accesos", "Ajustes", "candado"]]],
   ];
@@ -360,6 +412,7 @@
   let IR_COPIA = false; // «#accesos-copia»: Ajustes, bajando hasta la copia de seguridad
   const irA = (k) => {
     IR_COPIA = k === "accesos-copia"; if (IR_COPIA) k = "accesos";
+    cargaAps().then(() => {}, () => {});
     if (!PAGINAS[k] && !SECCIONES[k]) k = "inicio";
     actual = k;
     if (location.hash.slice(1) !== k) history.replaceState(null, "", "#" + k);
@@ -375,11 +428,17 @@
     if (e.target.closest("[data-mas]")) { abreHojaMas(); return; }
     if (e.target.closest("[data-instalar]")) { instalar(); return; }
     const n = e.target.closest("[data-nuevo]");
-    if (n) { cierraHoja(); abrirEditor(n.dataset.nuevo, null); }
+    if (n) { cierraHoja(); nuevoEn(n.dataset.nuevo); }
   });
+  // Antes de crear, carga lo que haga falta (las secciones). Sin secciones, no se puede publicar en ellas: lleva a crear una.
+  const nuevoEn = async (k) => {
+    await SECCIONES[k].antes?.().catch?.(() => {});
+    if (k === "publicaciones" && !APS.length) { avisa("Primero crea una sección. Luego podrás publicar dentro."); location.hash = "apartados"; setTimeout(() => abrirEditor("apartados", null), 300); return; }
+    abrirEditor(k, null);
+  };
   $("fab").addEventListener("click", () => {
     // En una sección, «Nuevo» crea directamente; en las demás páginas, pregunta qué
-    if (SECCIONES[actual]) abrirEditor(actual, null); else abreHojaNuevo();
+    if (SECCIONES[actual]) nuevoEn(actual); else abreHojaNuevo();
   });
 
   // ---- Hoja de abajo (móvil) ----
@@ -402,6 +461,8 @@
     ["actualidad", "Escribir un anuncio", "Información general, sin destacar"],
     ["encuestas", "Hacer una consulta", "Votación anónima"],
     ["documentos", "Subir un documento", "Convenio, calendario, tablas…"],
+    ["publicaciones", "Publicar en tus secciones", "Dentro de las secciones que has creado"],
+    ["apartados", "Crear una sección", "Una pestaña nueva en la web"],
   ];
   const abreHojaNuevo = () => abreHoja("¿Qué quieres publicar?", `<div class="hoja-lista">${ACCIONES.map(([k, t, s]) =>
     `<button type="button" class="accion-fila" data-nuevo="${k}">${icono(SECCIONES[k].ic)}<span><b>${esc(t)}</b><small>${esc(s)}</small></span></button>`).join("")}</div>`);
@@ -417,9 +478,10 @@
     const [reu, prog, ult, buz] = await Promise.all([
       sb.from("reuniones").select("*").gte("fecha", hoy).lte("fecha", en14).order("fecha"),
       sb.from("avisos").select("*").gt("publicar_en", ahoraISO()).order("publicar_en"),
-      Promise.all(["avisos", "actualidad", "reuniones", "actas", "encuestas", "documentos"].map((t) =>
+      Promise.all(["avisos", "actualidad", "reuniones", "actas", "encuestas", "documentos", "publicaciones"].map((t) =>
         sb.from(t).select("*").order(t === "avisos" ? "fecha" : "creado", { ascending: false }).limit(4).then((r) => (r.data || []).map((x) => ({ ...x, _t: t }))))),
       sb.from("buzon").select("id", { count: "exact", head: true }).eq("leido", false).eq("archivado", false),
+      cargaAps().catch(() => {}),
     ]);
     if (actual !== "inicio") return;
     PEND_BUZON = buz.count || 0; marcaCuentaBuzon();
@@ -503,7 +565,7 @@
   };
 
   // ---- Estadísticas: visitas de los últimos 30 días ----
-  const NOMBRE_SECCION = { actualidad: "Actualidad", avisos: "Avisos", reuniones: "Reuniones", actas: "Actas", documentos: "Documentos", buzon: "Sugerencias y preguntas", nosotros: "Nosotros", buscar: "Buscador" };
+  const NOMBRE_SECCION = { actualidad: "Info general", secciones: "Tus secciones", avisos: "Avisos", reuniones: "Reuniones", actas: "Actas", documentos: "Documentos", buzon: "Sugerencias y preguntas", nosotros: "Nosotros", buscar: "Buscador" };
   const pintaEstadisticas = async () => {
     const desde = new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10);
     const [{ data, error }, sus] = await Promise.all([sb.from("visitas").select("*").gte("dia", desde), sb.rpc("contar_suscritos")]);
@@ -537,7 +599,7 @@
     const S = SECCIONES[k];
     const chips = [conSeccion && S.nombre, ...(S.chips ? S.chips(x) : [])].filter(Boolean);
     const sub = S.sub ? S.sub(x) : "";
-    return `<div class="tarjeta fila${k === "avisos" && (x.urgente || x.destacar_dia === hoyISO()) ? " urgente" : ""}">
+    return `<div class="tarjeta fila${k === "avisos" && (x.urgente || x.destacar_dia === hoyISO()) ? " urgente" : ""}${k === "apartados" && x.padre_id && !conSeccion ? " fila-hija" : ""}">
       <button type="button" class="fila-abre" data-editar-en="${k}:${x.id}">
         <b>${esc(tituloDe(S, x))}</b>
         ${sub ? `<span class="fila-sub">${esc(sub)}</span>` : ""}
@@ -555,13 +617,14 @@
       <p class="sub-vista">${esc(S.ayuda)}</p>
       <label class="buscador"><span class="sr-only">Buscar en ${esc(S.nombre)}</span><input type="search" id="filtro" placeholder="Buscar en ${esc(S.nombre.toLowerCase())}" autocomplete="off"></label>
       <div class="lista" id="filas"><div class="esq"></div></div>`;
+    await S.antes?.();
     let q = sb.from(S.tabla).select("*");
     S.orden.forEach(([c, asc]) => { q = q.order(c, { ascending: asc }); });
     const [r, v] = await Promise.all([q, k === "encuestas" ? sb.from("encuesta_votos").select("*") : Promise.resolve({ data: null })]);
     if (actual !== k) return;
     if (r.error) { $("filas").innerHTML = `<p class="vacio">${esc(errTxt(r.error))}</p>`; return; }
     if (v.data) { VOTOS = {}; v.data.forEach((x) => { (VOTOS[x.encuesta_id] ||= {})[x.opcion] = x.n; }); }
-    FILAS = r.data;
+    FILAS = k === "apartados" ? apsEnOrden(r.data) : r.data;
     const pinta = () => {
       const t = $("filtro").value.trim().toLowerCase();
       const lista = t ? FILAS.filter((x) => JSON.stringify(x).toLowerCase().includes(t)) : FILAS;
@@ -585,7 +648,8 @@
     if (mv) {
       const [id, dir] = mv.dataset.mover.split(":").map(Number), S = SECCIONES[actual];
       // Solo se mueve dentro de su grupo (en documentos, la misma categoría)
-      const grupo = actual === "documentos" ? FILAS.filter((x) => x.categoria === FILAS.find((y) => y.id === id).categoria) : FILAS;
+      const yo = FILAS.find((y) => y.id === id);
+      const grupo = actual === "documentos" ? FILAS.filter((x) => x.categoria === yo.categoria) : actual === "apartados" ? FILAS.filter((x) => (x.padre_id || null) === (yo.padre_id || null)) : FILAS;
       const i = grupo.findIndex((x) => x.id === id), j = i + dir;
       if (j < 0 || j >= grupo.length) return;
       [grupo[i], grupo[j]] = [grupo[j], grupo[i]];
@@ -610,7 +674,13 @@
         ${o.sinFormato ? "" : `<div class="formato"><button type="button" class="btn-linea peq" data-formato="negrita:${col}"><b>N</b> Negrita</button><button type="button" class="btn-linea peq" data-formato="lista:${col}">• Lista</button></div>`}
         <textarea id="${id}" rows="${o.sinFormato ? 4 : 7}"${ph}>${esc(val ?? "")}</textarea>${ay}</div>`;
       case "si": return `<label class="casilla" data-campo="${col}"><input type="checkbox" id="${id}"${val ? " checked" : ""}><span>${esc(etq)}</span></label>`;
-      case "opcion": return `<label class="campo" data-campo="${col}"><span>${esc(etq)}</span><select id="${id}">${[...new Set([...(o.lista || []), val].filter(Boolean))].map((x) => `<option${x === val ? " selected" : ""}>${esc(x)}</option>`).join("")}</select></label>`;
+      case "opcion": {
+        // La lista puede ser de textos o de pares [valor, lo que se lee]; y puede salir de una función (v11: secciones)
+        const ops = (typeof o.lista === "function" ? o.lista(ED?.orig) : (o.lista || [])).map((x) => Array.isArray(x) ? x : [x, x]);
+        const v = val == null ? "" : String(val);
+        if (v && !ops.some(([a]) => String(a) === v)) ops.push([v, v]);
+        return `<label class="campo" data-campo="${col}"><span>${esc(etq)}</span><select id="${id}">${ops.map(([a, b]) => `<option value="${esc(a)}"${String(a) === v ? " selected" : ""}>${esc(b)}</option>`).join("")}</select>${ay}</label>`;
+      }
       case "foto": return `<div class="campo" data-campo="${col}"><span>${esc(etq)}</span>
         <div class="foto-campo"><div class="foto-previa" id="foto-previa"></div>
           <div class="foto-btns"><label class="btn-linea subir">${icono("subir")}<span id="foto-txt">Elegir foto</span><input type="file" id="f-foto" accept="image/*"></label>
@@ -667,6 +737,7 @@
       let val = el.value.trim();
       if (comprobar && o.req && !val) { el.closest("[data-campo]").classList.add("falta"); el.focus(); return [v, `Falta rellenar «${etq}».`]; }
       if (tipo === "numero") val = Number(val) || 0;
+      else if (tipo === "opcion" && o.num) val = val ? Number(val) : null;
       else if (tipo === "fechahora") val = val ? new Date(val).toISOString() : null;
       else if (tipo === "url" && val && !/^https?:\/\//i.test(val)) val = "https://" + val;
       else if (!val && ["hora", "fecha", "tel", "email", "url"].includes(tipo)) val = null;
@@ -815,6 +886,7 @@
       if (n != null) txt += n ? ` y avisado a ${n} ${n === 1 ? "móvil" : "móviles"}` : " (todavía no hay móviles apuntados a los avisos)";
     }
     if (programado && v.notificar !== false) txt += ": avisará a los móviles cuando se publique";
+    if (ED.k === "apartados") await cargaAps().catch(() => {});
     avisa(txt);
     cerrarEditor(true);
     irA(actual);
@@ -837,7 +909,7 @@
   });
 
   // ================== AVISOS AL MÓVIL ==================
-  const AVISABLE = ["avisos", "actualidad", "reuniones", "actas", "encuestas", "documentos"];
+  const AVISABLE = ["avisos", "actualidad", "reuniones", "actas", "encuestas", "documentos", "publicaciones"];
   // Devuelve a cuántos móviles ha llegado (o null si ha fallado)
   const avisarMoviles = async (tabla, id, cambio = false) => {
     try {
@@ -900,7 +972,7 @@
 
   // ================== TEXTOS ==================
   const TEXTOS = [
-    ["bienvenida", "Bienvenida de la portada", "Una o dos frases que salen arriba en «Actualidad»."],
+    ["bienvenida", "Bienvenida de la portada", "Una o dos frases que salen arriba en «Info general» (la portada)."],
     ["nosotros", "Texto de «Nosotros»", "Qué es el comité, qué hace y cómo contactar."],
     ["aviso_legal", "Aviso legal", "Quién está detrás de la web. Si el comité tiene un email de contacto, añadidlo aquí."],
     ["privacidad", "Privacidad", "Qué datos se guardan, para qué y cuánto tiempo. Si añadís algo nuevo a la web que guarde datos, hay que contarlo aquí."],
@@ -993,7 +1065,7 @@
       </form>
       <h2 class="titulo-bloque" id="ajuste-copia">Copia de seguridad</h2>
       <div class="tarjeta seguridad">
-        <p class="sub-vista">El plan gratuito no guarda copias. Descarga una al mes y guárdala en el ordenador o en el Drive: lleva todos los avisos, anuncios, reuniones, actas, documentos, consultas, preguntas, miembros, mensajes del buzón y textos de la web.</p>
+        <p class="sub-vista">El plan gratuito no guarda copias. Descarga una al mes y guárdala en el ordenador o en el Drive: lleva todos los avisos, anuncios, reuniones, actas, documentos, consultas, preguntas, miembros, tus secciones y lo publicado en ellas, mensajes del buzón y textos de la web.</p>
         <p class="sub-vista" id="ultima-copia">Comprobando la última copia…</p>
         <div class="acciones"><button type="button" class="btn" id="b-copia-todo">${icono("instalar")}Descargar copia con archivos</button>
           <button type="button" class="btn-linea" id="b-copia-datos">${icono("texto")}Solo los textos</button></div>
@@ -1078,7 +1150,7 @@
     const q = $("rescate-quedan"); if (q && !r.error) q.textContent = r.quedan;
   };
   // ---- Copia de seguridad (como en CCOO) ----
-  const TABLAS_COPIA = ["avisos", "actualidad", "reuniones", "actas", "documentos", "encuestas", "preguntas", "miembros", "buzon", "paginas", "admins"];
+  const TABLAS_COPIA = ["avisos", "actualidad", "reuniones", "actas", "documentos", "encuestas", "preguntas", "miembros", "apartados", "publicaciones", "buzon", "paginas", "admins"];
   const haceTxt = (iso) => { const d = Math.floor((Date.now() - new Date(iso)) / 86400000); return d <= 0 ? "hoy" : d === 1 ? "ayer" : "hace " + d + " días"; };
   const prepararCopia = async () => {
     const { data } = await sb.from("paginas").select("contenido").eq("slug", "ultima_copia").maybeSingle();
@@ -1104,9 +1176,9 @@
         await cargarJSZip();
         const zip = new window.JSZip();
         zip.file("datos.json", JSON.stringify(copia, null, 2));
-        zip.file("LEEME.txt", "Copia de seguridad de la web del Comité de Empresa de Calsina Carré.\r\n\r\ndatos.json: todos los textos (avisos, anuncios, reuniones, actas, documentos, consultas, preguntas, miembros, buzón y textos de la web).\r\narchivos/: los PDF, fotos y documentos subidos.\r\n\r\nGuárdala en un sitio seguro: lleva los mensajes del buzón. Si algún día hace falta recuperar algo, con este archivo se puede restaurar.");
+        zip.file("LEEME.txt", "Copia de seguridad de la web del Comité de Empresa de Calsina Carré.\r\n\r\ndatos.json: todos los textos (avisos, anuncios, reuniones, actas, documentos, consultas, preguntas, miembros, secciones propias y lo publicado en ellas, buzón y textos de la web).\r\narchivos/: los PDF, fotos y documentos subidos.\r\n\r\nGuárdala en un sitio seguro: lleva los mensajes del buzón. Si algún día hace falta recuperar algo, con este archivo se puede restaurar.");
         const urls = new Map();
-        ["avisos", "actualidad", "actas", "documentos"].forEach((t) => (copia.tablas[t] || []).forEach((x) => (x.adjuntos || []).forEach((a) => a?.url && urls.set(a.url, a.nombre))));
+        ["avisos", "actualidad", "actas", "documentos", "publicaciones"].forEach((t) => (copia.tablas[t] || []).forEach((x) => (x.adjuntos || []).forEach((a) => a?.url && urls.set(a.url, a.nombre))));
         (copia.tablas.miembros || []).forEach((x) => x.foto?.url && urls.set(x.foto.url, "foto.webp"));
         let i = 0, fallos = 0;
         for (const [url, nom] of urls) {

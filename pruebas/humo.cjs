@@ -33,7 +33,7 @@ fs.mkdirSync(OUT, { recursive: true });
       if (c.nombre === "390") await p.screenshot({ path: path.join(OUT, "web-390-aviso-privacidad.png") });
       await p.click("#b-aviso-ok");
       if (!(await p.evaluate(() => document.getElementById("aviso-privacidad").hidden))) fallos.push(`${c.nombre}: el aviso de privacidad no se cierra`);
-      for (const v of ["actualidad", "avisos", "reuniones", "actas", "documentos", "buzon", "nosotros", "buscar", "privacidad", "aviso-legal", "cookies"]) {
+      for (const v of ["actualidad", "avisos", "reuniones", "actas", "documentos", "buzon", "nosotros", "seccion-1", "seccion-2", "buscar", "privacidad", "aviso-legal", "cookies"]) {
         await p.goto(BASE + "#" + v); await p.waitForTimeout(v === "actualidad" ? 900 : 350);
         if (v === "buscar") { await p.fill("#buscar-todo", "turnos"); await p.waitForTimeout(150); }
         const ancho = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -47,6 +47,19 @@ fs.mkdirSync(OUT, { recursive: true });
         if (!(await p.$("#v-" + v + " .vacio-caja"))) fallos.push(`${c.nombre}: #${v} vacío no enseña su explicación`);
         if (c.nombre === "390") await p.screenshot({ path: path.join(OUT, `web-390-vacio-${v}.png`), fullPage: true });
       }
+      // Secciones propias: pestaña, acceso en la portada, subsección, enlace directo a una publicación y sección oculta
+      await p.goto(BASE + "#actualidad"); await p.waitForTimeout(600);
+      if (!(await p.$('#pestanas a[href="#seccion-1"]'))) fallos.push(`${c.nombre}: la sección principal no sale como pestaña`);
+      if (await p.$('#pestanas a[href="#seccion-2"]')) fallos.push(`${c.nombre}: la subsección no debería salir como pestaña`);
+      if (await p.$('#pestanas a[href="#seccion-3"]')) fallos.push(`${c.nombre}: la sección oculta sale en la web`);
+      if (!(await p.$('#accesos-secciones a[href="#seccion-1"]'))) fallos.push(`${c.nombre}: la sección no sale en los accesos de la portada`);
+      await p.goto(BASE + "#seccion-1"); await p.waitForTimeout(400);
+      if (!(await p.$('#seccion-hijas a[href="#seccion-2"]'))) fallos.push(`${c.nombre}: la subsección no sale dentro de su sección`);
+      if (!(await p.$("#seccion-pubs #publicacion-1"))) fallos.push(`${c.nombre}: no sale lo publicado en la sección`);
+      await p.goto(BASE + "#publicacion-2"); await p.waitForTimeout(400);
+      if (!(await p.$("#publicacion-2")) || !/Salud laboral/.test(await p.textContent("#seccion-miga"))) fallos.push(`${c.nombre}: el enlace a una publicación de una subsección no funciona`);
+      if (!(await p.evaluate(() => document.querySelector('#pestanas a[href="#seccion-1"]').classList.contains("activa")))) fallos.push(`${c.nombre}: en la subsección no se marca la pestaña de su sección`);
+      if (c.nombre === "390") await p.screenshot({ path: path.join(OUT, "web-390-subseccion.png"), fullPage: true });
       // Votar en la consulta
       await p.goto(BASE + "#actualidad"); await p.waitForTimeout(700);
       await p.click("[data-voto]"); await p.waitForTimeout(300);
@@ -79,7 +92,7 @@ fs.mkdirSync(OUT, { recursive: true });
       await pa.click("#b-dos-activar"); await pa.waitForTimeout(300);
       if (!(await pa.$("#dos-codigo"))) fallos.push(`${c.nombre}: no se puede empezar a activar la verificación en dos pasos`);
       if (c.nombre === "390") await pa.screenshot({ path: path.join(OUT, "panel-390-dos-pasos.png"), fullPage: true });
-      for (const v of ["inicio", "avisos", "actualidad", "reuniones", "actas", "buzon", "encuestas", "preguntas", "miembros", "documentos", "textos", "cartel", "papelera", "accesos"]) {
+      for (const v of ["inicio", "avisos", "actualidad", "reuniones", "actas", "buzon", "encuestas", "preguntas", "miembros", "documentos", "apartados", "publicaciones", "textos", "cartel", "papelera", "accesos"]) {
         await pa.goto(BASE + "admin.html#" + v); await pa.waitForTimeout(450);
         if (await pa.evaluate(() => document.getElementById("s-panel").hidden)) { fallos.push(`${c.nombre}: el panel no entra`); break; }
         const ancho = await pa.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -88,7 +101,7 @@ fs.mkdirSync(OUT, { recursive: true });
           await pa.screenshot({ path: path.join(OUT, `panel-${c.nombre}-${v}.png`), fullPage: v === "inicio" });
       }
       // Editor de cada sección
-      for (const k of ["avisos", "actualidad", "reuniones", "actas", "encuestas", "preguntas", "miembros", "documentos"]) {
+      for (const k of ["avisos", "actualidad", "reuniones", "actas", "encuestas", "preguntas", "miembros", "documentos", "apartados", "publicaciones"]) {
         await pa.goto(BASE + "admin.html#" + k); await pa.waitForTimeout(400);
         await pa.click("[data-editar-en]"); await pa.waitForTimeout(350);
         if (await pa.evaluate(() => document.getElementById("editor").hidden)) { fallos.push(`${c.nombre}: no abre el editor de ${k}`); continue; }
@@ -112,6 +125,24 @@ fs.mkdirSync(OUT, { recursive: true });
       if (!(await pa.evaluate(() => __DB.avisos.some((a) => a.titulo === "Aviso de prueba")))) fallos.push(`${c.nombre}: no guarda un aviso nuevo`);
       const toast = await pa.textContent("#toast");
       if (!/avisado a 2/.test(toast || "")) fallos.push(`${c.nombre}: al publicar no avisa a los móviles (${toast})`);
+      // Secciones: crear una subsección y publicar dentro
+      await pa.goto(BASE + "admin.html#apartados"); await pa.waitForTimeout(500);
+      if (!(await pa.$(".fila-hija"))) fallos.push(`${c.nombre}: en «Secciones» la subsección no sale metida dentro`);
+      await pa.evaluate(() => document.getElementById("fab").click()); await pa.waitForTimeout(300);
+      await pa.fill("#f-titulo", "Vacaciones"); await pa.selectOption("#f-padre_id", "1"); await pa.selectOption("#f-icono", "calendario");
+      if (c.nombre === "390") await pa.screenshot({ path: path.join(OUT, "panel-390-seccion-nueva.png") });
+      await pa.click("#ed-guardar"); await pa.waitForTimeout(500);
+      const nueva = await pa.evaluate(() => __DB.apartados.find((a) => a.titulo === "Vacaciones"));
+      if (!nueva || nueva.padre_id !== 1 || nueva.icono !== "calendario") fallos.push(`${c.nombre}: no guarda la sección nueva (${JSON.stringify(nueva)})`);
+      await pa.goto(BASE + "admin.html#publicaciones"); await pa.waitForTimeout(500);
+      await pa.evaluate(() => document.getElementById("fab").click()); await pa.waitForTimeout(300);
+      await pa.selectOption("#f-apartado_id", String(nueva?.id || 1)); await pa.fill("#f-titulo", "Turnos de vacaciones de verano"); await pa.fill("#f-contenido", "Texto");
+      if (c.nombre === "390") await pa.screenshot({ path: path.join(OUT, "panel-390-publicacion-nueva.png") });
+      await pa.click("#ed-guardar"); await pa.waitForTimeout(500);
+      const pub = await pa.evaluate(() => __DB.publicaciones.find((p) => p.titulo === "Turnos de vacaciones de verano"));
+      if (!pub || pub.apartado_id !== (nueva?.id || 1)) fallos.push(`${c.nombre}: no guarda la publicación en su sección (${JSON.stringify(pub)})`);
+      if (!/avisado a 2/.test((await pa.textContent("#toast")) || "")) fallos.push(`${c.nombre}: al publicar en una sección no avisa a los móviles`);
+      if (c.nombre === "390") { await pa.goto(BASE + "admin.html#apartados"); await pa.waitForTimeout(500); await pa.screenshot({ path: path.join(OUT, "panel-390-secciones.png"), fullPage: true }); }
       // Destacar un aviso un día (y quitarlo con el botón)
       await pa.goto(BASE + "admin.html#avisos"); await pa.waitForTimeout(400);
       await pa.click('[data-editar-en="avisos:2"]'); await pa.waitForTimeout(300);

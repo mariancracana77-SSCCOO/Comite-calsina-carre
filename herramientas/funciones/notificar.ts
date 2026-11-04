@@ -4,6 +4,7 @@
 // - Tarea programada cada 10 min (pg_cron, cabecera x-cron-secret): avisos programados que ya tocan y pendientes.
 //   v10: el día en que un aviso sale destacado en la portada («Destacar en la portada el día»), manda «DESTACADO HOY: …»
 //   una sola vez, a partir de las 8:00 de Madrid (para no despertar a nadie). Se marca antes de enviar.
+// v11: también avisa de lo publicado en las secciones propias (tabla publicaciones).
 // Las claves VAPID se crean aquí la primera vez y se guardan en config_privada: la privada nunca sale del servidor.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -37,11 +38,13 @@ const fechaCorta = (iso: string) => new Date(iso + "T12:00:00").toLocaleDateStri
 type Msg = { titulo: string; cuerpo: string; url: string };
 const TABLAS: Record<string, (x: any, web: string) => Msg> = {
   avisos: (x, web) => ({ titulo: (x.urgente ? "URGENTE: " : "Aviso: ") + x.titulo, cuerpo: recorta(x.contenido, 140) || "Ya está en la web del comité.", url: web + "#aviso-" + x.id }),
-  actualidad: (x, web) => ({ titulo: "Actualidad: " + x.titulo, cuerpo: recorta(x.contenido, 140) || "Ya está en la web del comité.", url: web + "#noticia-" + x.id }),
+  actualidad: (x, web) => ({ titulo: "Info general: " + x.titulo, cuerpo: recorta(x.contenido, 140) || "Ya está en la web del comité.", url: web + "#noticia-" + x.id }),
   reuniones: (x, web) => ({ titulo: "Reunión: " + x.titulo, cuerpo: fechaCorta(x.fecha) + (x.hora ? ", " + x.hora : "") + (x.lugar ? " · " + x.lugar : ""), url: web + "#reunion-" + x.id }),
   actas: (x, web) => ({ titulo: "Nueva acta: " + x.titulo, cuerpo: recorta(x.acuerdos || x.resumen || "Ya está en la web del comité.", 140), url: web + "#acta-" + x.id }),
   encuestas: (x, web) => ({ titulo: "Consulta: " + x.pregunta, cuerpo: "Vota de forma anónima en la web del comité." + (x.cierra ? " Hasta el " + fechaCorta(x.cierra) + "." : ""), url: web + "#consulta-" + x.id }),
   documentos: (x, web) => ({ titulo: "Nuevo documento: " + x.titulo, cuerpo: recorta(x.descripcion, 140) || "Ya está en la web del comité.", url: web + "#documento-" + x.id }),
+  // v11: lo que el padre publica en sus propias secciones (x._seccion lo pone avisarDe)
+  publicaciones: (x, web) => ({ titulo: (x._seccion ? x._seccion + ": " : "") + x.titulo, cuerpo: recorta(x.contenido, 140) || "Ya está en la web del comité.", url: web + "#publicacion-" + x.id }),
 };
 
 async function enviarPush(cfg: Record<string, string>, m: Msg, etiqueta: string) {
@@ -73,7 +76,12 @@ async function avisarDe(tabla: string, id: number, cfg: Record<string, string>, 
     await admin.from(tabla).update({ notificado: false }).eq("id", id); // se avisará cuando se publique
     return { enviado: false, motivo: "programado" };
   }
-  if ((tabla === "actualidad" && !x.publicado) || (tabla === "encuestas" && !x.publicada)) return { enviado: false, motivo: "oculto" };
+  if (((tabla === "actualidad" || tabla === "publicaciones") && !x.publicado) || (tabla === "encuestas" && !x.publicada)) return { enviado: false, motivo: "oculto" };
+  if (tabla === "publicaciones") {
+    const { data: ap } = await admin.from("apartados").select("titulo, visible").eq("id", x.apartado_id).maybeSingle();
+    if (!ap?.visible) return { enviado: false, motivo: "oculto" };
+    x._seccion = ap.titulo;
+  }
   const m = TABLAS[tabla](x, cfg.web_url);
   if (cambio) m.titulo = "Cambio: " + (x.titulo || x.pregunta);
   return { enviado: true, push: await enviarPush(cfg, m, tabla + "-" + id) };

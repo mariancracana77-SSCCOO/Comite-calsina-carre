@@ -312,3 +312,5 @@ a.hola-dato:hover, button.hola-dato:hover { border-color: var(--celeste); }
 .aviso-copia > .ico:last-child { width: 20px; height: 20px; padding: 0; background: none; }
 .quitar-campo { margin: -6px 0 14px; align-self: flex-start; }
 #ajuste-copia { scroll-margin-top: 90px; }
+/* v11: subsecciones un poco metidas hacia dentro en la lista de «Secciones» */
+.fila-hija { margin-left: 22px; border-left: 3px solid var(--azul-claro, #E6EEF7); }
