@@ -9,7 +9,7 @@ La gestiona desde el panel el padre de Lorena (usuario GitHub `mariancracana77-S
 
 - Web: https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/ (GitHub Pages desde `main`, raíz)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **4**
+- Versión actual: **5**
 
 ## Reglas (las mismas que en CCOO)
 - No publicar en `main` sin que Lorena lo confirme. Trabajar en la rama indicada.
@@ -21,7 +21,7 @@ La gestiona desde el panel el padre de Lorena (usuario GitHub `mariancracana77-S
 - Móvil (320–412 px) y PC, letra muy grande y modo oscuro deben seguir funcionando.
 
 ## Marca
-Kit visual HD del comité (CC metálico + camión + personas). Paleta: `#0B1E3C` azul noche, `#0E5FAE` azul, `#00C6FF` cian, `#E6EEF7` hielo, blanco. Letras: Montserrat (títulos) e Inter (texto), alojadas en `fuentes/` (`fuentes.css`). Imágenes en `img/`: `icon-192/512.png` (esquinas transparentes), `icon-maskable-512.png` y `apple-touch-icon.png` (a sangre), `favicon-32/64.png` (solo el CC), `hero-arte.webp` (CC + camión + la gasolinera de la empresa, a la derecha del bloque azul de la portada; la gasolinera la pidió el padre porque la empresa tiene gasolinera propia: dibujo en `herramientas/gasolinera.svg`, añadido a la derecha del recorte del kit alargando su fondo), `cabecera-900/1600.webp` (banner del cartel), `og.png`.
+Kit visual HD del comité (CC metálico + camión + personas). Paleta: `#0B1E3C` azul noche, `#0E5FAE` azul, `#00C6FF` cian, `#E6EEF7` hielo, blanco. Letras: Montserrat (títulos) e Inter (texto), alojadas en `fuentes/` (`fuentes.css`). Imágenes en `img/`: `icon-192/512.png` (esquinas transparentes), `icon-maskable-512.png` y `apple-touch-icon.png` (a sangre), `favicon-32/64.png` (solo el CC), `hero-arte.webp` (CC + camión + la gasolinera de la empresa, a la derecha del bloque azul de la portada; la gasolinera la pidió el padre porque la empresa tiene gasolinera propia: dibujo en `herramientas/gasolinera.svg`, añadido a la derecha del recorte del kit alargando su fondo), `cabecera-900/1600.webp` (ya no se usan en la web), `og.png` (vista previa al compartir: se hace con `herramientas/og.html` + `herramientas/og.cjs`). El cartel (`cartel.html`) lleva cabecera con el logo y `hero-arte.webp`, y los iconos de la empresa en el pie; debe caber en un A4.
 
 ## Lo que tiene la empresa (portada)
 Lo pidió el padre: camión/transporte, toro = carretilla elevadora/almacén, transpaleta/carga y descarga, «distribuidor» = de momento camión de reparto/distribución, surtidor/gasolinera. Iconos SVG `camion`, `toro`, `transpaleta`, `reparto`, `surtidor` en `comun.js`. Van como una fila fina de 5 iconos con su nombre (`ul.hero-empresa`) dentro del bloque azul de la portada, bajo los botones. No cargar la imagen de arriba con más dibujos (le parecía feo) ni ponerlo como franja aparte bajo los accesos (quedaba feo: dos filas de iconos seguidas).
