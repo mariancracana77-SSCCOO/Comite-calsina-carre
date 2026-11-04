@@ -12,9 +12,9 @@
 <link rel="icon" href="img/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="icon" href="img/favicon-64.png" sizes="64x64" type="image/png">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=7">
-<link rel="stylesheet" href="styles.css?v=7">
-<link rel="stylesheet" href="admin.css?v=7">
+<link rel="stylesheet" href="fuentes.css?v=8">
+<link rel="stylesheet" href="styles.css?v=8">
+<link rel="stylesheet" href="admin.css?v=8">
 </head>
 <body class="panel">
 <header class="cabecera cab-panel">
@@ -47,6 +47,7 @@
       <div class="enlaces-login">
         <button type="button" class="btn-texto" id="b-olvido">He olvidado la contraseña</button>
         <button type="button" class="btn-texto" id="b-tengo-codigo">Ya tengo el código del email</button>
+        <button type="button" class="btn-texto" id="b-rescate">Tengo un código de rescate</button>
         <button type="button" class="btn-texto" id="b-primera">Primera vez: crear la cuenta</button>
       </div>
     </details>
@@ -64,6 +65,21 @@
     <button type="submit" class="btn grande">Guardar y entrar</button>
     <p id="c-estado" class="estado" role="status"></p>
     <div class="enlaces-login"><button type="button" class="btn-texto" id="b-codigo-volver">Volver</button></div>
+  </form>
+</main>
+
+<!-- CÓDIGO DE RESCATE -->
+<main class="caja solo-login" id="s-rescate" hidden>
+  <form class="tarjeta login" id="f-rescate" novalidate>
+    <h1 class="titulo-vista">Código de rescate</h1>
+    <p class="sub-vista">Con uno de los códigos de rescate que guardaste en papel puedes poner una contraseña nueva ahora mismo, sin email. Cada código sirve una sola vez.</p>
+    <label class="campo"><span>Email</span><input type="email" id="r-email" autocomplete="username"></label>
+    <label class="campo"><span>Código de rescate <small>(como ABCDE-23456)</small></span><input id="r-codigo" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="14"></label>
+    <label class="campo"><span>Contraseña nueva <small>(10 o más, con letras y números)</small></span><input type="password" id="r-nueva" autocomplete="new-password"></label>
+    <label class="campo"><span>Repítela</span><input type="password" id="r-repite" autocomplete="new-password"></label>
+    <button type="submit" class="btn grande">Guardar y entrar</button>
+    <p id="r-estado" class="estado" role="status"></p>
+    <div class="enlaces-login"><button type="button" class="btn-texto" id="b-rescate-volver">Volver</button></div>
   </form>
 </main>
 
@@ -139,8 +155,8 @@
 </section>
 
 <script src="lib/supabase.js"></script>
-<script src="comun.js?v=7"></script>
-<script src="render.js?v=7"></script>
-<script src="admin.js?v=7"></script>
+<script src="comun.js?v=8"></script>
+<script src="render.js?v=8"></script>
+<script src="admin.js?v=8"></script>
 </body>
 </html>

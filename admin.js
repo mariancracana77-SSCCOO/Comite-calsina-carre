@@ -204,7 +204,7 @@
   ponIconos();
 
   // ================== SESIÓN ==================
-  const PANTALLAS = ["s-entrar", "s-codigo", "s-nueva", "s-sinpermiso", "s-dos-pasos", "s-panel"];
+  const PANTALLAS = ["s-entrar", "s-codigo", "s-rescate", "s-nueva", "s-sinpermiso", "s-dos-pasos", "s-panel"];
   const muestra = (id) => PANTALLAS.forEach((p) => { $(p).hidden = p !== id; });
   let recuperando = /type=recovery/.test(location.hash), YO = "";
   try { $("e-email").value = TEMA.lee("comite-admin-email") || ""; } catch (_) {}
@@ -230,7 +230,13 @@
     const est = $("e-estado"), email = $("e-email").value.trim();
     estado(est, "Entrando…");
     const { error } = await sb.auth.signInWithPassword({ email, password: $("e-clave").value });
-    if (error) return estado(est, errTxt(error), "mal");
+    if (error) {
+      if (/Invalid login credentials/i.test(error.message)) {
+        $("f-entrar").querySelector(".problemas").open = true;
+        return estado(est, "Email o contraseña incorrectos. Ojo: la cuenta del comité es distinta de la de CCOO, con su propia contraseña. Si no la recuerdas, pide a otro administrador que te la ponga desde Ajustes, o usa un código de rescate.", "mal");
+      }
+      return estado(est, errTxt(error), "mal");
+    }
     TEMA.guarda("comite-admin-email", email);
     estado(est, ""); entrar();
   });
@@ -259,6 +265,23 @@
     $("c-codigo").focus();
   };
   $("b-olvido").addEventListener("click", () => pideCodigo(true));
+  $("b-rescate").addEventListener("click", () => { $("r-email").value = $("e-email").value.trim(); muestra("s-rescate"); $("r-codigo").focus(); });
+  $("b-rescate-volver").addEventListener("click", () => muestra("s-entrar"));
+  $("f-rescate").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const est = $("r-estado"), email = $("r-email").value.trim().toLowerCase(), clave = $("r-nueva").value;
+    if (!email) return estado(est, "Escribe tu email.", "mal");
+    if (claveFlojaTxt(clave)) return estado(est, claveFlojaTxt(clave), "mal");
+    if (clave !== $("r-repite").value) return estado(est, "Las dos contraseñas no son iguales.", "mal");
+    estado(est, "Comprobando el código…");
+    const { data, error } = await sb.functions.invoke("cuenta", { body: { accion: "usar_codigo", email, codigo: $("r-codigo").value, clave } });
+    const msg = data?.error || (error && (await error.context?.json?.().catch(() => null))?.error);
+    if (error || !data?.ok) return estado(est, msg || "No se ha podido. Prueba otra vez.", "mal");
+    const r = await sb.auth.signInWithPassword({ email, password: clave });
+    if (r.error) return estado(est, errTxt(r.error), "mal");
+    TEMA.guarda("comite-admin-email", email);
+    avisa(`Contraseña cambiada. Te quedan ${data.quedan} códigos de rescate.`); entrar();
+  });
   $("b-tengo-codigo").addEventListener("click", () => pideCodigo(false));
   $("b-codigo-volver").addEventListener("click", () => muestra("s-entrar"));
   $("f-codigo").addEventListener("submit", async (e) => {
@@ -923,14 +946,32 @@
     if (actual !== "accesos") return;
     $("zona").innerHTML = `<h1 class="titulo-vista">Ajustes</h1>
       <h2 class="titulo-bloque">Correos con acceso al panel</h2>
-      <p class="sub-vista">Solo estos correos pueden crear su cuenta y publicar. La persona añadida entra con «¿Problemas para entrar?» → «Primera vez: crear la cuenta».</p>
-      <div class="lista">${error ? `<p class="vacio">${esc(errTxt(error))}</p>` : data.map((a) => `
-        <div class="tarjeta fila"><div class="fila-abre"><b>${esc(a.email)}</b>${a.email.toLowerCase() === yo ? '<span class="fila-sub">Tú</span>' : ""}</div>
-        ${a.email.toLowerCase() === yo ? "" : `<button type="button" class="btn-linea peligro" data-quitar-admin="${esc(a.email)}">${icono("borrar")}Quitar</button>`}</div>`).join("")}</div>
+      <p class="sub-vista">Solo estos correos pueden publicar. Tú les puedes poner la contraseña aquí mismo: así no dependen de ningún email. La cuenta del comité es distinta de la de CCOO, aunque el correo sea el mismo.</p>
+      <div class="lista" id="lista-admins">${error ? `<p class="vacio">${esc(errTxt(error))}</p>` : data.map((a) => `
+        <div class="tarjeta admin-fila" data-admin="${esc(a.email)}">
+          <div class="admin-cab">
+            <div class="fila-abre"><b>${esc(a.email)}</b><span class="fila-sub" data-estado-cuenta>${a.email.toLowerCase() === yo ? "Tú · " : ""}Comprobando la cuenta…</span></div>
+            <div class="admin-btns">
+              <button type="button" class="btn-linea" data-poner-clave="${esc(a.email)}">${icono("candado")}Poner contraseña</button>
+              ${a.email.toLowerCase() === yo ? "" : `<button type="button" class="btn-linea peligro" data-quitar-admin="${esc(a.email)}">${icono("borrar")}Quitar</button>`}
+            </div>
+          </div>
+          <form class="clave-form" data-form-clave="${esc(a.email)}" novalidate hidden>
+            <label class="campo"><span>Contraseña nueva <small>(10 o más, con letras y números)</small></span><input type="text" autocomplete="off" spellcheck="false" data-clave1></label>
+            <label class="campo"><span>Repítela</span><input type="text" autocomplete="off" spellcheck="false" data-clave2></label>
+            <p class="ayuda">Se ve mientras la escribes para que no haya errores. Díselo a esa persona en persona o por teléfono, no por escrito.</p>
+            <div class="acciones"><button type="submit" class="btn">${icono("check")}Guardar contraseña</button><button type="button" class="btn-linea" data-cancelar-clave>Cancelar</button></div>
+            <p class="estado" role="status"></p>
+          </form>
+        </div>`).join("")}</div>
       <form id="f-admin" class="tarjeta form-panel" novalidate>
         <label class="campo"><span>Dar acceso a otro email</span><input type="email" id="a-email" autocomplete="off" placeholder="nombre@ejemplo.com"></label>
+        <label class="campo"><span>Contraseña para esa persona <small>(opcional; si la pones, ya puede entrar)</small></span><input type="text" id="a-clave" autocomplete="off" spellcheck="false" placeholder="10 o más, con letras y números"></label>
         <button type="submit" class="btn">${icono("mas")}Dar acceso</button>
+        <p class="estado" id="a-estado" role="status"></p>
       </form>
+      <h2 class="titulo-bloque">Códigos de rescate</h2>
+      <div class="tarjeta seguridad" id="rescate"><div class="esq"></div></div>
       <h2 class="titulo-bloque">Seguridad de tu cuenta</h2>
       <div class="tarjeta seguridad" id="dos-pasos"><div class="esq"></div></div>
       <div class="tarjeta seguridad">
@@ -945,18 +986,85 @@
     });
     $("f-admin").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const email = $("a-email").value.trim().toLowerCase();
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return avisa("Ese email no parece correcto", true);
+      const email = $("a-email").value.trim().toLowerCase(), clave = $("a-clave").value, est = $("a-estado");
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return estado(est, "Ese email no parece correcto.", "mal");
+      if (clave && claveFlojaTxt(clave)) return estado(est, claveFlojaTxt(clave), "mal");
       const { error: er } = await sb.from("admins").insert({ email });
-      if (er) return avisa(/duplicate/i.test(er.message) ? "Ese email ya tiene acceso" : errTxt(er), true);
-      avisa("Acceso dado"); pintaAccesos();
+      if (er && !/duplicate/i.test(er.message)) return estado(est, errTxt(er), "mal");
+      if (clave) {
+        estado(est, "Creando la cuenta…");
+        const r = await ponClave(email, clave);
+        if (r) return estado(est, r, "mal");
+        avisa("Acceso dado. Ya puede entrar con esa contraseña.");
+      } else avisa(er ? "Ese email ya tenía acceso" : "Acceso dado");
+      pintaAccesos();
     });
+    // Poner contraseña a una cuenta de la lista
+    $("lista-admins")?.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-poner-clave]");
+      if (b) { const f = document.querySelector(`[data-form-clave="${CSS.escape(b.dataset.ponerClave)}"]`); f.hidden = !f.hidden; if (!f.hidden) f.querySelector("[data-clave1]").focus(); return; }
+      const c = e.target.closest("[data-cancelar-clave]");
+      if (c) { const f = c.closest("form"); f.reset(); f.hidden = true; }
+    });
+    $("lista-admins")?.addEventListener("submit", async (e) => {
+      const f = e.target.closest("[data-form-clave]"); if (!f) return;
+      e.preventDefault();
+      const est = f.querySelector(".estado"), c1 = f.querySelector("[data-clave1]").value, c2 = f.querySelector("[data-clave2]").value;
+      if (claveFlojaTxt(c1)) return estado(est, claveFlojaTxt(c1), "mal");
+      if (c1 !== c2) return estado(est, "Las dos contraseñas no son iguales.", "mal");
+      estado(est, "Guardando…");
+      const r = await ponClave(f.dataset.formClave, c1);
+      if (r) return estado(est, r, "mal");
+      f.reset(); f.hidden = true;
+      avisa("Contraseña guardada. Ya puede entrar con ella.");
+      pintaEstadoCuentas();
+    });
+    pintaEstadoCuentas();
+    pintaRescate();
     $("zona").querySelectorAll("[data-quitar-admin]").forEach((b) => b.addEventListener("click", async () => {
       if (!confirm(`¿Quitar el acceso a ${b.dataset.quitarAdmin}?`)) return;
       const { error: er } = await sb.from("admins").delete().eq("email", b.dataset.quitarAdmin);
       if (er) return avisa(errTxt(er), true);
       avisa("Acceso quitado"); pintaAccesos();
     }));
+  };
+
+  // ---- Contraseñas sin email (función «cuenta», como en la web de CCOO) ----
+  const llamaCuenta = async (body) => {
+    try {
+      const { data, error } = await sb.functions.invoke("cuenta", { body });
+      if (error) { const j = await error.context?.json?.().catch(() => null); return { error: j?.error || errTxt(error) }; }
+      return data || {};
+    } catch (e) { return { error: errTxt(e) }; }
+  };
+  const ponClave = async (email, clave) => { const r = await llamaCuenta({ accion: "poner_clave", email, clave }); return r.error || ""; };
+  const pintaEstadoCuentas = async () => {
+    const r = await llamaCuenta({ accion: "estado" });
+    document.querySelectorAll("[data-admin]").forEach((fila) => {
+      const em = fila.dataset.admin.toLowerCase(), sp = fila.querySelector("[data-estado-cuenta]"); if (!sp) return;
+      const tu = em === YO.toLowerCase() ? "Tú · " : "";
+      sp.textContent = r.error ? tu.replace(" · ", "") : tu + (r.cuentas?.[em] ? "Cuenta creada" : "Sin cuenta todavía: ponle una contraseña y ya podrá entrar");
+    });
+    const q = $("rescate-quedan"); if (q && !r.error) q.textContent = r.quedan;
+  };
+  const pintaRescate = () => {
+    const caja = $("rescate"); if (!caja) return;
+    caja.innerHTML = `
+      <b>Para cuando no puedas entrar</b>
+      <p class="sub-vista">Son 8 códigos de un solo uso. Si un día no recuerdas la contraseña y nadie te la puede poner, en la pantalla de entrar pulsa «¿Problemas para entrar?» → «Tengo un código de rescate» y pon una contraseña nueva. Guárdalos en papel, en casa. Te quedan: <b id="rescate-quedan">…</b></p>
+      <button type="button" class="btn-linea" id="b-codigos">${icono("candado")}Crear códigos nuevos</button>
+      <div id="codigos-lista"></div>`;
+    $("b-codigos").addEventListener("click", async () => {
+      if (!confirm("Se crean 8 códigos nuevos y los que tuvieras antes dejan de valer. ¿Seguir?")) return;
+      const r = await llamaCuenta({ accion: "codigos" });
+      if (r.error) return avisa(r.error, true);
+      $("codigos-lista").innerHTML = `<p class="nota-campo">${icono("alerta")}Apúntalos o imprímelos AHORA: no se volverán a enseñar.</p>
+        <ol class="codigos">${r.codigos.map((c) => `<li><code>${esc(c)}</code></li>`).join("")}</ol>
+        <button type="button" class="btn" id="b-imprimir-codigos">${icono("documento")}Imprimir</button>`;
+      $("rescate-quedan").textContent = r.codigos.length;
+      $("b-imprimir-codigos").addEventListener("click", () => print());
+    });
+    pintaEstadoCuentas();
   };
 
   // ---- Verificación en dos pasos (app de códigos: Google Authenticator, Microsoft Authenticator…) ----

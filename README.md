@@ -63,6 +63,7 @@ Abre la web y el panel con datos de prueba (sin tocar la base de datos real) en 
 
 ## Versiones
 
+- **v8**: contraseñas sin email como en CCOO: en Ajustes se pone la contraseña a cada correo con acceso (si no tiene cuenta, se crea) y códigos de rescate; el error al entrar explica que la cuenta del comité es distinta de la de CCOO.
 - **v7**: parte legal (aviso legal, privacidad completa, cookies, aviso informativo y botón para borrar los datos del móvil), borrado automático del buzón a los 12 meses, verificación en dos pasos y contraseñas más seguras en el panel, Inicio del panel con bloque azul.
 - **v6**: se quitan los iconos de lo que tiene la empresa (portada, cartel e imagen al compartir); fotos de los miembros (desde el panel, solo con su permiso; se recortan y reducen en el móvil antes de subirlas) y apartados vacíos con icono y explicación.
 - **v5**: cartel A4 con QR y la imagen al compartir por WhatsApp con el estilo nuevo.
