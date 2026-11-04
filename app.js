@@ -3,8 +3,8 @@
   const $ = (id) => document.getElementById(id);
   const D = { actualidad: [], avisos: [], reuniones: [], actas: [], preguntas: [], miembros: [], encuestas: [], votos: {}, documentos: [], paginas: {} };
   const instalada = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
-  const VISTAS = ["actualidad", "avisos", "reuniones", "actas", "buzon", "nosotros", "buscar", "privacidad"];
-  const PESTANA_DE = { buscar: null, privacidad: null };
+  const VISTAS = ["actualidad", "avisos", "reuniones", "actas", "buzon", "nosotros", "buscar", "privacidad", "aviso-legal", "cookies"];
+  const PESTANA_DE = { buscar: null, privacidad: null, "aviso-legal": null, cookies: null };
 
   // ---------- Iconos fijos del HTML ----------
   document.querySelectorAll("[data-ic]").forEach((s) => { s.innerHTML = icono(s.dataset.ic); });
@@ -274,7 +274,9 @@
   // ---------- Nosotros y privacidad ----------
   const pintaNosotros = () => {
     $("nosotros-texto").innerHTML = textoHTML(D.paginas.nosotros) || "<p>Información del comité próximamente.</p>";
-    $("privacidad-texto").innerHTML = textoHTML(D.paginas.privacidad) || "<p>Esta web es solo informativa.</p>";
+    $("privacidad-texto").innerHTML = textoHTML(D.paginas.privacidad) || "<p>Esta web es solo informativa y no pide datos personales.</p>";
+    $("aviso-legal-texto").innerHTML = textoHTML(D.paginas.aviso_legal) || "<p>Web informativa del Comité de Empresa de Calsina Carré.</p>";
+    $("cookies-texto").innerHTML = textoHTML(D.paginas.cookies) || "<p>Esta web no usa cookies. Solo guarda tus preferencias en tu propio móvil.</p>";
     $("lista-miembros").innerHTML = D.miembros.map(R.miembro).join("") || vacio("Pronto pondremos aquí quién forma el comité", "Mientras tanto, puedes escribirnos de forma anónima.", "personas", ["#buzon", "Ir al buzón anónimo"]);
   };
 
@@ -448,6 +450,22 @@
     } catch (e) { estado(est, "No se han podido desactivar. Prueba de nuevo.", "mal"); }
   });
   const estado = (el, txt, tipo = "") => { el.textContent = txt; el.className = "estado" + (tipo ? " " + tipo : ""); };
+
+  // ---------- Aviso de privacidad (solo informa; no bloquea nada) ----------
+  if (TEMA.lee("comite-aviso-privacidad") !== "1") $("aviso-privacidad").hidden = false;
+  const cierraAvisoPrivacidad = () => { $("aviso-privacidad").hidden = true; TEMA.guarda("comite-aviso-privacidad", "1"); };
+  $("b-aviso-ok").addEventListener("click", cierraAvisoPrivacidad);
+  $("aviso-privacidad").querySelector('a[href="#cookies"]').addEventListener("click", cierraAvisoPrivacidad);
+
+  // ---------- Borrar lo que la web guarda en este móvil ----------
+  $("b-borrar-datos").addEventListener("click", async () => {
+    if (!confirm("¿Borrar lo que esta web guarda en este móvil? Olvidará tus preferencias, lo que has visto y lo que has votado.")) return;
+    try { Object.keys(localStorage).filter((k) => k.startsWith("comite-")).forEach((k) => localStorage.removeItem(k)); } catch (_) {}
+    try { Object.keys(sessionStorage).filter((k) => k.startsWith("comite-")).forEach((k) => sessionStorage.removeItem(k)); } catch (_) {}
+    try { const ks = await caches.keys(); await Promise.all(ks.filter((k) => k.startsWith("comite-")).map((k) => caches.delete(k))); } catch (_) {}
+    TEMA.aplica();
+    $("borrar-estado").textContent = "Hecho. Se ha borrado todo lo que esta web guardaba en este móvil."; $("borrar-estado").className = "estado bien";
+  });
 
   // ---------- Instalar como app ----------
   const noQuiere = () => TEMA.lee("comite-no-instalar") === "1";

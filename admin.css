@@ -103,7 +103,7 @@
 .accion-fila small, .accion-tarjeta small { color: var(--suave); font-size: .82rem; }
 
 /* ---------- Inicio ---------- */
-.hola { margin-top: 12px; }
+
 .acciones-inicio { display: grid; gap: 10px; grid-template-columns: 1fr; margin-bottom: 14px; }
 @media (min-width: 640px) { .acciones-inicio { grid-template-columns: 1fr 1fr; } }
 @media (min-width: 1100px) { .acciones-inicio { grid-template-columns: 1fr 1fr 1fr; } }
@@ -252,3 +252,41 @@ button.fila-abre:hover b { color: var(--azul); }
 .foto-btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .foto-btns .subir { position: relative; overflow: hidden; white-space: nowrap; cursor: pointer; }
 .foto-btns .subir input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+
+/* ---------- Bloque azul del Inicio del panel (como la portada de la web) ---------- */
+.hola-bloque {
+  position: relative; overflow: hidden; display: grid; gap: 16px; margin: 12px 0 16px; padding: 22px 20px; border-radius: 18px; color: #fff;
+  background: radial-gradient(60% 120% at 95% 0%, rgba(0, 198, 255, .22), transparent 60%), radial-gradient(70% 120% at 0% 100%, rgba(14, 95, 174, .45), transparent 60%), linear-gradient(180deg, #0B1E3C, #0d2547);
+}
+.hola-bloque::after { content: ""; position: absolute; width: 520px; height: 520px; right: -250px; top: -380px; border-radius: 50%; border: 2px solid rgba(0, 198, 255, .3); pointer-events: none; }
+.hola-txt { position: relative; z-index: 1; }
+.hola-fecha { margin: 0 0 4px; font-family: "Montserrat", sans-serif; font-weight: 700; font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; color: var(--celeste); }
+.hola-bloque h1.hola { margin: 0; font-family: "Montserrat", sans-serif; font-weight: 800; font-size: 1.7rem; line-height: 1.1; }
+.hola-txt > p:last-child { margin: 6px 0 0; color: rgba(255, 255, 255, .8); }
+.hola-resumen { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.hola-dato {
+  display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 10px 12px; border-radius: 12px; text-align: left;
+  background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .14); color: #fff; text-decoration: none; font: inherit; cursor: pointer;
+}
+span.hola-dato { cursor: default; }
+.hola-dato .ico { width: 20px; height: 20px; color: var(--celeste); margin-bottom: 2px; }
+.hola-dato b { font-family: "Montserrat", sans-serif; font-size: 1.25rem; line-height: 1.1; }
+.hola-dato span { font-size: .74rem; color: rgba(255, 255, 255, .75); line-height: 1.25; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.hola-dato.aviso { border-color: rgba(0, 198, 255, .6); background: rgba(0, 198, 255, .14); }
+a.hola-dato:hover, button.hola-dato:hover { border-color: var(--celeste); }
+@media (min-width: 900px) {
+  .hola-bloque { grid-template-columns: 1fr minmax(0, 1.1fr); align-items: center; padding: 26px 28px; }
+  .hola-bloque h1.hola { font-size: 2rem; }
+}
+@media (max-width: 360px) { .hola-dato { padding: 8px; } .hola-dato b { font-size: 1.05rem; } }
+
+/* ---------- Seguridad (Ajustes) ---------- */
+.seguridad { display: grid; gap: 8px; justify-items: start; max-width: 760px; margin-bottom: 12px; }
+.seguridad .sub-vista { margin: 0; }
+.seg-ok { display: inline-flex; align-items: center; gap: 8px; color: var(--verde); }
+.pasos-dos { margin: 4px 0; padding-left: 1.3em; }
+.pasos-dos li { margin: 4px 0; }
+.qr-dos { width: 180px; height: 180px; padding: 8px; background: #fff; border-radius: 12px; border: 1px solid var(--borde); }
+.clave-dos { font-size: .95rem; padding: 2px 6px; border-radius: 6px; background: var(--azul-claro); color: var(--azul-osc); overflow-wrap: anywhere; letter-spacing: .05em; }
+.fila-dos { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.fila-dos input { width: 9em; min-height: 48px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--borde); background: var(--fondo); color: var(--texto); font: inherit; font-size: 1.2rem; letter-spacing: .2em; }

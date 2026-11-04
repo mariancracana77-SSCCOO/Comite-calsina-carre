@@ -452,3 +452,23 @@ textarea, .campo input, .campo select, .campo textarea {
 /* Foto de los miembros */
 img.inicial.foto { object-fit: cover; padding: 0; box-shadow: 0 0 0 2px var(--tarjeta), 0 0 0 4px rgba(0, 198, 255, .45); }
 @media (min-width: 700px) { .miembro .inicial { width: 64px; height: 64px; } }
+
+/* ---------- Páginas legales y aviso de privacidad ---------- */
+.texto.legal { line-height: 1.65; }
+.texto.legal strong:first-child { display: block; margin-top: 10px; font-family: "Montserrat", sans-serif; color: var(--azul-osc); }
+.texto.legal p:first-child strong:first-child { margin-top: 0; }
+.legal-nav { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 16px 2px 0; }
+.legal-nav a { font-weight: 600; }
+.borrar-datos { margin-top: 14px; display: grid; gap: 6px; justify-items: start; }
+.borrar-datos p { margin: 0; color: var(--suave); font-size: .92rem; }
+.aviso-privacidad {
+  position: fixed; left: 12px; right: 12px; bottom: calc(86px + env(safe-area-inset-bottom)); z-index: 16;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; padding: 12px 14px;
+  border-radius: 14px; background: var(--cab); color: #fff; box-shadow: 0 10px 30px rgba(0, 0, 0, .3); border: 1px solid rgba(0, 198, 255, .3);
+}
+.aviso-privacidad p { margin: 0; flex: 1 1 260px; font-size: .9rem; line-height: 1.45; color: rgba(255, 255, 255, .88); }
+.aviso-privacidad b { color: #fff; }
+.aviso-privacidad > div { display: flex; gap: 8px; }
+.aviso-privacidad .btn-linea { color: #fff; border-color: rgba(255, 255, 255, .35); }
+.aviso-privacidad .btn { background: linear-gradient(135deg, #00C6FF, #0E5FAE); color: #fff; min-height: 42px; }
+@media (min-width: 980px) { .aviso-privacidad { left: 50%; right: auto; width: 720px; transform: translateX(-50%); } }

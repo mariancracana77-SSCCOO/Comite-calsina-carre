@@ -9,7 +9,7 @@ La gestiona desde el panel el padre de Lorena (usuario GitHub `mariancracana77-S
 
 - Web: https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/ (GitHub Pages desde `main`, raíz)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **6**
+- Versión actual: **7**
 
 ## Reglas (las mismas que en CCOO)
 - No publicar en `main` sin que Lorena lo confirme. Trabajar en la rama indicada.
@@ -40,7 +40,16 @@ El padre pidió mostrar lo que tiene la empresa (camión, toro, transpaleta, dis
 ## Al publicar una versión nueva
 Cambiar el número en: `?v=N` de los HTML, `VERSION_WEB` en `comun.js` y `VERSION` en `sw.js`. Añadir línea en «Versiones» del README. Pasar `pruebas/humo.cjs` antes.
 
+## Legal y privacidad
+- Páginas `#aviso-legal`, `#privacidad` y `#cookies` (textos en `paginas`: `aviso_legal`, `privacidad`, `cookies`, editables en el panel → Textos de la web). Enlaces en el pie. Responsable: el comité; contacto por los miembros (sin email por ahora: el padre puede añadirlo).
+- Sin cookies; solo almacenamiento técnico en el móvil (exento de consentimiento, art. 22.2 LSSI). Aviso informativo no bloqueante la primera vez (`#aviso-privacidad`, localStorage `comite-aviso-privacidad`). En Cookies, botón para borrar todo lo que la web guarda en el móvil (claves `comite-*` y cachés `comite-*`).
+- Consentimiento con casilla sin marcar: buzón y avisos al móvil. Fotos/teléfono/email de miembros, solo con su permiso.
+- Conservación: buzón se borra solo a los 12 meses (pg_cron `borrar-buzon-antiguo`, 3:17), papelera 90 días, `push_subs` se limpian al fallar.
+- Si se añade algo que guarde datos, actualizar el texto de privacidad.
+
 ## Seguridad
+- Panel: contraseña de 10+ con letras y números (`claveFlojaTxt`); verificación en dos pasos TOTP opcional en Ajustes (`supabase.auth.mfa`); al entrar, si hay factor, pide el código (`#s-dos-pasos`); `is_admin()` exige sesión aal2 si la cuenta tiene factor verificado. «Cerrar en todos» = `signOut({ scope: "global" })`.
+- `<meta name="referrer" content="strict-origin-when-cross-origin">` en todas las páginas.
 - CSP en los HTML: `script-src 'self'`. Prohibido `<script>` en línea, `onclick=""` y `eval`. Delegación de eventos.
 - Siempre `esc()` al meter texto en HTML; enlaces con `urlSegura()`.
 - Las consultas de supabase-js no se envían si no se esperan: usar `await` o `.then()`.

@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://ytxpubqyhnohhugpukdm.supabase.co; connect-src 'self' https://ytxpubqyhnohhugpukdm.supabase.co wss://ytxpubqyhnohhugpukdm.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="robots" content="noindex">
@@ -11,9 +12,9 @@
 <link rel="icon" href="img/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="icon" href="img/favicon-64.png" sizes="64x64" type="image/png">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=6">
-<link rel="stylesheet" href="styles.css?v=6">
-<link rel="stylesheet" href="admin.css?v=6">
+<link rel="stylesheet" href="fuentes.css?v=7">
+<link rel="stylesheet" href="styles.css?v=7">
+<link rel="stylesheet" href="admin.css?v=7">
 </head>
 <body class="panel">
 <header class="cabecera cab-panel">
@@ -58,7 +59,7 @@
     <h1 class="titulo-vista">Contraseña nueva</h1>
     <p class="sub-vista">Te hemos enviado un email a <b id="codigo-email"></b>. Si trae un botón, púlsalo. Si trae un código de cifras, escríbelo aquí.</p>
     <label class="campo"><span>Código del email</span><input id="c-codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></label>
-    <label class="campo"><span>Contraseña nueva <small>(8 o más letras o números)</small></span><input type="password" id="c-nueva" autocomplete="new-password"></label>
+    <label class="campo"><span>Contraseña nueva <small>(10 o más, con letras y números)</small></span><input type="password" id="c-nueva" autocomplete="new-password"></label>
     <label class="campo"><span>Repítela</span><input type="password" id="c-repite" autocomplete="new-password"></label>
     <button type="submit" class="btn grande">Guardar y entrar</button>
     <p id="c-estado" class="estado" role="status"></p>
@@ -70,9 +71,21 @@
 <main class="caja solo-login" id="s-nueva" hidden>
   <form class="tarjeta login" id="f-nueva" novalidate>
     <h1 class="titulo-vista">Nueva contraseña</h1>
-    <label class="campo"><span>Escribe la nueva contraseña <small>(8 o más letras o números)</small></span><input type="password" id="n-clave" autocomplete="new-password"></label>
+    <label class="campo"><span>Escribe la nueva contraseña <small>(10 o más, con letras y números)</small></span><input type="password" id="n-clave" autocomplete="new-password"></label>
     <button type="submit" class="btn grande">Guardar contraseña</button>
     <p id="n-estado" class="estado" role="status"></p>
+  </form>
+</main>
+
+<!-- VERIFICACIÓN EN DOS PASOS -->
+<main class="caja solo-login" id="s-dos-pasos" hidden>
+  <form class="tarjeta login" id="f-dos-pasos" novalidate>
+    <h1 class="titulo-vista">Código de seguridad</h1>
+    <p class="sub-vista">Abre la app de códigos del móvil (Google Authenticator) y escribe las 6 cifras de «Panel del comité».</p>
+    <label class="campo"><span>Código de 6 cifras</span><input id="d-codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
+    <button type="submit" class="btn grande">Entrar</button>
+    <p id="d-estado" class="estado" role="status"></p>
+    <div class="enlaces-login"><button type="button" class="btn-texto" id="b-dos-salir">Salir y entrar con otra cuenta</button></div>
   </form>
 </main>
 
@@ -126,8 +139,8 @@
 </section>
 
 <script src="lib/supabase.js"></script>
-<script src="comun.js?v=6"></script>
-<script src="render.js?v=6"></script>
-<script src="admin.js?v=6"></script>
+<script src="comun.js?v=7"></script>
+<script src="render.js?v=7"></script>
+<script src="admin.js?v=7"></script>
 </body>
 </html>

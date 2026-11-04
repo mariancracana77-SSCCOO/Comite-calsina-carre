@@ -27,7 +27,13 @@ fs.mkdirSync(OUT, { recursive: true });
       const p = await ctx.newPage();
       p.on("console", (m) => { if (m.type() === "error") errores.push(`${c.nombre} web: ${m.text()}`); });
       p.on("pageerror", (e) => errores.push(`${c.nombre} web: ${e.message}`));
-      for (const v of ["actualidad", "avisos", "reuniones", "actas", "documentos", "buzon", "nosotros", "buscar", "privacidad"]) {
+      // Aviso de privacidad: sale la primera vez y se cierra con «Entendido»
+      await p.goto(BASE + "#actualidad"); await p.waitForTimeout(600);
+      if (await p.evaluate(() => document.getElementById("aviso-privacidad").hidden)) fallos.push(`${c.nombre}: no sale el aviso de privacidad la primera vez`);
+      if (c.nombre === "390") await p.screenshot({ path: path.join(OUT, "web-390-aviso-privacidad.png") });
+      await p.click("#b-aviso-ok");
+      if (!(await p.evaluate(() => document.getElementById("aviso-privacidad").hidden))) fallos.push(`${c.nombre}: el aviso de privacidad no se cierra`);
+      for (const v of ["actualidad", "avisos", "reuniones", "actas", "documentos", "buzon", "nosotros", "buscar", "privacidad", "aviso-legal", "cookies"]) {
         await p.goto(BASE + "#" + v); await p.waitForTimeout(v === "actualidad" ? 900 : 350);
         if (v === "buscar") { await p.fill("#buscar-todo", "turnos"); await p.waitForTimeout(150); }
         const ancho = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -59,6 +65,11 @@ fs.mkdirSync(OUT, { recursive: true });
       const pa = await ctx2.newPage();
       pa.on("console", (m) => { if (m.type() === "error") errores.push(`${c.nombre} panel: ${m.text()}`); });
       pa.on("pageerror", (e) => errores.push(`${c.nombre} panel: ${e.message}`));
+      // Ajustes: empezar a activar la verificación en dos pasos (enseña el QR y pide el código)
+      await pa.goto(BASE + "admin.html#accesos"); await pa.waitForTimeout(500);
+      await pa.click("#b-dos-activar"); await pa.waitForTimeout(300);
+      if (!(await pa.$("#dos-codigo"))) fallos.push(`${c.nombre}: no se puede empezar a activar la verificación en dos pasos`);
+      if (c.nombre === "390") await pa.screenshot({ path: path.join(OUT, "panel-390-dos-pasos.png"), fullPage: true });
       for (const v of ["inicio", "avisos", "actualidad", "reuniones", "actas", "buzon", "encuestas", "preguntas", "miembros", "documentos", "textos", "cartel", "papelera", "accesos"]) {
         await pa.goto(BASE + "admin.html#" + v); await pa.waitForTimeout(450);
         if (await pa.evaluate(() => document.getElementById("s-panel").hidden)) { fallos.push(`${c.nombre}: el panel no entra`); break; }
