@@ -1,0 +1,107 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../fuentes.css">
+<style>
+body{margin:0;background:#F3F6FA;font-family:Inter,sans-serif;padding:16px}
+.llegada{position:relative;border-radius:18px;overflow:hidden;background:linear-gradient(180deg,#0B2B4E,#03172D);box-shadow:0 6px 20px rgba(11,30,60,.25)}
+.llegada svg{display:block;width:100%;height:auto}
+.llegada-txt{position:absolute;left:16px;top:12px;color:#fff;font-family:Montserrat;font-weight:800;font-size:15px;letter-spacing:.04em;opacity:0;animation:aparece .5s 7.3s forwards}
+.llegada-txt small{display:block;font-family:Inter;font-weight:500;font-size:12px;color:#9fdcff;letter-spacing:0}
+@keyframes aparece{to{opacity:1}}
+.A{animation-duration:8s;animation-fill-mode:both;animation-timing-function:linear}
+.camion{animation-name:camion}
+@keyframes camion{0%{transform:translateX(-160px);animation-timing-function:cubic-bezier(.2,.6,.3,1)}18%{transform:translateX(16px)}34%{transform:translateX(16px);animation-timing-function:cubic-bezier(.5,0,.3,1)}50%{transform:translateX(100px)}84%{transform:translateX(100px);animation-timing-function:cubic-bezier(.6,0,1,1)}100%{transform:translateX(420px)}}
+.rueda{transform-box:fill-box;transform-origin:center;animation-name:gira}
+@keyframes gira{0%{transform:rotate(0)}18%{transform:rotate(900deg)}34%{transform:rotate(900deg)}50%{transform:rotate(1500deg)}84%{transform:rotate(1500deg)}100%{transform:rotate(2600deg)}}
+.manguera{animation-name:manguera}
+@keyframes manguera{0%,19%{opacity:0}21%,31%{opacity:1}33%,100%{opacity:0}}
+.litros{transform-box:fill-box;transform-origin:left;animation-name:litros}
+@keyframes litros{0%,20%{transform:scaleX(0)}31%,100%{transform:scaleX(1)}}
+.surtidor-luz{animation-name:luz}
+@keyframes luz{0%,19%{fill:#00C6FF}20%,32%{fill:#5CFF9D}33%,100%{fill:#00C6FF}}
+.toro{animation-name:toro}
+@keyframes toro{0%,51%{transform:translate(0,16px)}58%,64%{transform:translate(-154px,16px)}75%,81%{transform:translate(-60px,16px)}89%,100%{transform:translate(0,16px)}}
+.horquilla{animation-name:horquilla}
+@keyframes horquilla{0%,44%{transform:translateY(0)}50%,58%{transform:translateY(-15px)}63%,75%{transform:translateY(-23px)}81%,84%{transform:translateY(12px)}90%,100%{transform:translateY(0)}}
+.caja{animation-name:caja}
+@keyframes caja{0%{transform:translate(-160px,0);animation-timing-function:cubic-bezier(.2,.6,.3,1)}18%{transform:translate(16px,0)}34%{transform:translate(16px,0);animation-timing-function:cubic-bezier(.5,0,.3,1)}50%,58%{transform:translate(100px,0)}63%{transform:translate(100px,-8px)}75%{transform:translate(194px,-8px)}81%,100%{transform:translate(194px,27px)}}
+.caja-cerrada{animation-name:cierra}
+@keyframes cierra{0%,85%{opacity:1}88%,100%{opacity:0}}
+.cartel{transform-box:fill-box;transform-origin:center bottom;animation-name:cartel}
+@keyframes cartel{0%,86%{transform:scale(.2);opacity:0}92%{transform:scale(1.15);opacity:1}96%,100%{transform:scale(1);opacity:1}}
+.raya{animation:raya .5s linear infinite}
+@keyframes raya{to{stroke-dashoffset:-26}}
+@media (prefers-reduced-motion:reduce){.A{animation-duration:1ms;animation-delay:0s!important}.raya{animation:none}.llegada-txt{animation-duration:1ms;animation-delay:0s}}
+</style></head><body>
+<div class="llegada" role="img" aria-label="Ha llegado un aviso nuevo: un camión reposta, llega a la nave y la carretilla descarga el aviso">
+<svg viewBox="0 0 360 150">
+ <defs>
+  <linearGradient id="met" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".6" stop-color="#d6e2ef"/><stop offset="1" stop-color="#8ea7c3"/></linearGradient>
+  <linearGradient id="cab" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a7ad6"/><stop offset="1" stop-color="#0E5FAE"/></linearGradient>
+  <filter id="gl"><feGaussianBlur stdDeviation="2"/></filter>
+ </defs>
+ <!-- estrellas -->
+ <g fill="#9fdcff" opacity=".5"><circle cx="150" cy="18" r=".8"/><circle cx="210" cy="30" r=".6"/><circle cx="250" cy="14" r=".7"/><circle cx="120" cy="40" r=".5"/><circle cx="330" cy="22" r=".6"/></g>
+ <!-- gasolinera -->
+ <g>
+  <rect x="62" y="58" width="4" height="54" fill="url(#met)"/><rect x="128" y="58" width="4" height="54" fill="url(#met)"/>
+  <rect x="52" y="50" width="90" height="10" rx="2" fill="#0E5FAE"/><rect x="52" y="58" width="90" height="2" fill="#00C6FF"/>
+  <rect x="58" y="60" width="78" height="10" fill="#bfefff" opacity=".12" filter="url(#gl)"/>
+  <text x="97" y="57" font-family="Montserrat" font-weight="800" font-size="6" fill="#fff" text-anchor="middle" letter-spacing=".5">GASOLINERA</text>
+ </g>
+ <!-- nave -->
+ <g>
+  <path d="M280 112V62l40-14 40 14v50z" fill="#12305a"/><path d="M280 62l40-14 40 14" stroke="#00C6FF" stroke-width="1.5" fill="none"/>
+  <rect x="300" y="78" width="40" height="34" fill="#061428"/><rect x="300" y="78" width="40" height="34" fill="#00C6FF" opacity=".08"/>
+  <path d="M300 84h40M300 90h40M300 96h40" stroke="#1b3a63" stroke-width="1"/>
+  <text x="320" y="72" font-family="Montserrat" font-weight="800" font-size="6" fill="#fff" text-anchor="middle">NAVE</text>
+ </g>
+ <!-- carretera -->
+ <rect x="0" y="112" width="360" height="38" fill="#071a33"/><rect x="0" y="112" width="360" height="2" fill="#1b3a63"/>
+ <line class="raya" x1="0" y1="132" x2="360" y2="132" stroke="#9fb6cf" stroke-width="2" stroke-dasharray="14 12" opacity=".6"/>
+ <!-- camión (mira a la derecha): plataforma 0-100, cabina 102-140 -->
+ <g class="A camion">
+  <rect x="0" y="96" width="102" height="6" rx="1" fill="#0B1E3C"/><rect x="0" y="94" width="102" height="3" fill="url(#met)"/>
+  <rect x="2" y="66" width="4" height="28" fill="#8ea7c3"/><rect x="96" y="66" width="4" height="28" fill="#8ea7c3"/>
+  <path d="M104 102V74c0-4 3-8 8-8h14c5 0 9 4 11 9l3 9v18z" fill="url(#cab)"/>
+  <path d="M124 70h3c3 0 6 3 7 6l2 6h-12z" fill="#bfefff" opacity=".85"/>
+  <rect x="106" y="84" width="10" height="3" fill="#00C6FF"/>
+  <text x="114" y="80" font-family="Montserrat" font-weight="800" font-size="7" fill="#fff" text-anchor="middle">CC</text>
+  <rect x="138" y="92" width="4" height="4" rx="1" fill="#FFE27A"/>
+  <g fill="#0B1E3C" stroke="#8ea7c3" stroke-width="1.5">
+   <g class="A rueda"><circle cx="16" cy="106" r="7"/><path d="M16 100v12M10 106h12" stroke-width="1"/></g>
+   <g class="A rueda"><circle cx="32" cy="106" r="7"/><path d="M32 100v12M26 106h12" stroke-width="1"/></g>
+   <g class="A rueda"><circle cx="124" cy="106" r="7"/><path d="M124 100v12M118 106h12" stroke-width="1"/></g>
+  </g>
+ </g>
+ <!-- caja con el aviso: va en el camión y luego en la carretilla -->
+ <g class="A caja">
+  <g class="A caja-cerrada">
+   <rect x="40" y="71" width="30" height="23" rx="1.5" fill="#c99a5b"/><path d="M40 78h30M55 71v23" stroke="#a87b40" stroke-width="1.2"/>
+   <rect x="46" y="83" width="18" height="7" fill="#fff"/><text x="55" y="88.5" font-family="Montserrat" font-weight="800" font-size="4.6" fill="#0B1E3C" text-anchor="middle">AVISO</text>
+  </g>
+  <g class="A cartel">
+   <rect x="34" y="62" width="42" height="32" rx="3" fill="#fff" stroke="#00C6FF" stroke-width="1.5"/>
+   <path d="M55 66l-7 12h14z" fill="#c62828"/><path d="M55 70v4" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><circle cx="55" cy="76" r=".9" fill="#fff"/>
+   <text x="55" y="87" font-family="Montserrat" font-weight="800" font-size="7" fill="#0B1E3C" text-anchor="middle">AVISO</text>
+  </g>
+ </g>
+ <!-- surtidor, delante del camión -->
+ <g>
+  <rect x="104" y="80" width="16" height="32" rx="2" fill="url(#met)"/>
+  <rect x="107" y="84" width="10" height="7" rx="1" fill="#0B1E3C"/>
+  <rect class="A litros" x="108" y="86" width="8" height="3" fill="#5CFF9D"/>
+  <circle class="A surtidor-luz" cx="112" cy="96" r="2"/>
+  <path class="A manguera" d="M120 96 C127 104 129 100 126 93" stroke="#0B1E3C" stroke-width="2" fill="none"/>
+ </g>
+ <!-- carretilla (toro), mira a la izquierda; puntas de las horquillas en x=290 -->
+ <g class="A toro">
+  <g class="A horquilla"><rect x="290" y="93" width="22" height="2.5" fill="#cfd8e3"/><rect x="311" y="62" width="3" height="34" fill="#8ea7c3"/></g>
+  <rect x="314" y="60" width="3" height="46" fill="#5d7593"/>
+  <path d="M317 106V86h10l4-16h10v36z" fill="#FFB020"/><path d="M327 86l4-16h10v16" fill="none" stroke="#0B1E3C" stroke-width="2"/>
+  <rect x="337" y="88" width="10" height="18" fill="#e09a10"/>
+  <circle cx="324" cy="108" r="5" fill="#0B1E3C" stroke="#8ea7c3" stroke-width="1.2"/><circle cx="341" cy="108" r="5" fill="#0B1E3C" stroke="#8ea7c3" stroke-width="1.2"/>
+ </g>
+</svg>
+<div class="llegada-txt">Ha llegado un aviso nuevo<small>Míralo aquí abajo</small></div>
+</div>
+</body></html>
