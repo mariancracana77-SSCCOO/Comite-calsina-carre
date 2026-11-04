@@ -9,8 +9,8 @@ Web gratuita que **se instala como app** (PWA) para informar a toda la plantilla
 
 | Apartado | Qué hay |
 |---|---|
-| **Actualidad** (portada) | Cabecera con el logo, aviso urgente, próxima reunión con los días que faltan, «novedades desde tu última visita», consultas abiertas, accesos rápidos y noticias |
-| **Avisos** | Comunicados cortos; los urgentes en rojo; contador de avisos sin leer en la pestaña |
+| **Actualidad** (portada) | Cabecera con el logo, aviso urgente, próxima reunión con los días que faltan, «novedades desde tu última visita», consultas abiertas, accesos rápidos y anuncios (información general, sin destacar) |
+| **Avisos** | Lo importante que hay que destacar (huelga, festivo, elecciones); los urgentes en rojo; contador de avisos sin leer en la pestaña |
 | **Calendario de reuniones** | Calendario del mes, próximas reuniones (con botón «Añadir a mi calendario») y reuniones pasadas |
 | **Actas** | Resumen y acuerdos con buscador y filtro por año; y **Documentos útiles** (convenio, calendario laboral, tablas salariales…) |
 | **Sugerencias y preguntas** | Buzón **anónimo** y preguntas frecuentes |
@@ -64,6 +64,7 @@ Abre la web y el panel con datos de prueba (sin tocar la base de datos real) en 
 ## Versiones
 
 - **v8**: contraseñas sin email como en CCOO: en Ajustes se pone la contraseña a cada correo con acceso (si no tiene cuenta, se crea) y códigos de rescate; el error al entrar explica que la cuenta del comité es distinta de la de CCOO.
+- **v9**: Actualidad pasa a ser «anuncios» (información general para todos, sin destacar) y Avisos queda para lo importante (huelga, festivo, elecciones); textos y ayudas del panel lo explican.
 - **v7**: parte legal (aviso legal, privacidad completa, cookies, aviso informativo y botón para borrar los datos del móvil), borrado automático del buzón a los 12 meses, verificación en dos pasos y contraseñas más seguras en el panel, Inicio del panel con bloque azul.
 - **v6**: se quitan los iconos de lo que tiene la empresa (portada, cartel e imagen al compartir); fotos de los miembros (desde el panel, solo con su permiso; se recortan y reducen en el móvil antes de subirlas) y apartados vacíos con icono y explicación.
 - **v5**: cartel A4 con QR y la imagen al compartir por WhatsApp con el estilo nuevo.

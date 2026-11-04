@@ -119,7 +119,7 @@
   let ultimaVisita = null;
   const NOV = [
     ["avisos", "fecha", "aviso", "avisos", "aviso"],
-    ["actualidad", "creado", "noticia", "noticias", "noticia"],
+    ["actualidad", "creado", "anuncio", "anuncios", "noticia"],
     ["reuniones", "creado", "reunión", "reuniones", "reunion"],
     ["actas", "creado", "acta", "actas", "acta"],
     ["encuestas", "creado", "consulta", "consultas", "consulta"],
@@ -168,7 +168,7 @@
     })() : "";
     pintaNovedades();
     pintaConsultas();
-    $("lista-actualidad").innerHTML = D.actualidad.map(tarjetaNoticia).join("") || vacio("Todavía no hay noticias", "Aquí saldrán las novedades del comité: convenio, nóminas, calendario laboral y todo lo que os afecta.", "periodico", ["#avisos-movil", "Avisarme cuando haya novedades"]);
+    $("lista-actualidad").innerHTML = D.actualidad.map(tarjetaNoticia).join("") || vacio("Todavía no hay anuncios", "Aquí saldrá la información general del comité: acuerdos, cambios de turnos y pausas, convenio, nóminas y todo lo que os afecta.", "periodico", ["#avisos-movil", "Avisarme cuando haya novedades"]);
   };
 
   // ---------- Avisos ----------
