@@ -6,7 +6,7 @@
 window.SUPABASE_URL = "https://ytxpubqyhnohhugpukdm.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_tmkeed90aj4Fv00UoTTy7Q_qBPUAaCj";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "6"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "7"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/";
 
 // ---- Utilidades ----
@@ -20,6 +20,7 @@ window.urlSegura = (u) => {
 
 // Texto sencillo a HTML: párrafos, listas con "- ", **negrita** y enlaces
 window.textoHTML = (s) => {
+  if (!String(s ?? "").trim()) return "";
   const linea = (t) => esc(t)
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');

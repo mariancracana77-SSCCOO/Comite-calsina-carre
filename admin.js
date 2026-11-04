@@ -204,7 +204,7 @@
   ponIconos();
 
   // ================== SESIÓN ==================
-  const PANTALLAS = ["s-entrar", "s-codigo", "s-nueva", "s-sinpermiso", "s-panel"];
+  const PANTALLAS = ["s-entrar", "s-codigo", "s-nueva", "s-sinpermiso", "s-dos-pasos", "s-panel"];
   const muestra = (id) => PANTALLAS.forEach((p) => { $(p).hidden = p !== id; });
   let recuperando = /type=recovery/.test(location.hash), YO = "";
   try { $("e-email").value = TEMA.lee("comite-admin-email") || ""; } catch (_) {}
@@ -214,6 +214,9 @@
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { muestra("s-entrar"); return; }
     YO = session.user.email || "";
+    // Si tiene activada la verificación en dos pasos, pide el código antes de entrar
+    const { data: nivel } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (nivel && nivel.nextLevel === "aal2" && nivel.currentLevel !== "aal2") { muestra("s-dos-pasos"); $("d-codigo").value = ""; $("d-codigo").focus(); return; }
     const { data: esAdmin, error } = await sb.rpc("is_admin");
     if (error || !esAdmin) { muestra("s-sinpermiso"); return; }
     muestra("s-panel");
@@ -233,7 +236,8 @@
   });
   $("b-primera").addEventListener("click", async () => {
     const est = $("e-estado"), email = $("e-email").value.trim(), clave = $("e-clave").value;
-    if (!email || clave.length < 8) return estado(est, "Escribe arriba tu email y la contraseña que quieres usar (8 o más letras o números) y vuelve a pulsar «Primera vez».", "mal");
+    if (!email) return estado(est, "Escribe arriba tu email y la contraseña que quieres usar (10 o más, con letras y números) y vuelve a pulsar «Primera vez».", "mal");
+    if (claveFlojaTxt(clave)) return estado(est, claveFlojaTxt(clave) + " Escríbela arriba y vuelve a pulsar «Primera vez».", "mal");
     estado(est, "Creando la cuenta…");
     const { data, error } = await sb.auth.signUp({ email, password: clave, options: { emailRedirectTo: PANEL_URL } });
     if (error) return estado(est, errTxt(error), "mal");
@@ -261,7 +265,7 @@
     e.preventDefault();
     const est = $("c-estado"), codigo = $("c-codigo").value.replace(/\D/g, ""), nueva = $("c-nueva").value;
     if (codigo.length < 6) return estado(est, "Escribe el código que trae el email.", "mal");
-    if (nueva.length < 8) return estado(est, "La contraseña nueva necesita 8 o más letras o números.", "mal");
+    if (claveFlojaTxt(nueva)) return estado(est, claveFlojaTxt(nueva), "mal");
     if (nueva !== $("c-repite").value) return estado(est, "Las dos contraseñas no son iguales.", "mal");
     estado(est, "Comprobando el código…");
     const { error } = await sb.auth.verifyOtp({ email: $("codigo-email").textContent, token: codigo, type: "recovery" });
@@ -273,13 +277,28 @@
   $("f-nueva").addEventListener("submit", async (e) => {
     e.preventDefault();
     const est = $("n-estado"), clave = $("n-clave").value;
-    if (clave.length < 8) return estado(est, "8 o más letras o números.", "mal");
+    if (claveFlojaTxt(clave)) return estado(est, claveFlojaTxt(clave), "mal");
     const { error } = await sb.auth.updateUser({ password: clave });
     if (error) return estado(est, errTxt(error), "mal");
     recuperando = false; history.replaceState(null, "", "admin.html"); avisa("Contraseña guardada"); entrar();
   });
+  // Contraseña segura: 10 o más caracteres, con letras y números
+  const claveFlojaTxt = (c) => c.length < 10 ? "La contraseña necesita 10 caracteres o más." : !/[a-zñ]/i.test(c) || !/\d/.test(c) ? "La contraseña tiene que llevar letras y números." : "";
   const salir = async () => { await sb.auth.signOut(); history.replaceState(null, "", "admin.html"); location.reload(); };
   $("b-salir-sp").addEventListener("click", salir);
+  $("b-dos-salir").addEventListener("click", salir);
+  $("f-dos-pasos").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const est = $("d-estado"), code = $("d-codigo").value.replace(/\D/g, "");
+    if (code.length !== 6) return estado(est, "Escribe las 6 cifras que salen en la app de códigos.", "mal");
+    estado(est, "Comprobando…");
+    const { data: f } = await sb.auth.mfa.listFactors();
+    const totp = (f?.totp || [])[0];
+    if (!totp) return estado(est, "No hay ninguna verificación en dos pasos activada en esta cuenta.", "mal");
+    const { error } = await sb.auth.mfa.challengeAndVerify({ factorId: totp.id, code });
+    if (error) return estado(est, /invalid|expired/i.test(error.message) ? "Código incorrecto o caducado. Espera al siguiente y prueba otra vez." : errTxt(error), "mal");
+    estado(est, ""); entrar();
+  });
 
   // ================== MENÚ Y NAVEGACIÓN ==================
   let actual = "inicio", PEND_BUZON = 0;
@@ -374,8 +393,20 @@
     const ultimos = ult.flat().sort((a, b) => String(fechaDe(b)).localeCompare(String(fechaDe(a)))).slice(0, 8);
     const hora = new Date().getHours();
     $("zona").innerHTML = `
-      <h1 class="titulo-vista hola">${hora < 14 ? "Buenos días" : hora < 21 ? "Buenas tardes" : "Buenas noches"}</h1>
-      <p class="sub-vista">¿Qué quieres publicar hoy?</p>
+      <section class="hola-bloque">
+        <div class="hola-txt">
+          <p class="hola-fecha">${esc((() => { const t = new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }); return t.charAt(0).toUpperCase() + t.slice(1); })())}</p>
+          <h1 class="hola">${hora < 14 ? "Buenos días" : hora < 21 ? "Buenas tardes" : "Buenas noches"}</h1>
+          <p>¿Qué quieres publicar hoy?</p>
+        </div>
+        <div class="hola-resumen">
+          <a href="#buzon" class="hola-dato${PEND_BUZON ? " aviso" : ""}">${icono("mensaje")}<b>${PEND_BUZON}</b><span>${PEND_BUZON === 1 ? "mensaje sin leer" : "mensajes sin leer"}</span></a>
+          ${(() => { const r = (reu.data || [])[0]; if (!r) return `<a href="#reuniones" class="hola-dato">${icono("calendario")}<b>–</b><span>sin reuniones en 14 días</span></a>`;
+            const dias = Math.round((fechaDia(r.fecha) - fechaDia(hoyISO())) / 86400000);
+            return `<button type="button" class="hola-dato" data-editar-en="reuniones:${r.id}">${icono("calendario")}<b>${dias === 0 ? "Hoy" : dias === 1 ? "Mañana" : dias + " días"}</b><span>${esc(r.titulo)}</span></button>`; })()}
+          <span class="hola-dato">${icono("campana")}<b id="hola-moviles">…</b><span>móviles con avisos</span></span>
+        </div>
+      </section>
       <div class="acciones-inicio">
         ${ACCIONES.map(([k, t, s]) => `<button type="button" class="accion-tarjeta" data-nuevo="${k}">${icono(SECCIONES[k].ic)}<span><b>${esc(t)}</b><small>${esc(s)}</small></span></button>`).join("")}
         <a class="accion-tarjeta${PEND_BUZON ? " destaca" : ""}" href="#buzon">${icono("mensaje")}<span><b>Leer el buzón</b><small>${PEND_BUZON ? PEND_BUZON + (PEND_BUZON === 1 ? " mensaje sin leer" : " mensajes sin leer") : "No hay mensajes nuevos"}</small></span></a>
@@ -414,6 +445,7 @@
       </details>`;
     if (pideInstalar) document.querySelectorAll("[data-instalar-tarjeta]").forEach((b) => { b.hidden = false; });
     sb.rpc("contar_suscritos").then(({ data, error }) => {
+      if ($("hola-moviles")) $("hola-moviles").textContent = error ? "–" : (data || 0);
       if (!$("push-cuenta")) return;
       $("push-cuenta").textContent = error ? "No se ha podido contar." : data === 1 ? "1 móvil tiene los avisos activados." : `${data || 0} móviles tienen los avisos activados.`;
     });
@@ -826,7 +858,9 @@
   const TEXTOS = [
     ["bienvenida", "Bienvenida de la portada", "Una o dos frases que salen arriba en «Actualidad»."],
     ["nosotros", "Texto de «Nosotros»", "Qué es el comité, qué hace y cómo contactar."],
-    ["privacidad", "Privacidad", "Qué datos se guardan. Revisadlo antes de publicar la web."],
+    ["aviso_legal", "Aviso legal", "Quién está detrás de la web. Si el comité tiene un email de contacto, añadidlo aquí."],
+    ["privacidad", "Privacidad", "Qué datos se guardan, para qué y cuánto tiempo. Si añadís algo nuevo a la web que guarde datos, hay que contarlo aquí."],
+    ["cookies", "Cookies", "La web no usa cookies; aquí se explica lo que se guarda en el móvil de cada uno."],
   ];
   const pintaTextos = async () => {
     const { data, error } = await sb.from("paginas").select("*");
@@ -896,7 +930,19 @@
       <form id="f-admin" class="tarjeta form-panel" novalidate>
         <label class="campo"><span>Dar acceso a otro email</span><input type="email" id="a-email" autocomplete="off" placeholder="nombre@ejemplo.com"></label>
         <button type="submit" class="btn">${icono("mas")}Dar acceso</button>
-      </form>`;
+      </form>
+      <h2 class="titulo-bloque">Seguridad de tu cuenta</h2>
+      <div class="tarjeta seguridad" id="dos-pasos"><div class="esq"></div></div>
+      <div class="tarjeta seguridad">
+        <b>Cerrar la sesión en todos los dispositivos</b>
+        <p class="sub-vista">Por si has entrado en un móvil u ordenador que no es tuyo. Tendrás que volver a entrar con tu contraseña.</p>
+        <button type="button" class="btn-linea peligro" id="b-salir-todo">${icono("salir")}Cerrar en todos</button>
+      </div>`;
+    pintaDosPasos();
+    $("b-salir-todo").addEventListener("click", async () => {
+      if (!confirm("¿Cerrar la sesión del panel en todos los móviles y ordenadores?")) return;
+      await sb.auth.signOut({ scope: "global" }); history.replaceState(null, "", "admin.html"); location.reload();
+    });
     $("f-admin").addEventListener("submit", async (e) => {
       e.preventDefault();
       const email = $("a-email").value.trim().toLowerCase();
@@ -911,6 +957,62 @@
       if (er) return avisa(errTxt(er), true);
       avisa("Acceso quitado"); pintaAccesos();
     }));
+  };
+
+  // ---- Verificación en dos pasos (app de códigos: Google Authenticator, Microsoft Authenticator…) ----
+  const pintaDosPasos = async () => {
+    const caja = $("dos-pasos"); if (!caja) return;
+    const { data, error } = await sb.auth.mfa.listFactors();
+    if (error) { caja.innerHTML = `<p class="vacio">${esc(errTxt(error))}</p>`; return; }
+    const activa = (data?.totp || []).find((f) => f.status === "verified");
+    caja.innerHTML = activa ? `
+      <b class="seg-ok">${icono("check")}Verificación en dos pasos activada</b>
+      <p class="sub-vista">Al entrar, además de la contraseña, te pedimos el código de 6 cifras de tu app de códigos. Aunque alguien sepa tu contraseña, no puede entrar sin tu móvil.</p>
+      <button type="button" class="btn-linea peligro" id="b-dos-quitar">${icono("borrar")}Desactivarla</button>` : `
+      <b>Verificación en dos pasos</b>
+      <p class="sub-vista">Muy recomendable. Además de la contraseña, al entrar se pide un código de 6 cifras que da una app gratuita del móvil (Google Authenticator o Microsoft Authenticator). Así, aunque alguien averigüe tu contraseña, no puede entrar.</p>
+      <button type="button" class="btn" id="b-dos-activar">${icono("candado")}Activarla</button>`;
+    $("b-dos-quitar")?.addEventListener("click", async () => {
+      if (!confirm("¿Desactivar la verificación en dos pasos? Tu cuenta quedará protegida solo con la contraseña.")) return;
+      const { error: er } = await sb.auth.mfa.unenroll({ factorId: activa.id });
+      if (er) return avisa(errTxt(er), true);
+      avisa("Verificación en dos pasos desactivada"); pintaDosPasos();
+    });
+    $("b-dos-activar")?.addEventListener("click", activaDosPasos);
+  };
+  const activaDosPasos = async () => {
+    const caja = $("dos-pasos");
+    // Quita intentos anteriores sin terminar
+    const { data: prev } = await sb.auth.mfa.listFactors();
+    for (const f of (prev?.all || []).filter((x) => x.status !== "verified")) await sb.auth.mfa.unenroll({ factorId: f.id });
+    const { data, error } = await sb.auth.mfa.enroll({ factorType: "totp", friendlyName: "Panel del comité " + new Date().toISOString().slice(0, 16) });
+    if (error) return avisa(errTxt(error), true);
+    const qr = String(data.totp.qr_code || "");
+    caja.innerHTML = `
+      <b>Activar la verificación en dos pasos</b>
+      <ol class="pasos-dos">
+        <li>Instala en tu móvil la app gratuita <b>Google Authenticator</b> (o Microsoft Authenticator).</li>
+        <li>En la app, pulsa <b>+</b> y <b>Escanear un código QR</b>, y apunta a este código:</li>
+      </ol>
+      ${/^data:image\/svg\+xml/.test(qr) ? `<img class="qr-dos" src="${esc(qr)}" alt="Código QR para la app de códigos" width="180" height="180">` : ""}
+      <p class="sub-vista">¿No puedes escanearlo? En la app elige «Introducir una clave» y escribe: <code class="clave-dos">${esc(data.totp.secret)}</code></p>
+      <ol class="pasos-dos" start="3"><li>Escribe aquí las 6 cifras que te sale en la app:</li></ol>
+      <form id="f-dos-activar" class="fila-dos" novalidate>
+        <input id="dos-codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" aria-label="Código de 6 cifras">
+        <button type="submit" class="btn">${icono("check")}Confirmar</button>
+        <button type="button" class="btn-linea" id="b-dos-cancelar">Cancelar</button>
+      </form>
+      <p class="estado" id="dos-estado" role="status"></p>`;
+    $("dos-codigo").focus();
+    $("b-dos-cancelar").addEventListener("click", async () => { await sb.auth.mfa.unenroll({ factorId: data.id }); pintaDosPasos(); });
+    $("f-dos-activar").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const code = $("dos-codigo").value.replace(/\D/g, "");
+      if (code.length !== 6) return estado($("dos-estado"), "Escribe las 6 cifras.", "mal");
+      const { error: er } = await sb.auth.mfa.challengeAndVerify({ factorId: data.id, code });
+      if (er) return estado($("dos-estado"), "El código no es correcto. Espera a que cambie en la app y prueba otra vez.", "mal");
+      avisa("Verificación en dos pasos activada"); pintaDosPasos();
+    });
   };
 
   // ================== INSTALAR ==================

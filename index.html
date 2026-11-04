@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://ytxpubqyhnohhugpukdm.supabase.co; connect-src 'self' https://ytxpubqyhnohhugpukdm.supabase.co wss://ytxpubqyhnohhugpukdm.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>Comité de Empresa Calsina Carré</title>
@@ -17,8 +18,8 @@
 <meta property="og:description" content="Actualidad, avisos, reuniones, actas y buzón para la plantilla.">
 <meta property="og:image" content="https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/img/og.png">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="fuentes.css?v=6">
-<link rel="stylesheet" href="styles.css?v=6">
+<link rel="stylesheet" href="fuentes.css?v=7">
+<link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body>
 <a class="saltar" href="#contenido">Ir al contenido</a>
@@ -244,6 +245,40 @@
     </div>
   </section>
 
+  <!-- AVISO LEGAL -->
+  <section id="v-aviso-legal" class="vista" data-titulo="Aviso legal" hidden>
+    <div class="cab-apartado">
+      <div class="cab-apartado-in">
+        <span class="ic" data-ic="acta"></span>
+        <div><h1>Aviso legal</h1><p>Quién está detrás de esta web y para qué sirve.</p></div>
+      </div>
+    </div>
+    <div class="caja">
+      <div id="aviso-legal-texto" class="tarjeta texto legal"></div>
+      <nav class="legal-nav" aria-label="Información legal"><a href="#privacidad">Privacidad</a><a href="#cookies">Cookies</a></nav>
+    </div>
+  </section>
+
+  <!-- COOKIES -->
+  <section id="v-cookies" class="vista" data-titulo="Cookies" hidden>
+    <div class="cab-apartado">
+      <div class="cab-apartado-in">
+        <span class="ic" data-ic="candado"></span>
+        <div><h1>Cookies</h1><p>Esta web no usa cookies. Esto es lo único que se guarda en tu móvil.</p></div>
+      </div>
+    </div>
+    <div class="caja">
+      <div id="cookies-texto" class="tarjeta texto legal"></div>
+      <div class="tarjeta borrar-datos">
+        <b>Borrar lo que esta web guarda en este móvil</b>
+        <p>Olvidará tu tema, el tamaño de letra, lo que has visto y lo que has votado. No afecta a nadie más.</p>
+        <button type="button" class="btn-linea peligro" id="b-borrar-datos">Borrar mis datos de este móvil</button>
+        <p class="estado" id="borrar-estado" role="status"></p>
+      </div>
+      <nav class="legal-nav" aria-label="Información legal"><a href="#aviso-legal">Aviso legal</a><a href="#privacidad">Privacidad</a></nav>
+    </div>
+  </section>
+
   <!-- PRIVACIDAD -->
   <section id="v-privacidad" class="vista" data-titulo="Privacidad" hidden>
     <div class="cab-apartado">
@@ -253,10 +288,16 @@
       </div>
     </div>
     <div class="caja">
-      <div id="privacidad-texto" class="tarjeta texto"></div>
+      <div id="privacidad-texto" class="tarjeta texto legal"></div>
+      <nav class="legal-nav" aria-label="Información legal"><a href="#aviso-legal">Aviso legal</a><a href="#cookies">Cookies</a></nav>
     </div>
   </section>
 </main>
+
+<div id="aviso-privacidad" class="aviso-privacidad" role="region" aria-label="Aviso de privacidad" hidden>
+  <p><b>Tu privacidad:</b> esta web no usa cookies ni te pide datos. Solo guarda tus preferencias en tu propio móvil.</p>
+  <div><a class="btn-linea" href="#cookies">Más información</a><button type="button" class="btn" id="b-aviso-ok">Entendido</button></div>
+</div>
 
 <nav class="barra-fija" aria-label="Contacto">
   <a href="#nosotros" class="btn grande"><span class="ic" data-ic="personas"></span><span>Contactar<span class="solo-ancho"> con el comité</span></span></a>
@@ -281,13 +322,13 @@
   </div>
   <div class="pie-legal">
     <span>© <span id="pie-ano">2026</span> Comité de Empresa de Calsina Carré</span>
-    <span><a href="#privacidad">Privacidad</a> · <a href="admin.html">Acceso del comité</a></span>
+    <span><a href="#aviso-legal">Aviso legal</a> · <a href="#privacidad">Privacidad</a> · <a href="#cookies">Cookies</a> · <a href="admin.html">Acceso del comité</a></span>
   </div>
 </footer>
 
 <script src="lib/supabase.js"></script>
-<script src="comun.js?v=6"></script>
-<script src="render.js?v=6"></script>
-<script src="app.js?v=6"></script>
+<script src="comun.js?v=7"></script>
+<script src="render.js?v=7"></script>
+<script src="app.js?v=7"></script>
 </body>
 </html>
