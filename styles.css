@@ -229,7 +229,36 @@ main { outline: none; }
 .etq.rojo { background: var(--rojo); color: #fff; }
 .etq.nuevo { background: #e8f5e9; color: #1b5e20; }
 .etq.azul { background: var(--azul-claro); color: var(--azul-osc); }
-.aviso.urgente { border-color: var(--rojo); border-left-width: 6px; }
+/* Avisos: estilo señal de tráfico */
+.aviso { position: relative; overflow: hidden; }
+.aviso-cuerpo { display: flex; gap: 14px; align-items: flex-start; }
+.aviso-txt { flex: 1; min-width: 0; }
+.senal { flex: none; width: 52px; height: 65px; margin: -2px 0 -6px; overflow: visible; filter: drop-shadow(0 3px 3px rgba(11, 30, 60, .22)); }
+.senal-poste { fill: #9aa7b6; } .senal-brida { fill: #6f7d8e; }
+.senal-marco { fill: #fff; stroke: #c3ccd7; stroke-width: 1; }
+.senal-borde { fill: #d32f2f; stroke: #d32f2f; stroke-width: 4; stroke-linejoin: round; }
+.senal-dentro { fill: #fff; stroke: #fff; stroke-width: 3; stroke-linejoin: round; }
+.senal-signo { stroke: #111; stroke-width: 3.6; stroke-linecap: round; fill: none; }
+.senal-punto { fill: #111; }
+.senal-marco.azul { fill: #1565c0; stroke: #0d4a90; }
+.senal-filete { fill: none; stroke: #fff; stroke-width: 1.6; }
+.senal-i { fill: #fff; }
+.senal-brillo { fill: #fff; opacity: .16; pointer-events: none; }
+.senal-luz { fill: #ffb300; stroke: #8a5a00; stroke-width: .8; animation: luz-ambar 1.1s steps(1, end) infinite; }
+@keyframes luz-ambar { 0% { fill: #ffb300; filter: drop-shadow(0 0 4px #ffc400); } 50% { fill: #7a5200; filter: none; } }
+@media (prefers-reduced-motion: reduce) { .senal-luz { animation: none; } }
+.rayas { position: relative; height: 12px; margin: -16px -16px 14px; background: repeating-linear-gradient(-45deg, #d32f2f 0 12px, #fff 12px 24px); box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .12); }
+.rayas::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255, 255, 255, .35), transparent 60%); }
+/* Borde de abajo como una carretera: asfalto con la raya discontinua */
+.aviso { padding-bottom: 22px; }
+.aviso::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 7px; background: linear-gradient(90deg, #f2f4f7 0 16px, transparent 16px 30px) 8px 50% / 30px 2px repeat-x, #2a3442; }
+.aviso.urgente::after { background: linear-gradient(90deg, #ffcc33 0 16px, transparent 16px 30px) 8px 50% / 30px 2px repeat-x, #2a3442; }
+.aviso.urgente { border-color: var(--rojo); }
+.destacado.con-senal { position: relative; overflow: hidden; display: grid; grid-template-columns: auto 1fr; column-gap: 14px; row-gap: 4px; align-items: start; border-left: 1px solid var(--rojo); padding-top: 0; }
+.destacado.con-senal .rayas { grid-column: 1 / -1; margin: 0 -16px 10px; }
+.destacado.con-senal .senal { grid-row: 2 / span 4; }
+.destacado.con-senal > :not(.rayas):not(.senal) { grid-column: 2; }
+@media (max-width: 360px) { .senal { width: 42px; height: 53px; } .aviso-cuerpo { gap: 10px; } }
 .acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .resalta { animation: resalta 2s ease; }
 @keyframes resalta { 0%, 40% { box-shadow: 0 0 0 4px var(--celeste); } 100% { box-shadow: var(--sombra); } }
@@ -472,3 +501,5 @@ img.inicial.foto { object-fit: cover; padding: 0; box-shadow: 0 0 0 2px var(--ta
 .aviso-privacidad .btn-linea { color: #fff; border-color: rgba(255, 255, 255, .35); }
 .aviso-privacidad .btn { background: linear-gradient(135deg, #00C6FF, #0E5FAE); color: #fff; min-height: 42px; }
 @media (min-width: 980px) { .aviso-privacidad { left: 50%; right: auto; width: 720px; transform: translateX(-50%); } }
+.destacado.con-senal { padding-bottom: 22px; }
+.destacado.con-senal::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 7px; background: linear-gradient(90deg, #ffcc33 0 16px, transparent 16px 30px) 8px 50% / 30px 2px repeat-x, #2a3442; }

@@ -2,6 +2,8 @@
 // Manda avisos al móvil (notificaciones push) cuando el comité publica algo.
 // - Desde el panel: un admin con su sesión ({modo: "publicado", tabla, id, cambio?}, {modo: "estado"}, {modo: "prueba"}).
 // - Tarea programada cada 10 min (pg_cron, cabecera x-cron-secret): avisos programados que ya tocan y pendientes.
+//   v10: el día en que un aviso sale destacado en la portada («Destacar en la portada el día»), manda «DESTACADO HOY: …»
+//   una sola vez, a partir de las 8:00 de Madrid (para no despertar a nadie). Se marca antes de enviar.
 // Las claves VAPID se crean aquí la primera vez y se guardan en config_privada: la privada nunca sale del servidor.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -94,6 +96,20 @@ Deno.serve(async (req) => {
       else q = q.gte("creado", desde);
       const { data } = await q.limit(10);
       for (const r of data ?? []) res.push({ t, id: r.id, ...(await avisarDe(t, r.id, cfg)) });
+    }
+    // Avisos destacados hoy en la portada (como en CCOO): una notificación ese día, aunque el aviso sea antiguo
+    const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" })
+      .formatToParts(new Date()).map((x) => [x.type, x.value]));
+    if (Number(p.hour) >= 8) {
+      const hoy = `${p.year}-${p.month}-${p.day}`;
+      const { data: dest, error: errDest } = await admin.from("avisos").update({ destacado_avisado: true }).eq("destacado_avisado", false).eq("destacar_dia", hoy)
+        .or(`publicar_en.is.null,publicar_en.lte.${ahora}`).select("*");
+      if (errDest) console.error("destacados", errDest.message);
+      for (const x of dest ?? []) {
+        const m = TABLAS.avisos(x, cfg.web_url);
+        m.titulo = "DESTACADO HOY: " + x.titulo;
+        res.push({ t: "destacado", id: x.id, push: await enviarPush(cfg, m, "avisos-" + x.id + "-destacado") });
+      }
     }
     return json({ ok: true, procesados: res });
   }

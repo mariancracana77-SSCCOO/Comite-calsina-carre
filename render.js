@@ -14,14 +14,34 @@
       <div class="acciones">${botonCompartir("noticia-" + n.id, n.titulo, n.contenido)}</div>
     </article>`;
 
-  const aviso = (a) => `
-    <article class="tarjeta aviso${a.urgente ? " urgente" : ""}" id="aviso-${a.id}">
-      <div class="meta">${a.urgente ? `<span class="etq rojo">${icono("alerta")}Urgente</span>` : ""}${nuevo(a.fecha)}<span>${esc(fechaLarga(a.fecha || new Date()))}</span></div>
-      <h3>${esc(a.titulo || "Sin título")}</h3>
-      <div class="texto">${textoHTML(a.contenido)}</div>
-      ${adjuntosHTML(a.adjuntos)}
-      <div class="acciones">${botonCompartir("aviso-" + a.id, a.titulo, a.contenido)}</div>
-    </article>`;
+  // Avisos con estilo de señal de tráfico (lo eligió el padre), con su poste:
+  // - normal: señal informativa azul cuadrada con «i» blanca;
+  // - urgente o destacado hoy: señal de peligro (triángulo con borde rojo y «!») con luz ámbar que parpadea,
+  //   y la tarjeta lleva arriba una franja de rayas rojas y blancas, como las vallas de obras.
+  const senal = (rojo) => `<svg class="senal${rojo ? " roja" : ""}" viewBox="0 0 56 70" aria-hidden="true">
+    <rect class="senal-poste" x="25.5" y="44" width="5" height="26" rx="1.2"/><rect class="senal-brida" x="23.5" y="50" width="9" height="3" rx="1"/>${rojo
+    ? `<path class="senal-marco" d="M28 3.5c1.6 0 3 .9 3.8 2.3l21 37.2c1.6 2.8-.4 6.3-3.6 6.3H6.8c-3.2 0-5.2-3.5-3.6-6.3l21-37.2c.8-1.4 2.2-2.3 3.8-2.3z"/>
+    <path class="senal-borde" d="M28 9.5 48 44.5H8z"/><path class="senal-dentro" d="M28 17 41.2 40.2H14.8z"/>
+    <path class="senal-signo" d="M28 24v8.2"/><circle class="senal-punto" cx="28" cy="36.6" r="2.1"/>
+    <circle class="senal-luz" cx="28" cy="3.6" r="3.2"/>`
+    : `<rect class="senal-marco azul" x="4" y="2" width="48" height="46" rx="6"/><rect class="senal-filete" x="7.5" y="5.5" width="41" height="39" rx="3.5"/>
+    <circle class="senal-i" cx="28" cy="15" r="3.6"/><path class="senal-i" d="M23 22h7.4v15.5H34v4H22v-4h3.6V26H23z"/>`}
+    <path class="senal-brillo" d="M8 6h22L12 30H8z"/></svg>`;
+  // Destacado hoy («Destacar en la portada el día»): ese día se ve en rojo, como un urgente
+  const aviso = (a) => { const hoy = a.destacar_dia && a.destacar_dia === hoyISO(), rojo = a.urgente || hoy; return `
+    <article class="tarjeta aviso${rojo ? " urgente" : ""}" id="aviso-${a.id}">
+      ${rojo ? '<div class="rayas" aria-hidden="true"></div>' : ""}
+      <div class="aviso-cuerpo">
+        ${senal(rojo)}
+        <div class="aviso-txt">
+          <div class="meta">${hoy ? '<span class="etq rojo">Destacado hoy</span>' : a.urgente ? '<span class="etq rojo">Urgente</span>' : '<span class="etq azul">Aviso</span>'}${nuevo(a.fecha)}<span>${esc(fechaLarga(a.fecha || new Date()))}</span></div>
+          <h3>${esc(a.titulo || "Sin título")}</h3>
+          <div class="texto">${textoHTML(a.contenido)}</div>
+          ${adjuntosHTML(a.adjuntos)}
+          <div class="acciones">${botonCompartir("aviso-" + a.id, a.titulo, a.contenido)}</div>
+        </div>
+      </div>
+    </article>`; };
 
   const reunion = (r) => {
     const f = r.fecha || hoyISO(), d = fechaDia(f), pasada = f < hoyISO();
@@ -112,5 +132,5 @@
     </article>`;
   };
 
-  window.R = { noticia, aviso, reunion, acta, documento, consulta, pregunta, miembro, opciones, abierta };
+  window.R = { senal, noticia, aviso, reunion, acta, documento, consulta, pregunta, miembro, opciones, abierta };
 })();
