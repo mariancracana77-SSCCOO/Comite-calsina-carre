@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://ytxpubqyhnohhugpukdm.supabase.co; connect-src 'self' https://ytxpubqyhnohhugpukdm.supabase.co wss://ytxpubqyhnohhugpukdm.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<title>Comité de Empresa Calsina Carré</title>
+<meta name="description" content="Información del comité de empresa para la plantilla de Calsina Carré: actualidad, avisos, reuniones, actas, buzón de sugerencias y preguntas.">
+<meta name="theme-color" content="#0B1E3C">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="img/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="img/favicon-64.png" sizes="64x64" type="image/png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Comité CC">
+<meta property="og:title" content="Comité de Empresa Calsina Carré">
+<meta property="og:description" content="Actualidad, avisos, reuniones, actas y buzón para la plantilla.">
+<meta property="og:image" content="https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/img/og.png">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="fuentes.css?v=2">
+<link rel="stylesheet" href="styles.css?v=2">
+</head>
+<body>
+<a class="saltar" href="#contenido">Ir al contenido</a>
+
+<header class="cabecera">
+  <div class="cab-fila">
+    <a class="marca" href="#actualidad" aria-label="Ir a Actualidad">
+      <span class="marca-logo"><img src="img/icon-192.png" alt="" width="48" height="48"></span>
+      <span class="marca-txt"><b>Calsina Carré</b><small>Comité de empresa</small></span>
+    </a>
+    <div class="cab-botones">
+      <button type="button" id="b-buscar" class="cab-btn" aria-label="Buscar en toda la web"></button>
+      <button type="button" id="b-letra" class="cab-btn" aria-label="Cambiar el tamaño de la letra"><span class="aa">Aa</span></button>
+      <button type="button" id="b-tema" class="cab-btn" aria-label="Cambiar entre modo claro y oscuro"></button>
+    </div>
+  </div>
+  <nav class="pestanas" aria-label="Apartados">
+    <div class="pestanas-fila" id="pestanas">
+      <a href="#actualidad" data-vista="actualidad">Actualidad</a>
+      <a href="#avisos" data-vista="avisos">Avisos<span class="cuenta" data-cuenta="avisos" hidden></span></a>
+      <a href="#reuniones" data-vista="reuniones">Calendario de reuniones</a>
+      <a href="#actas" data-vista="actas">Actas</a>
+      <a href="#buzon" data-vista="buzon">Sugerencias y preguntas</a>
+      <a href="#nosotros" data-vista="nosotros">Nosotros</a>
+    </div>
+  </nav>
+</header>
+
+<div id="sin-red" class="sin-red" hidden></div>
+<div id="instalar" class="instalar" hidden>
+  <div><b>Instala la app</b><small id="instalar-txt">Tenla siempre a mano en tu móvil, como una aplicación más.</small></div>
+  <button type="button" id="b-instalar" class="btn">Instalar</button>
+  <button type="button" id="b-instalar-no" class="cerrar" aria-label="Ahora no"></button>
+</div>
+
+<main id="contenido" tabindex="-1">
+  <!-- ACTUALIDAD (portada) -->
+  <section id="v-actualidad" class="vista" data-titulo="Actualidad">
+    <div class="portada">
+      <img class="banner-marca" src="img/cabecera-900.webp" srcset="img/cabecera-900.webp 900w, img/cabecera-1600.webp 1600w" sizes="(min-width: 980px) 948px, 100vw" width="1600" height="352" alt="Calsina Carré · Transporte y logística · Comité de empresa">
+      <p class="bienvenida" id="bienvenida"></p>
+      <div id="urgente"></div>
+      <div id="proxima"></div>
+    </div>
+    <div class="caja">
+      <div id="novedades"></div>
+      <div id="consultas"></div>
+      <nav class="accesos" aria-label="Accesos rápidos">
+        <a href="#reuniones"><span class="ic" data-ic="calendario"></span><span>Reuniones</span></a>
+        <a href="#actas"><span class="ic" data-ic="acta"></span><span>Actas</span></a>
+        <a href="#documentos"><span class="ic" data-ic="documento"></span><span>Documentos</span></a>
+        <a href="#buzon"><span class="ic" data-ic="mensaje"></span><span>Buzón anónimo</span></a>
+      </nav>
+      <h1 class="titulo-vista">Actualidad</h1>
+      <p class="sub-vista">Noticias e información que os afecta como trabajadores.</p>
+      <div id="lista-actualidad" class="lista"><div class="esq"></div><div class="esq"></div></div>
+    </div>
+  </section>
+
+  <!-- AVISOS -->
+  <section id="v-avisos" class="vista" data-titulo="Avisos" hidden>
+    <div class="caja">
+      <h1 class="titulo-vista">Avisos</h1>
+      <p class="sub-vista">Comunicados cortos del comité. Los urgentes salen marcados en rojo.</p>
+      <div id="push-caja" class="tarjeta push-caja" hidden>
+        <div class="push-cab"><span class="ic" data-ic="campana"></span><div><h2>Recibe los avisos en tu móvil</h2><p id="push-txt">Te llega una notificación cada vez que el comité publica algo, aunque tengas la web cerrada.</p></div></div>
+        <div id="push-off">
+          <label class="acepto"><input type="checkbox" id="push-acepto"><span>Acepto que este móvil quede apuntado para recibir los avisos. Solo se guarda una dirección técnica anónima (no tu nombre ni tu número) y puedo quitarlo cuando quiera.</span></label>
+          <button type="button" class="btn grande" id="push-activar"><span class="ic" data-ic="campana"></span>Activar los avisos</button>
+        </div>
+        <div id="push-on" hidden>
+          <p class="push-ok"><span class="ic" data-ic="check"></span>Los avisos están activados en este móvil.</p>
+          <button type="button" class="btn-linea" id="push-desactivar"><span class="ic" data-ic="campanaNo"></span>Desactivar los avisos</button>
+        </div>
+        <p id="push-estado" class="estado" role="status"></p>
+      </div>
+      <div id="lista-avisos" class="lista"></div>
+    </div>
+  </section>
+
+  <!-- CALENDARIO DE REUNIONES -->
+  <section id="v-reuniones" class="vista" data-titulo="Calendario de reuniones" hidden>
+    <div class="caja">
+      <h1 class="titulo-vista">Calendario de reuniones</h1>
+      <p class="sub-vista">Reuniones del comité, con la empresa y asambleas. Puedes añadirlas al calendario de tu móvil.</p>
+      <div class="mes">
+        <div class="mes-cab">
+          <button type="button" class="mes-btn" id="mes-ant" aria-label="Mes anterior"></button>
+          <h2 id="mes-nombre" aria-live="polite"></h2>
+          <button type="button" class="mes-btn" id="mes-sig" aria-label="Mes siguiente"></button>
+        </div>
+        <div class="mes-dias" aria-hidden="true"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+        <div class="mes-rejilla" id="mes-rejilla"></div>
+      </div>
+      <h2 class="titulo-bloque">Próximas reuniones</h2>
+      <div id="lista-proximas" class="lista"></div>
+      <details class="pasadas" id="pasadas-caja">
+        <summary>Reuniones pasadas</summary>
+        <div id="lista-pasadas" class="lista"></div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ACTAS -->
+  <section id="v-actas" class="vista" data-titulo="Actas" hidden>
+    <div class="caja">
+      <h1 class="titulo-vista">Actas</h1>
+      <div class="segmentos" role="tablist" aria-label="Actas o documentos">
+        <button type="button" role="tab" id="seg-actas" aria-selected="true" aria-controls="bloque-actas">Actas</button>
+        <button type="button" role="tab" id="seg-documentos" aria-selected="false" aria-controls="bloque-documentos">Documentos útiles</button>
+      </div>
+      <div id="bloque-documentos" role="tabpanel" aria-labelledby="seg-documentos" hidden>
+        <p class="sub-vista">Convenio, calendario laboral, tablas salariales y otros documentos que te pueden hacer falta.</p>
+        <div id="lista-documentos"></div>
+      </div>
+      <div id="bloque-actas" role="tabpanel" aria-labelledby="seg-actas">
+      <p class="sub-vista">Resumen y acuerdos de cada reunión. Si hay acta completa, puedes abrirla en PDF.</p>
+      <label class="buscador">
+        <span class="sr-only">Buscar en las actas</span>
+        <input type="search" id="buscar-actas" placeholder="Buscar en las actas" autocomplete="off">
+      </label>
+      <div id="anos-actas" class="chips" role="group" aria-label="Elegir año"></div>
+      <div id="lista-actas" class="lista"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUGERENCIAS Y PREGUNTAS -->
+  <section id="v-buzon" class="vista" data-titulo="Sugerencias y preguntas" hidden>
+    <div class="caja">
+      <h1 class="titulo-vista">Sugerencias y preguntas</h1>
+      <p class="sub-vista">Escríbenos lo que quieras proponer o preguntar. Es anónimo: no guardamos tu nombre, ni tu teléfono, ni desde dónde lo envías.</p>
+      <form id="form-buzon" class="tarjeta form-buzon" novalidate>
+        <fieldset class="tipo-buzon">
+          <legend>¿Qué nos quieres enviar?</legend>
+          <label><input type="radio" name="tipo" value="Sugerencia" checked><span>Una sugerencia</span></label>
+          <label><input type="radio" name="tipo" value="Pregunta"><span>Una pregunta</span></label>
+        </fieldset>
+        <label for="buzon-texto" class="etq-campo">Tu mensaje</label>
+        <textarea id="buzon-texto" rows="5" maxlength="1000" placeholder="Escribe aquí. No pongas tu nombre, email ni teléfono." required></textarea>
+        <div class="cuenta-letras"><span id="buzon-cuenta">0</span> / 1000</div>
+        <label class="acepto"><input type="checkbox" id="buzon-acepto"><span>Entiendo que el mensaje es anónimo y que el comité puede publicar la respuesta en «Preguntas frecuentes» sin decir quién preguntó.</span></label>
+        <button type="submit" class="btn grande" id="buzon-enviar">Enviar al comité</button>
+        <p id="buzon-estado" class="estado" role="status"></p>
+      </form>
+      <h2 class="titulo-bloque">Preguntas frecuentes</h2>
+      <div id="lista-preguntas" class="faq"></div>
+    </div>
+  </section>
+
+  <!-- NOSOTROS -->
+  <section id="v-nosotros" class="vista" data-titulo="Nosotros" hidden>
+    <div class="caja">
+      <h1 class="titulo-vista">Nosotros</h1>
+      <div id="nosotros-texto" class="tarjeta texto"></div>
+      <h2 class="titulo-bloque">Miembros del comité</h2>
+      <div id="lista-miembros" class="miembros"></div>
+    </div>
+  </section>
+  <!-- BUSCAR -->
+  <section id="v-buscar" class="vista" data-titulo="Buscar" hidden>
+    <div class="caja">
+      <h1 class="titulo-vista">Buscar</h1>
+      <label class="buscador">
+        <span class="sr-only">Qué quieres buscar</span>
+        <input type="search" id="buscar-todo" placeholder="Ej.: vacaciones, nómina, turnos…" autocomplete="off" enterkeyhint="search">
+      </label>
+      <p id="buscar-info" class="sub-vista" role="status"></p>
+      <div id="lista-buscar" class="lista"></div>
+    </div>
+  </section>
+
+  <!-- PRIVACIDAD -->
+  <section id="v-privacidad" class="vista" data-titulo="Privacidad" hidden>
+    <div class="caja">
+      <h1 class="titulo-vista">Privacidad</h1>
+      <div id="privacidad-texto" class="tarjeta texto"></div>
+    </div>
+  </section>
+</main>
+
+<nav class="barra-fija" aria-label="Contacto">
+  <a href="#nosotros" class="btn grande"><span class="ic" data-ic="personas"></span><span>Contactar<span class="solo-ancho"> con el comité</span></span></a>
+  <a href="#buzon" class="barra-buzon" aria-label="Buzón anónimo"><span class="ic" data-ic="mensaje"></span><span>Buzón</span></a>
+  <a href="#avisos-movil" class="barra-buzon" id="barra-campana" aria-label="Avisos al móvil"><span class="ic" data-ic="campana"></span><span>Avisos</span></a>
+</nav>
+
+<footer class="pie">
+  <p>Comité de Empresa de Calsina Carré · Web informativa para la plantilla</p>
+  <p><a href="#privacidad">Privacidad</a> · <a href="admin.html">Acceso del comité</a></p>
+</footer>
+
+<script src="lib/supabase.js"></script>
+<script src="comun.js?v=2"></script>
+<script src="render.js?v=2"></script>
+<script src="app.js?v=2"></script>
+</body>
+</html>

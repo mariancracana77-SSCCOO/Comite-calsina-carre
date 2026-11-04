@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Cartel para el tablón · Comité Calsina Carré</title>
+<link rel="icon" href="img/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="fuentes.css?v=2">
+<style>
+  :root { --noche: #0B1E3C; --azul: #0E5FAE; --cian: #00C6FF; --hielo: #E6EEF7; --tinta: #0B1E3C; --suave: #4d5b6c; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Inter", Arial, sans-serif; color: var(--tinta); background: #dfe6ef; }
+  .barra { display: flex; gap: 10px; justify-content: center; padding: 14px; flex-wrap: wrap; }
+  .barra button, .barra a { font: inherit; font-weight: 700; border: 0; border-radius: 10px; padding: 11px 18px; cursor: pointer; background: var(--azul); color: #fff; text-decoration: none; }
+  .barra a { background: #fff; color: var(--tinta); border: 1px solid #c9d4e2; }
+  .hoja { position: relative; width: 210mm; height: 297mm; margin: 0 auto 30px; background: #fff; display: flex; flex-direction: column; align-items: center; text-align: center; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,.12); }
+  .banner { width: 100%; display: block; }
+  h1 { font-family: "Montserrat", Arial, sans-serif; font-weight: 800; font-size: 13mm; line-height: 1.02; margin: 9mm 14mm 3mm; text-transform: uppercase; color: var(--noche); }
+  h1 span { color: var(--azul); }
+  .sub { font-size: 5.2mm; color: var(--suave); margin: 0 20mm 8mm; line-height: 1.35; }
+  .centro { display: flex; gap: 10mm; align-items: center; justify-content: center; padding: 0 14mm; }
+  .qr { display: flex; flex-direction: column; align-items: center; gap: 3mm; }
+  .codigo { position: relative; padding: 5mm; background: #fff; border: 1.6mm solid var(--noche); border-radius: 6mm; box-shadow: 0 0 0 1.4mm var(--cian); }
+  .codigo svg { display: block; width: 66mm; height: 66mm; }
+  .codigo .logo-qr { position: absolute; left: 50%; top: 50%; width: 17mm; height: 17mm; transform: translate(-50%, -50%); border-radius: 4mm; background: #fff; padding: .8mm; }
+  .qr b { font-family: "Montserrat", Arial, sans-serif; font-weight: 800; font-size: 6.5mm; text-transform: uppercase; }
+  .qr small { font-size: 3.6mm; color: var(--suave); white-space: nowrap; }
+  .ofrece { list-style: none; margin: 0; padding: 0; text-align: left; font-size: 4.6mm; line-height: 1.25; display: grid; gap: 3.6mm; max-width: 84mm; }
+  .ofrece li { display: flex; gap: 3mm; align-items: flex-start; }
+  .ofrece li::before { content: ""; flex: none; width: 4.2mm; height: 4.2mm; margin-top: .6mm; border-radius: 1.2mm; background: linear-gradient(135deg, var(--azul), var(--cian)); }
+  .ofrece b { font-family: "Montserrat", Arial, sans-serif; font-weight: 800; font-size: 5mm; display: block; line-height: 1.1; margin-bottom: .6mm; }
+  .pasos { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin: 9mm 14mm 0; text-align: left; width: calc(100% - 28mm); }
+  .paso { background: var(--hielo); border-radius: 4mm; padding: 5mm 6mm; }
+  .paso h2 { font-family: "Montserrat", Arial, sans-serif; font-weight: 800; font-size: 6mm; margin: 0 0 2mm; text-transform: uppercase; color: var(--azul); }
+  .paso ol { margin: 0; padding-left: 5.5mm; font-size: 4.1mm; line-height: 1.45; }
+  .pie { margin-top: auto; width: 100%; background: var(--noche); color: #fff; padding: 6mm 0 7mm; border-top: 2mm solid var(--cian); }
+  .pie p { font-family: "Montserrat", Arial, sans-serif; font-weight: 800; font-size: 6mm; letter-spacing: .06em; text-transform: uppercase; margin: 0; }
+  @media print {
+    body { background: #fff; }
+    .barra { display: none; }
+    .hoja { margin: 0; box-shadow: none; }
+    @page { size: A4; margin: 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  @media screen and (max-width: 860px) { .hoja { zoom: .45; } }
+</style>
+</head>
+<body>
+<div class="barra">
+  <button type="button" id="b-imprimir">Imprimir cartel</button>
+  <a href="admin.html#cartel">Volver al panel</a>
+</div>
+<div class="hoja">
+  <img class="banner" src="img/cabecera-1600.webp" alt="Calsina Carré · Comité de empresa">
+  <h1>Toda la información <span>del comité</span> en tu móvil</h1>
+  <p class="sub">Escanea el código con la cámara del móvil e instala la app. Es gratis, no tienes que registrarte y no pedimos ningún dato.</p>
+  <div class="centro">
+    <div class="qr"><div class="codigo"><div id="qr-web"></div><img class="logo-qr" src="img/icon-192.png" alt=""></div><b>Escanea con la cámara</b><small id="url-web"></small></div>
+    <ul class="ofrece">
+      <li><span><b>Avisos y actualidad</b>Lo que te afecta como trabajador, al momento.</span></li>
+      <li><span><b>Calendario de reuniones</b>Comité, empresa y asambleas.</span></li>
+      <li><span><b>Actas y documentos</b>Acuerdos, convenio, calendario laboral.</span></li>
+      <li><span><b>Consultas anónimas</b>Opina sin que nadie sepa qué votas.</span></li>
+      <li><span><b>Buzón anónimo</b>Pregunta o sugiere sin dar tu nombre.</span></li>
+    </ul>
+  </div>
+  <div class="pasos">
+    <div class="paso"><h2>Android</h2><ol><li>Escanea el código y abre el enlace en Chrome.</li><li>Pulsa <b>Instalar</b> (o menú ⋮ → <b>Instalar aplicación</b>).</li><li>Ábrela desde el icono, como cualquier app.</li></ol></div>
+    <div class="paso"><h2>iPhone</h2><ol><li>Escanea el código y abre el enlace en Safari.</li><li>Pulsa <b>Compartir</b> → <b>Añadir a pantalla de inicio</b>.</li><li>Ábrela desde el icono, como cualquier app.</li></ol></div>
+  </div>
+  <div class="pie"><p>Comité de empresa · Para toda la plantilla</p></div>
+</div>
+<script src="lib/qr.js"></script>
+<script src="cartel.js?v=2"></script>
+</body>
+</html>

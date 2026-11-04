@@ -1,0 +1,6 @@
+# GitHub Pages: deja fuera de la web pública los archivos internos (en github.com se siguen viendo)
+exclude:
+  - CLAUDE.md
+  - README.md
+  - pruebas/
+  - herramientas/
