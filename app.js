@@ -75,7 +75,14 @@
   };
 
   // ---------- Piezas (en render.js, compartidas con el panel) ----------
-  const vacio = (txt) => `<p class="vacio">${esc(txt)}</p>`;
+  // Apartado sin contenido: icono, título, explicación y, si toca, un enlace útil
+  const vacio = (titulo, txt = "", ic = "documento", enlace = null) => `
+    <div class="vacio-caja">
+      <span class="vacio-ic">${icono(ic)}</span>
+      <b>${esc(titulo)}</b>
+      ${txt ? `<p>${esc(txt)}</p>` : ""}
+      ${enlace ? `<a class="btn-linea" href="${esc(enlace[0])}">${esc(enlace[1])}</a>` : ""}
+    </div>`;
   const tarjetaNoticia = R.noticia, tarjetaAviso = R.aviso, tarjetaReunion = R.reunion, tarjetaActa = R.acta, tarjetaDocumento = R.documento;
 
   // ---------- Consultas anónimas ----------
@@ -161,12 +168,12 @@
     })() : "";
     pintaNovedades();
     pintaConsultas();
-    $("lista-actualidad").innerHTML = D.actualidad.map(tarjetaNoticia).join("") || vacio("Todavía no hay noticias publicadas.");
+    $("lista-actualidad").innerHTML = D.actualidad.map(tarjetaNoticia).join("") || vacio("Todavía no hay noticias", "Aquí saldrán las novedades del comité: convenio, nóminas, calendario laboral y todo lo que os afecta.", "periodico", ["#avisos-movil", "Avisarme cuando haya novedades"]);
   };
 
   // ---------- Avisos ----------
   const pintaAvisos = () => {
-    $("lista-avisos").innerHTML = D.avisos.map(tarjetaAviso).join("") || vacio("No hay avisos.");
+    $("lista-avisos").innerHTML = D.avisos.map(tarjetaAviso).join("") || vacio("No hay avisos por ahora", "Cuando el comité publique un aviso, saldrá aquí. Activa los avisos y te llegará al móvil.", "megafono");
     pintaCuenta();
   };
 
@@ -198,7 +205,7 @@
     const hoy = hoyISO();
     const prox = D.reuniones.filter((r) => r.fecha >= hoy);
     const pas = D.reuniones.filter((r) => r.fecha < hoy).reverse();
-    $("lista-proximas").innerHTML = prox.map(tarjetaReunion).join("") || vacio("No hay reuniones previstas por ahora.");
+    $("lista-proximas").innerHTML = prox.map(tarjetaReunion).join("") || vacio("No hay reuniones previstas", "Cuando se convoque una reunión o una asamblea, saldrá aquí con el día, la hora y el lugar.", "calendario");
     $("lista-pasadas").innerHTML = pas.map(tarjetaReunion).join("");
     $("pasadas-caja").hidden = !pas.length;
     pintaMes();
@@ -223,7 +230,7 @@
     const lista = D.actas.filter((a) => (filtroAno === "todos" || a.fecha.startsWith(filtroAno))
       && (!q || [a.titulo, a.tipo, a.resumen, a.acuerdos].join(" ").toLowerCase().includes(q)));
     $("lista-actas").innerHTML = lista.map(tarjetaActa).join("")
-      || vacio(q ? "No hay actas con esas palabras." : "Todavía no hay actas publicadas.");
+      || (q ? vacio("No hay actas con esas palabras", "Prueba con otras palabras o mira todas las actas.", "buscar") : vacio("Todavía no hay actas", "Aquí saldrán el resumen y los acuerdos de cada reunión.", "acta"));
   };
   $("buscar-actas").addEventListener("input", pintaActas);
   $("anos-actas").addEventListener("click", (e) => {
@@ -236,12 +243,12 @@
     const nombres = Object.keys(grupos);
     $("lista-documentos").innerHTML = nombres.map((g) =>
       `${nombres.length > 1 ? `<h2 class="titulo-bloque">${esc(g)}</h2>` : ""}<div class="lista">${grupos[g].map(tarjetaDocumento).join("")}</div>`).join("")
-      || vacio("Todavía no hay documentos.");
+      || vacio("Todavía no hay documentos", "Aquí estarán el convenio, el calendario laboral, las tablas salariales y otros documentos útiles.", "documento");
   };
 
   // ---------- Sugerencias y preguntas ----------
   const pintaPreguntas = () => {
-    $("lista-preguntas").innerHTML = D.preguntas.map((p) => R.pregunta(p)).join("") || vacio("Todavía no hay preguntas respondidas.");
+    $("lista-preguntas").innerHTML = D.preguntas.map((p) => R.pregunta(p)).join("") || vacio("Todavía no hay preguntas respondidas", "Si tienes una duda, escríbela arriba: el comité responderá aquí las más habituales.", "ayuda");
   };
   $("buzon-texto").addEventListener("input", (e) => { $("buzon-cuenta").textContent = e.target.value.length; });
   $("form-buzon").addEventListener("submit", async (e) => {
@@ -268,7 +275,7 @@
   const pintaNosotros = () => {
     $("nosotros-texto").innerHTML = textoHTML(D.paginas.nosotros) || "<p>Información del comité próximamente.</p>";
     $("privacidad-texto").innerHTML = textoHTML(D.paginas.privacidad) || "<p>Esta web es solo informativa.</p>";
-    $("lista-miembros").innerHTML = D.miembros.map(R.miembro).join("") || vacio("Pronto pondremos aquí quién forma el comité.");
+    $("lista-miembros").innerHTML = D.miembros.map(R.miembro).join("") || vacio("Pronto pondremos aquí quién forma el comité", "Mientras tanto, puedes escribirnos de forma anónima.", "personas", ["#buzon", "Ir al buzón anónimo"]);
   };
 
   // ---------- Buscar en toda la web ----------

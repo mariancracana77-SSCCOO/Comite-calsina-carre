@@ -243,3 +243,12 @@ button.fila-abre:hover b { color: var(--azul); }
 .rk-fila { display: grid; grid-template-columns: minmax(110px, 180px) 1fr 44px; gap: 10px; align-items: center; font-size: .9rem; }
 .rk-fila b { text-align: right; }
 .rk-fila .cons-barra { margin: 0; }
+
+/* Campo «foto» */
+.foto-campo { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.foto-previa { width: 72px; height: 72px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--azul-claro); color: var(--azul); flex: none; }
+.foto-previa img { width: 100%; height: 100%; object-fit: cover; }
+.foto-previa .ico { width: 30px; height: 30px; }
+.foto-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.foto-btns .subir { position: relative; overflow: hidden; white-space: nowrap; cursor: pointer; }
+.foto-btns .subir input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
