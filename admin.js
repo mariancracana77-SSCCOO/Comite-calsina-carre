@@ -79,7 +79,8 @@
     actas: {
       nombre: "Actas", uno: "acta", nuevo: "Nueva acta", ic: "acta", tabla: "actas", ancla: "acta",
       orden: [["fecha", false]],
-      ayuda: "Resumen y acuerdos de cada reunión. Puedes adjuntar el acta completa en PDF o fotos de las hojas.",
+      ayuda: "Resumen y acuerdos de cada reunión. Puedes adjuntar el acta completa en PDF o fotos de las hojas. Al crear una nueva, el asistente la redacta a partir de una foto de tus notas.",
+      asistente: true,
       campos: [
         ["titulo", "Título", "texto", { req: true, ph: "Ej.: Reunión con la empresa de octubre" }],
         ["tipo", "Tipo de reunión", "opcion", { lista: TIPOS_REUNION, def: TIPOS_REUNION[0] }],
@@ -766,6 +767,7 @@
     $("ed-modo").textContent = duplicando ? "Copia de " + S.uno : x ? "Editar " + S.uno : S.nuevo;
     $("ed-form").innerHTML = (x && S.avisoEditar ? `<p class="nota-campo">${icono("alerta")}${esc(S.avisoEditar)}</p>` : "")
       + camposDe(S).map((c) => campoHTML(c, x && !c[0].startsWith("_") && c[0] in x ? x[c[0]] : (typeof c[3]?.def === "function" ? c[3].def() : c[3]?.def))).join("");
+    if (S.asistente && !ED.orig) { $("ed-form").insertAdjacentHTML("afterbegin", asistenteHTML()); prepararAsistente(); }
     pintaAdj();
     $("ed-borrar").hidden = !ED.orig; $("ed-borrar").innerHTML = icono("borrar") + "Borrar";
     $("ed-duplicar").hidden = !ED.orig; $("ed-duplicar").innerHTML = icono("duplicar") + "Duplicar";
@@ -907,6 +909,110 @@
     abrirEditor(k, copia, { duplicando: true });
     avisa(k === "reuniones" ? "Copia lista: elige el día nuevo y guarda" : "Copia lista: cambia lo que haga falta y guarda");
   });
+
+  // ================== ASISTENTE DE ACTAS (v11, como en CCOO) ==================
+  // Foto de las notas (aunque sean a mano), PDF o Word → función «generar-acta» (IA gratuita de Google, Gemini) → rellena
+  // título, tipo, fecha, resumen y acuerdos. Nunca publica solo: el padre lo revisa y pulsa «Publicar».
+  let IA = [];
+  const IA_MAX = 6;
+  const extDe = (n) => String(n || "").split(".").pop().toLowerCase();
+  const asistenteHTML = () => `<div class="asistente">
+      <h3>${icono("magia")}Hacer el acta con el asistente</h3>
+      <p class="ayuda">Haz una <b>foto de tus notas</b> (aunque sean a mano) o sube el <b>PDF o Word</b> de la reunión. El asistente rellena el acta de abajo y tú la revisas antes de publicar.</p>
+      <div class="ia-botones">
+        <label class="ia-boton">${icono("camara")}<b>Hacer foto</b><span>con la cámara</span><input type="file" id="f-ia-cam" accept="image/*" capture="environment"></label>
+        <label class="ia-boton">${icono("subir")}<b>Elegir archivos</b><span>fotos, PDF, Word</span><input type="file" id="f-ia" multiple accept="image/*,application/pdf,.pdf,.docx,.txt,text/plain"></label>
+      </div>
+      <div id="lista-ia" class="lista-adj"></div>
+      <details class="nota-ia"><summary>Añadir una nota escrita (opcional)</summary>
+        <textarea id="notas-ia" rows="4" placeholder="Algo que no esté en los archivos: quién asistió, la fecha…"></textarea></details>
+      <p class="ayuda"><b>Importante:</b> los archivos se envían a la IA gratuita de Google (Gemini), que puede usarlos para mejorar sus productos. Evita fotos con datos personales de compañeros o información confidencial de la empresa.</p>
+      <button type="button" class="btn" id="b-ia" disabled>${icono("magia")}Generar acta</button>
+      <p class="estado" id="m-ia" role="status"></p>
+    </div>
+    <p class="separador-ia">Revisa el acta y publícala</p>`;
+  const prepararAsistente = () => {
+    IA = [];
+    const pinta = () => {
+      $("lista-ia").innerHTML = IA.map((f, i) => `<div class="adj-fila">${f.type.startsWith("image/") ? `<img src="${URL.createObjectURL(f)}" alt="">` : icono("documento")}
+        <span>${esc(f.name)}<small>${tamanoTxt(f.size)} · listo</small></span>
+        <button type="button" class="btn-ic peq" data-quitar-ia="${i}" aria-label="Quitar ${esc(f.name)}">${icono("cerrar")}</button></div>`).join("");
+      $("b-ia").disabled = !IA.length && $("notas-ia").value.trim().length < 20;
+    };
+    const anade = (files) => {
+      const malos = [];
+      for (const f of files) {
+        const ext = extDe(f.name), vale = (f.type || "").startsWith("image/") || f.type === "application/pdf" || ["pdf", "docx", "txt", "heic", "heif"].includes(ext);
+        if (!vale) { malos.push(f.name); continue; }
+        if (IA.length >= IA_MAX) { malos.push(f.name + " (como mucho " + IA_MAX + ")"); continue; }
+        IA.push(f);
+      }
+      estado($("m-ia"), malos.length ? "No se pueden usar: " + malos.join(", ") + ". Usa fotos, PDF o Word (.docx)." : "", malos.length ? "mal" : "");
+      $("f-ia").value = ""; $("f-ia-cam").value = ""; pinta();
+    };
+    $("f-ia").addEventListener("change", (e) => { e.stopPropagation(); anade([...e.target.files]); });
+    $("f-ia-cam").addEventListener("change", (e) => { e.stopPropagation(); anade([...e.target.files]); });
+    $("notas-ia").addEventListener("input", (e) => { e.stopPropagation(); pinta(); });
+    $("lista-ia").addEventListener("click", (e) => { const q = e.target.closest("[data-quitar-ia]"); if (q) { e.stopPropagation(); IA.splice(+q.dataset.quitarIa, 1); pinta(); } });
+    const zona = $("ed-form").querySelector(".asistente");
+    zona.addEventListener("dragover", (e) => { e.preventDefault(); e.stopPropagation(); zona.classList.add("encima"); });
+    zona.addEventListener("dragleave", () => zona.classList.remove("encima"));
+    zona.addEventListener("drop", (e) => { e.preventDefault(); e.stopPropagation(); zona.classList.remove("encima"); anade([...e.dataTransfer.files]); });
+    $("b-ia").addEventListener("click", generarActa);
+  };
+  // Las fotos se reducen (la IA las lee igual de bien y la petición pesa menos)
+  const aBase64 = async (f) => {
+    if ((f.type || "").startsWith("image/")) {
+      try {
+        const img = await createImageBitmap(f), r = Math.min(1, 2000 / Math.max(img.width, img.height));
+        const cv = document.createElement("canvas"); cv.width = Math.round(img.width * r); cv.height = Math.round(img.height * r);
+        cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+        return { mime: "image/jpeg", data: cv.toDataURL("image/jpeg", 0.85).split(",")[1], nombre: f.name };
+      } catch (_) { /* formato que el navegador no abre (p. ej. HEIC): va tal cual */ }
+    }
+    if (f.size > 12 * 1048576) throw new Error(`«${f.name}» es demasiado grande para el asistente (máximo 12 MB).`);
+    const data = await new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = mal; r.readAsDataURL(f); });
+    const ext = extDe(f.name);
+    return { mime: f.type || (ext === "pdf" ? "application/pdf" : ext === "heic" ? "image/heic" : "application/octet-stream"), data, nombre: f.name };
+  };
+  // El texto de un Word (.docx) se saca en el propio navegador
+  const textoDeWord = async (f) => {
+    if (!window.JSZip) await cargarJSZip();
+    const zip = await window.JSZip.loadAsync(f), xml = await zip.file("word/document.xml")?.async("string");
+    if (!xml) throw new Error(`«${f.name}» no parece un Word válido. Guárdalo como PDF y súbelo otra vez.`);
+    return xml.replace(/<\/w:p>/g, "\n").replace(/<w:tab\/>/g, "\t").replace(/<[^>]+>/g, "")
+      .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/\n{3,}/g, "\n\n").trim();
+  };
+  const generarActa = async () => {
+    const btn = $("b-ia"), m = $("m-ia");
+    let notas = $("notas-ia").value.trim();
+    if (notas.length < 20 && !IA.length) return estado(m, "Añade una foto o un archivo con las notas de la reunión.", "mal");
+    btn.disabled = true;
+    try {
+      estado(m, "Preparando los archivos…");
+      const archivos = [];
+      for (const f of IA) {
+        const ext = extDe(f.name);
+        if (ext === "docx") notas += `\n\nContenido del documento «${f.name}»:\n` + (await textoDeWord(f)).slice(0, 25000);
+        else if (ext === "txt") notas += `\n\nContenido de «${f.name}»:\n` + (await f.text()).slice(0, 25000);
+        else archivos.push(await aBase64(f));
+      }
+      estado(m, "Leyendo las notas y redactando el acta… (puede tardar unos segundos)");
+      const { data, error } = await sb.functions.invoke("generar-acta", { body: { notas: notas.trim(), tipos: TIPOS_REUNION, hoy: hoyISO(), archivos } });
+      if (error) { let t = "No se ha podido generar el acta."; try { t = (await error.context.json()).error || t; } catch (_) {} throw new Error(t); }
+      const a = data.acta;
+      $("f-titulo").value = a.titulo || "";
+      if (a.tipo && TIPOS_REUNION.includes(a.tipo)) $("f-tipo").value = a.tipo;
+      if (a.fecha) $("f-fecha").value = a.fecha;
+      $("f-resumen").value = a.resumen || "";
+      $("f-acuerdos").value = a.acuerdos || "";
+      ED.sucio = true; previa();
+      const falta = [!a.fecha && "pon la fecha de la reunión", a.avisos].filter(Boolean).join(". ");
+      estado(m, "Hecho. Revisa el acta abajo" + (falta ? " (ojo: " + falta + ")" : "") + " y pulsa «Publicar».", "bien");
+      $("f-titulo").scrollIntoView({ behavior: "smooth", block: "center" });
+    } catch (e) { estado(m, errTxt(e), "mal"); }
+    btn.disabled = false;
+  };
 
   // ================== AVISOS AL MÓVIL ==================
   const AVISABLE = ["avisos", "actualidad", "reuniones", "actas", "encuestas", "documentos", "publicaciones"];

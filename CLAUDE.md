@@ -39,6 +39,9 @@ Para que el padre sea independiente (como «Apartados» en CCOO). Tablas `aparta
 - Panel: grupo «Tus secciones» con `apartados` («Secciones», ordenables dentro de su madre, subsecciones metidas `.fila-hija`) y `publicaciones` («Publicar en secciones»). `APS` = todas las secciones (`cargaAps`, en cada cambio de página). Los campos «opcion» admiten listas de pares [valor, texto] y funciones; `num: true` guarda número/null.
 - `notificar` avisa también de `publicaciones` («<Sección>: título», `#publicacion-N`).
 
+## Asistente de actas (v11, como en CCOO)
+En «Nueva acta» (`SECCIONES.actas.asistente`), `asistenteHTML`/`prepararAsistente`/`generarActa` en `admin.js`: fotos (reducidas a 2000 px JPEG), PDF, Word (.docx leído con JSZip en el navegador) o texto, hasta 6, → función `generar-acta` (copia en `herramientas/funciones/generar-acta.ts`, `verify_jwt` activado + `is_admin()` dentro; Gemini gratuito, modelos en `MODELOS`) → rellena título, tipo (de `TIPOS_REUNION`), fecha, resumen y acuerdos. No guarda nada. Necesita el secreto `GEMINI_API_KEY` en el Supabase del comité (lo pone Lorena en Edge Functions → Secrets; nunca por el chat). Lo enviado va a Google (lo avisa el panel): solo lo usa el admin.
+
 ## Iconos de lo que tiene la empresa: QUITADOS
 El padre pidió mostrar lo que tiene la empresa (camión, toro, transpaleta, distribuidor, gasolinera). Se probó como franja bajo los accesos y como fila de iconos en el bloque azul, en el cartel y en la imagen al compartir: no le gustó y se quitó de todo (v6). No volver a ponerlo. Se mantiene la gasolinera dibujada junto al camión en `hero-arte.webp`. Los iconos `camion`, `toro`, `transpaleta`, `reparto` y `surtidor` siguen definidos en `comun.js` sin usar.
 

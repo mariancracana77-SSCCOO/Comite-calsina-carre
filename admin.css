@@ -314,3 +314,18 @@ a.hola-dato:hover, button.hola-dato:hover { border-color: var(--celeste); }
 #ajuste-copia { scroll-margin-top: 90px; }
 /* v11: subsecciones un poco metidas hacia dentro en la lista de «Secciones» */
 .fila-hija { margin-left: 22px; border-left: 3px solid var(--azul-claro, #E6EEF7); }
+/* v11: asistente de actas */
+.asistente { border: 2px dashed var(--azul, #0E5FAE); border-radius: 14px; padding: 14px; margin-bottom: 8px; background: color-mix(in srgb, var(--azul, #0E5FAE) 6%, transparent); }
+.asistente.encima { border-style: solid; }
+.asistente h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 1.05rem; }
+.asistente h3 .ico { color: var(--azul, #0E5FAE); }
+.ia-botones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+.ia-boton { position: relative; display: grid; justify-items: center; gap: 2px; padding: 14px 8px; border-radius: 12px; border: 1px solid var(--borde, #d8e0ea); background: var(--tarjeta, #fff); cursor: pointer; text-align: center; }
+.ia-boton .ico { width: 28px; height: 28px; color: var(--azul, #0E5FAE); }
+.ia-boton span { font-size: .85rem; color: var(--suave, #556373); }
+.ia-boton input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.nota-ia { margin: 8px 0; } .nota-ia summary { cursor: pointer; font-weight: 700; min-height: 40px; display: flex; align-items: center; }
+.nota-ia textarea { width: 100%; box-sizing: border-box; margin-top: 6px; font: inherit; padding: 10px; border-radius: 10px; border: 1px solid var(--borde, #d8e0ea); }
+#b-ia { width: 100%; margin-top: 6px; }
+.separador-ia { display: flex; align-items: center; gap: 10px; margin: 14px 0 10px; font-weight: 700; color: var(--suave, #556373); font-size: .9rem; }
+.separador-ia::before, .separador-ia::after { content: ""; flex: 1; height: 1px; background: var(--borde, #d8e0ea); }

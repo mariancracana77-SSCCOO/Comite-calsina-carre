@@ -125,6 +125,18 @@ fs.mkdirSync(OUT, { recursive: true });
       if (!(await pa.evaluate(() => __DB.avisos.some((a) => a.titulo === "Aviso de prueba")))) fallos.push(`${c.nombre}: no guarda un aviso nuevo`);
       const toast = await pa.textContent("#toast");
       if (!/avisado a 2/.test(toast || "")) fallos.push(`${c.nombre}: al publicar no avisa a los móviles (${toast})`);
+      // Asistente de actas: foto de las notas → rellena el acta
+      await pa.goto(BASE + "admin.html#actas"); await pa.waitForTimeout(400);
+      await pa.evaluate(() => document.getElementById("fab").click()); await pa.waitForTimeout(300);
+      if (!(await pa.$(".asistente"))) fallos.push(`${c.nombre}: no sale el asistente de actas`);
+      else {
+        await pa.setInputFiles("#f-ia", path.join(RAIZ, "img/og.png")); await pa.waitForTimeout(200);
+        await pa.click("#b-ia"); await pa.waitForTimeout(700);
+        if ((await pa.inputValue("#f-titulo")) !== "Reunión del comité de noviembre" || !(await pa.inputValue("#f-acuerdos")).includes("jornada intensiva")) fallos.push(`${c.nombre}: el asistente no rellena el acta`);
+        if (!(await pa.evaluate(() => window.__IA && window.__IA.archivos.length === 1 && window.__IA.archivos[0].mime === "image/jpeg"))) fallos.push(`${c.nombre}: el asistente no envía la foto`);
+        if (c.nombre === "390") await pa.screenshot({ path: path.join(OUT, "panel-390-asistente.png"), fullPage: false });
+        await pa.keyboard.press("Escape"); await pa.waitForTimeout(150);
+      }
       // Secciones: crear una subsección y publicar dentro
       await pa.goto(BASE + "admin.html#apartados"); await pa.waitForTimeout(500);
       if (!(await pa.$(".fila-hija"))) fallos.push(`${c.nombre}: en «Secciones» la subsección no sale metida dentro`);
