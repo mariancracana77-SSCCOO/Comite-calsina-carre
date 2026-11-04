@@ -14,7 +14,7 @@
     avisos: {
       nombre: "Avisos", uno: "aviso", nuevo: "Nuevo aviso", ic: "megafono", tabla: "avisos", ancla: "aviso",
       orden: [["fecha", false]],
-      ayuda: "Comunicados cortos. Si marcas «Urgente», sale destacado arriba en la portada durante 14 días.",
+      ayuda: "Lo importante que hay que destacar: huelga, festivo, elecciones, último día para entregar algo… Si marcas «Urgente», sale destacado arriba en la portada durante 14 días. Para información general sin destacar, usa «Actualidad» (anuncios).",
       campos: [
         ["titulo", "Título", "texto", { req: true, ph: "Ej.: Cambio de turnos en noviembre" }],
         ["contenido", "Texto del aviso", "largo"],
@@ -30,12 +30,12 @@
       alGuardar: (v, orig) => { if (v.publicar_en && (!orig || orig.publicar_en !== v.publicar_en)) v.fecha = v.publicar_en; else if (!orig) v.fecha = ahoraISO(); },
     },
     actualidad: {
-      nombre: "Actualidad", uno: "noticia", nuevo: "Nueva noticia", ic: "periodico", tabla: "actualidad", ancla: "noticia",
+      nombre: "Actualidad", uno: "anuncio", nuevo: "Nuevo anuncio", ic: "periodico", tabla: "actualidad", ancla: "noticia",
       orden: [["fecha", false], ["id", false]],
-      ayuda: "Noticias e información para los trabajadores. Salen en la portada de la web.",
+      ayuda: "Anuncios: información general para toda la plantilla, sin destacar. Por ejemplo: «Desde mañana el turno 3 tiene 25 minutos de pausa en vez de 20». Salen en la portada. Si es algo importante que hay que destacar (huelga, festivo, elecciones), usa mejor «Avisos».",
       campos: [
-        ["titulo", "Título", "texto", { req: true, ph: "Ej.: Nuevo calendario laboral 2027" }],
-        ["categoria", "Categoría", "texto", { lista: ["General", "Convenio", "Nóminas", "Salud laboral", "Vacaciones", "Formación", "Igualdad"], def: "General" }],
+        ["titulo", "Título", "texto", { req: true, ph: "Ej.: El turno 3 pasa a 25 minutos de pausa" }],
+        ["categoria", "Categoría", "texto", { lista: ["General", "Acuerdos del comité", "Turnos y horarios", "Convenio", "Nóminas", "Salud laboral", "Vacaciones", "Formación", "Igualdad"], def: "General" }],
         ["fecha", "Fecha", "fecha", { def: () => hoyISO(), req: true }],
         ["contenido", "Texto", "largo"],
         ["adjuntos", "Fotos y documentos", "archivos"],
@@ -385,10 +385,10 @@
     <a class="menu-btn" href="guia.html" target="_blank" rel="noopener">${icono("ayuda")}<span>Guía del panel</span></a>
     <button type="button" class="menu-btn" data-salir>${icono("salir")}<span>Salir</span></button></div>`) || cuentaBuzon();
   const ACCIONES = [
-    ["avisos", "Publicar un aviso", "Con archivos si quieres"],
+    ["avisos", "Publicar un aviso", "Algo importante que destacar"],
     ["reuniones", "Añadir una reunión", "Comité, empresa o asamblea"],
     ["actas", "Subir un acta", "Resumen, acuerdos y PDF"],
-    ["actualidad", "Escribir una noticia", "Información para la plantilla"],
+    ["actualidad", "Escribir un anuncio", "Información general, sin destacar"],
     ["encuestas", "Hacer una consulta", "Votación anónima"],
     ["documentos", "Subir un documento", "Convenio, calendario, tablas…"],
   ];
