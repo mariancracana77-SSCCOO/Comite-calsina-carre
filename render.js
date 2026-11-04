@@ -14,14 +14,15 @@
       <div class="acciones">${botonCompartir("noticia-" + n.id, n.titulo, n.contenido)}</div>
     </article>`;
 
-  const aviso = (a) => `
-    <article class="tarjeta aviso${a.urgente ? " urgente" : ""}" id="aviso-${a.id}">
-      <div class="meta">${a.urgente ? `<span class="etq rojo">${icono("alerta")}Urgente</span>` : ""}${nuevo(a.fecha)}<span>${esc(fechaLarga(a.fecha || new Date()))}</span></div>
+  // Destacado hoy («Destacar en la portada el día»): ese día se ve en rojo, como un urgente
+  const aviso = (a) => { const hoy = a.destacar_dia && a.destacar_dia === hoyISO(); return `
+    <article class="tarjeta aviso${a.urgente || hoy ? " urgente" : ""}" id="aviso-${a.id}">
+      <div class="meta">${hoy ? `<span class="etq rojo">${icono("alerta")}Destacado hoy</span>` : a.urgente ? `<span class="etq rojo">${icono("alerta")}Urgente</span>` : ""}${nuevo(a.fecha)}<span>${esc(fechaLarga(a.fecha || new Date()))}</span></div>
       <h3>${esc(a.titulo || "Sin título")}</h3>
       <div class="texto">${textoHTML(a.contenido)}</div>
       ${adjuntosHTML(a.adjuntos)}
       <div class="acciones">${botonCompartir("aviso-" + a.id, a.titulo, a.contenido)}</div>
-    </article>`;
+    </article>`; };
 
   const reunion = (r) => {
     const f = r.fecha || hoyISO(), d = fechaDia(f), pasada = f < hoyISO();

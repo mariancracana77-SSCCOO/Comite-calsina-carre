@@ -9,7 +9,7 @@ La gestiona desde el panel el padre de Lorena (usuario GitHub `mariancracana77-S
 
 - Web: https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/ (GitHub Pages desde `main`, raíz)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **9**
+- Versión actual: **10**
 
 ## Reglas (las mismas que en CCOO)
 - No publicar en `main` sin que Lorena lo confirme. Trabajar en la rama indicada.
@@ -25,6 +25,10 @@ Kit visual HD del comité (CC metálico + camión + personas). Paleta: `#0B1E3C`
 
 ## Actualidad (anuncios) y Avisos: no son lo mismo
 Lo explicó el padre. **Actualidad = anuncios**: información general para todos, sin destacar (p. ej. «la reunión de hoy acordó que desde mañana el turno 3 tiene 25 minutos de pausa en vez de 20»). **Avisos** = lo importante que hay que destacar (huelga general la semana que viene, mañana festivo, elecciones, último día del mes para algo). En la interfaz se llama «Actualidad» y sus entradas son «anuncios» (la tabla sigue siendo `actualidad` y el ancla `#noticia-N`).
+
+## Traído de CCOO en la v10
+- **Destacar un aviso un día** (como CCOO v102–103): columna `avisos.destacar_dia` (date) + `destacado_avisado`. Ese día el aviso sale en rojo arriba en la portada («Destacado hoy») y en su lista; la tarea `notificar` (cron) manda «DESTACADO HOY: …» una vez, a partir de las 8:00 de Madrid. Si se cambia el día, `alGuardar` pone `destacado_avisado = false` (o `true` si es nuevo, de hoy, y ya avisa al publicar). Campo tipo fecha con opción `quitar` → botón «Quitar el destacado» (`data-vaciar`). No toca `urgente`.
+- **Copia de seguridad** en Ajustes (`#accesos-copia` baja hasta ella): «Descargar copia con archivos» (ZIP con `lib/jszip.min.js`, MIT, cargado solo al usarlo) o «Solo los textos» (JSON). Guarda la fecha en `paginas.ultima_copia`; Inicio la recuerda si nunca se hizo o hace más de 31 días. Lleva el buzón: si se añaden tablas, añadirlas a `TABLAS_COPIA`.
 
 ## Iconos de lo que tiene la empresa: QUITADOS
 El padre pidió mostrar lo que tiene la empresa (camión, toro, transpaleta, distribuidor, gasolinera). Se probó como franja bajo los accesos y como fila de iconos en el bloque azul, en el cartel y en la imagen al compartir: no le gustó y se quitó de todo (v6). No volver a ponerlo. Se mantiene la gasolinera dibujada junto al camión en `hero-arte.webp`. Los iconos `camion`, `toro`, `transpaleta`, `reparto` y `surtidor` siguen definidos en `comun.js` sin usar.

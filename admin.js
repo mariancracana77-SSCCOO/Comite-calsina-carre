@@ -10,24 +10,33 @@
   // ================== QUÉ SE PUEDE PUBLICAR ==================
   // Campo: [columna, etiqueta, tipo, opciones]
   // Tipos: texto, largo (con Negrita/Lista), fecha, hora, fechahora, si, opcion, numero, tel, email, url, archivos, nota
+  const diaCorto = (d) => new Date(d + "T12:00:00").toLocaleDateString("es-ES", { day: "numeric", month: "short" }).replace(".", "");
+  const destacaTxt = (x) => !x.destacar_dia || x.destacar_dia < hoyISO() ? "" : x.destacar_dia === hoyISO() ? "Destacado hoy" : "Destacado el " + diaCorto(x.destacar_dia);
   const SECCIONES = {
     avisos: {
       nombre: "Avisos", uno: "aviso", nuevo: "Nuevo aviso", ic: "megafono", tabla: "avisos", ancla: "aviso",
       orden: [["fecha", false]],
-      ayuda: "Lo importante que hay que destacar: huelga, festivo, elecciones, último día para entregar algo… Si marcas «Urgente», sale destacado arriba en la portada durante 14 días. Para información general sin destacar, usa «Actualidad» (anuncios).",
+      ayuda: "Lo importante que hay que destacar: huelga, festivo, elecciones, último día para entregar algo… Si marcas «Urgente», sale destacado arriba en la portada durante 14 días. Con «Destacar en la portada el día» sale arriba solo ese día y llega «DESTACADO HOY» a los móviles. Para información general sin destacar, usa «Actualidad» (anuncios).",
       campos: [
         ["titulo", "Título", "texto", { req: true, ph: "Ej.: Cambio de turnos en noviembre" }],
         ["contenido", "Texto del aviso", "largo"],
         ["urgente", "Urgente: destacarlo arriba en la portada", "si", { def: false }],
+        ["destacar_dia", "Destacar en la portada el día (opcional)", "fecha", { quitar: "Quitar el destacado", ayuda: "El aviso se ve como siempre y ese día (de 0:00 a 23:59) sale en rojo arriba del todo en la portada. Ese día, a partir de las 8 de la mañana, llega «DESTACADO HOY» a los móviles con avisos." }],
         ["adjuntos", "Archivos adjuntos", "archivos"],
         ["notificar", "Avisar al móvil al publicar", "si", { def: true, soloNuevo: true, ayuda: "Llega una notificación a los móviles que tienen los avisos activados." }],
         ["_cambio", "Volver a avisar al móvil de este cambio", "si", { def: false, soloEditar: true }],
         ["publicar_en", "Programar para más tarde (opcional)", "fechahora", { ayuda: "Déjalo vacío para publicarlo ya. Si pones día y hora, no se verá hasta entonces." }],
       ],
-      chips: (x) => [x.urgente && "Urgente", x.publicar_en && x.publicar_en > ahoraISO() && "Programado"],
+      chips: (x) => [x.urgente && "Urgente", destacaTxt(x), x.publicar_en && x.publicar_en > ahoraISO() && "Programado"],
       sub: (x) => resumen(x.contenido),
       previa: (x) => R.aviso(x),
-      alGuardar: (v, orig) => { if (v.publicar_en && (!orig || orig.publicar_en !== v.publicar_en)) v.fecha = v.publicar_en; else if (!orig) v.fecha = ahoraISO(); },
+      alGuardar: (v, orig) => {
+        if (v.publicar_en && (!orig || orig.publicar_en !== v.publicar_en)) v.fecha = v.publicar_en; else if (!orig) v.fecha = ahoraISO();
+        // Día destacado: ese día la tarea manda «DESTACADO HOY» una vez. Si cambia el día, se vuelve a avisar.
+        // Si es un aviso nuevo destacado hoy y ya avisa al publicar, no se manda dos veces.
+        if (!orig || orig.destacar_dia !== v.destacar_dia)
+          v.destacado_avisado = !orig && v.destacar_dia === hoyISO() && !!v.notificar && !(v.publicar_en && v.publicar_en > ahoraISO());
+      },
     },
     actualidad: {
       nombre: "Actualidad", uno: "anuncio", nuevo: "Nuevo anuncio", ic: "periodico", tabla: "actualidad", ancla: "noticia",
@@ -348,7 +357,9 @@
     inicio: () => pintaInicio(), buzon: () => pintaBuzon(), textos: () => pintaTextos(),
     accesos: () => pintaAccesos(), papelera: () => pintaPapelera(), cartel: () => pintaCartel(),
   };
+  let IR_COPIA = false; // «#accesos-copia»: Ajustes, bajando hasta la copia de seguridad
   const irA = (k) => {
+    IR_COPIA = k === "accesos-copia"; if (IR_COPIA) k = "accesos";
     if (!PAGINAS[k] && !SECCIONES[k]) k = "inicio";
     actual = k;
     if (location.hash.slice(1) !== k) history.replaceState(null, "", "#" + k);
@@ -430,6 +441,7 @@
           <span class="hola-dato">${icono("campana")}<b id="hola-moviles">…</b><span>móviles con avisos</span></span>
         </div>
       </section>
+      <div id="recordatorio-copia"></div>
       <div class="acciones-inicio">
         ${ACCIONES.map(([k, t, s]) => `<button type="button" class="accion-tarjeta" data-nuevo="${k}">${icono(SECCIONES[k].ic)}<span><b>${esc(t)}</b><small>${esc(s)}</small></span></button>`).join("")}
         <a class="accion-tarjeta${PEND_BUZON ? " destaca" : ""}" href="#buzon">${icono("mensaje")}<span><b>Leer el buzón</b><small>${PEND_BUZON ? PEND_BUZON + (PEND_BUZON === 1 ? " mensaje sin leer" : " mensajes sin leer") : "No hay mensajes nuevos"}</small></span></a>
@@ -466,6 +478,12 @@
         <summary>${icono("grafica")}Visitas y estadísticas <small>Toca para ver</small></summary>
         <div id="est-cuerpo"><div class="esq"></div></div>
       </details>`;
+    // Recordatorio de la copia de seguridad (si nunca se ha hecho o hace más de un mes)
+    sb.from("paginas").select("contenido").eq("slug", "ultima_copia").maybeSingle().then(({ data }) => {
+      const f = data?.contenido, r = $("recordatorio-copia");
+      if (!r || (f && Date.now() - new Date(f) < 31 * 86400000)) return;
+      r.innerHTML = `<a class="tarjeta instalar-panel aviso-copia" href="#accesos-copia">${icono("archivo")}<span><b>${f ? "Hace más de un mes de la última copia de seguridad" : "Todavía no has hecho ninguna copia de seguridad"}</b><small>Toca aquí y pulsa «Descargar copia con archivos». Tarda un momento.</small></span>${icono("flecha")}</a>`;
+    }, () => {});
     if (pideInstalar) document.querySelectorAll("[data-instalar-tarjeta]").forEach((b) => { b.hidden = false; });
     sb.rpc("contar_suscritos").then(({ data, error }) => {
       if ($("hola-moviles")) $("hola-moviles").textContent = error ? "–" : (data || 0);
@@ -519,7 +537,7 @@
     const S = SECCIONES[k];
     const chips = [conSeccion && S.nombre, ...(S.chips ? S.chips(x) : [])].filter(Boolean);
     const sub = S.sub ? S.sub(x) : "";
-    return `<div class="tarjeta fila${k === "avisos" && x.urgente ? " urgente" : ""}">
+    return `<div class="tarjeta fila${k === "avisos" && (x.urgente || x.destacar_dia === hoyISO()) ? " urgente" : ""}">
       <button type="button" class="fila-abre" data-editar-en="${k}:${x.id}">
         <b>${esc(tituloDe(S, x))}</b>
         ${sub ? `<span class="fila-sub">${esc(sub)}</span>` : ""}
@@ -605,7 +623,8 @@
       default: {
         const t = { texto: "text", fecha: "date", hora: "time", fechahora: "datetime-local", numero: "number", tel: "tel", email: "email", url: "url" }[tipo];
         const v = tipo === "fechahora" ? aLocal(val) : (val ?? "");
-        return `<label class="campo" data-campo="${col}"><span>${esc(etq)}${marca}</span><input type="${t}" id="${id}" value="${esc(v)}"${req}${ph}${o.lista ? ` list="dl-${col}"` : ""}>${dl}${ay}</label>`;
+        return `<label class="campo" data-campo="${col}"><span>${esc(etq)}${marca}</span><input type="${t}" id="${id}" value="${esc(v)}"${req}${ph}${o.lista ? ` list="dl-${col}"` : ""}>${dl}${ay}</label>`
+          + (o.quitar ? `<button type="button" class="btn-linea quitar-campo" data-vaciar="${col}"${v ? "" : " hidden"}>${icono("borrar")}${esc(o.quitar)}</button>` : "");
       }
     }
   };
@@ -738,7 +757,7 @@
   $("ed-cerrar").addEventListener("click", () => cerrarEditor());
   $("ed-cancelar").addEventListener("click", () => cerrarEditor());
   $("velo-ed").addEventListener("click", () => cerrarEditor());
-  $("ed-form").addEventListener("input", () => { ED.sucio = true; previa(); });
+  $("ed-form").addEventListener("input", (e) => { ED.sucio = true; previa(); const q = document.querySelector(`[data-vaciar="${e.target.id.slice(2)}"]`); if (q) q.hidden = !e.target.value; });
   $("ed-form").addEventListener("change", () => { ED.sucio = true; previa(); });
   $("ed-form").addEventListener("submit", (e) => e.preventDefault());
   $("ed-form").addEventListener("click", (e) => {
@@ -759,6 +778,8 @@
       t.focus(); ED.sucio = true; previa();
       return;
     }
+    const vac = e.target.closest("[data-vaciar]");
+    if (vac) { $("f-" + vac.dataset.vaciar).value = ""; vac.hidden = true; ED.sucio = true; previa(); avisa("Quitado. Pulsa «Guardar cambios» para que se aplique."); return; }
     if (e.target.closest("#foto-quitar")) { if (ED.foto) ED.quitados.push(ED.foto); ED.foto = null; ED.sucio = true; pintaFoto(); previa(); return; }
     const q = e.target.closest("[data-quitar-adj]");
     if (q) { ED.quitados.push(...ED.adj.splice(Number(q.dataset.quitarAdj), 1)); ED.sucio = true; pintaAdj(); previa(); }
@@ -970,6 +991,14 @@
         <button type="submit" class="btn">${icono("mas")}Dar acceso</button>
         <p class="estado" id="a-estado" role="status"></p>
       </form>
+      <h2 class="titulo-bloque" id="ajuste-copia">Copia de seguridad</h2>
+      <div class="tarjeta seguridad">
+        <p class="sub-vista">El plan gratuito no guarda copias. Descarga una al mes y guárdala en el ordenador o en el Drive: lleva todos los avisos, anuncios, reuniones, actas, documentos, consultas, preguntas, miembros, mensajes del buzón y textos de la web.</p>
+        <p class="sub-vista" id="ultima-copia">Comprobando la última copia…</p>
+        <div class="acciones"><button type="button" class="btn" id="b-copia-todo">${icono("instalar")}Descargar copia con archivos</button>
+          <button type="button" class="btn-linea" id="b-copia-datos">${icono("texto")}Solo los textos</button></div>
+        <p class="estado" id="m-copia" role="status"></p>
+      </div>
       <h2 class="titulo-bloque">Códigos de rescate</h2>
       <div class="tarjeta seguridad" id="rescate"><div class="esq"></div></div>
       <h2 class="titulo-bloque">Seguridad de tu cuenta</h2>
@@ -979,7 +1008,8 @@
         <p class="sub-vista">Por si has entrado en un móvil u ordenador que no es tuyo. Tendrás que volver a entrar con tu contraseña.</p>
         <button type="button" class="btn-linea peligro" id="b-salir-todo">${icono("salir")}Cerrar en todos</button>
       </div>`;
-    pintaDosPasos();
+    pintaDosPasos(); prepararCopia();
+    if (IR_COPIA) setTimeout(() => $("ajuste-copia")?.scrollIntoView({ block: "start" }), 50);
     $("b-salir-todo").addEventListener("click", async () => {
       if (!confirm("¿Cerrar la sesión del panel en todos los móviles y ordenadores?")) return;
       await sb.auth.signOut({ scope: "global" }); history.replaceState(null, "", "admin.html"); location.reload();
@@ -1046,6 +1076,54 @@
       sp.textContent = r.error ? tu.replace(" · ", "") : tu + (r.cuentas?.[em] ? "Cuenta creada" : "Sin cuenta todavía: ponle una contraseña y ya podrá entrar");
     });
     const q = $("rescate-quedan"); if (q && !r.error) q.textContent = r.quedan;
+  };
+  // ---- Copia de seguridad (como en CCOO) ----
+  const TABLAS_COPIA = ["avisos", "actualidad", "reuniones", "actas", "documentos", "encuestas", "preguntas", "miembros", "buzon", "paginas", "admins"];
+  const haceTxt = (iso) => { const d = Math.floor((Date.now() - new Date(iso)) / 86400000); return d <= 0 ? "hoy" : d === 1 ? "ayer" : "hace " + d + " días"; };
+  const prepararCopia = async () => {
+    const { data } = await sb.from("paginas").select("contenido").eq("slug", "ultima_copia").maybeSingle();
+    if ($("ultima-copia")) $("ultima-copia").innerHTML = data?.contenido ? `Última copia: <b>${esc(haceTxt(data.contenido))}</b>.` : "<b>Todavía no se ha hecho ninguna copia.</b>";
+    $("b-copia-todo")?.addEventListener("click", () => hacerCopia(true));
+    $("b-copia-datos")?.addEventListener("click", () => hacerCopia(false));
+  };
+  const cargarJSZip = () => window.JSZip ? Promise.resolve() : new Promise((ok, mal) => {
+    const sc = document.createElement("script"); sc.src = "lib/jszip.min.js";
+    sc.onload = ok; sc.onerror = () => mal(new Error("No se ha podido preparar el archivo ZIP. Revisa la conexión."));
+    document.head.appendChild(sc);
+  });
+  const hacerCopia = async (conArchivos) => {
+    const b1 = $("b-copia-todo"), b2 = $("b-copia-datos"), m = $("m-copia"); b1.disabled = b2.disabled = true;
+    try {
+      estado(m, "Reuniendo los datos…");
+      const copia = { creada: new Date().toISOString(), web: WEB_URL, tablas: {} };
+      for (const t of TABLAS_COPIA) { const { data, error } = await sb.from(t).select("*"); if (error) throw error; copia.tablas[t] = data; }
+      const nombre = "copia-comite-calsina-" + hoyISO();
+      let blob;
+      if (!conArchivos) blob = new Blob([JSON.stringify(copia, null, 2)], { type: "application/json" });
+      else {
+        await cargarJSZip();
+        const zip = new window.JSZip();
+        zip.file("datos.json", JSON.stringify(copia, null, 2));
+        zip.file("LEEME.txt", "Copia de seguridad de la web del Comité de Empresa de Calsina Carré.\r\n\r\ndatos.json: todos los textos (avisos, anuncios, reuniones, actas, documentos, consultas, preguntas, miembros, buzón y textos de la web).\r\narchivos/: los PDF, fotos y documentos subidos.\r\n\r\nGuárdala en un sitio seguro: lleva los mensajes del buzón. Si algún día hace falta recuperar algo, con este archivo se puede restaurar.");
+        const urls = new Map();
+        ["avisos", "actualidad", "actas", "documentos"].forEach((t) => (copia.tablas[t] || []).forEach((x) => (x.adjuntos || []).forEach((a) => a?.url && urls.set(a.url, a.nombre))));
+        (copia.tablas.miembros || []).forEach((x) => x.foto?.url && urls.set(x.foto.url, "foto.webp"));
+        let i = 0, fallos = 0;
+        for (const [url, nom] of urls) {
+          i++; estado(m, `Descargando archivos: ${i} de ${urls.size}…`);
+          try { const r = await fetch(url); if (!r.ok) throw 0; zip.file("archivos/" + (decodeURIComponent(url.split("/").pop() || "") || nom), await r.blob()); } catch (_) { fallos++; }
+        }
+        estado(m, "Comprimiendo…");
+        blob = await zip.generateAsync({ type: "blob" });
+        if (fallos) avisa(`${fallos} archivo(s) no se han podido incluir.`, true);
+      }
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nombre + (conArchivos ? ".zip" : ".json");
+      document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+      await sb.from("paginas").upsert({ slug: "ultima_copia", contenido: new Date().toISOString(), actualizado: new Date().toISOString() });
+      estado(m, `Copia descargada (${tamanoTxt(blob.size)}). Guárdala en un sitio seguro: lleva los mensajes del buzón.`, "bien");
+      $("ultima-copia").innerHTML = "Última copia: <b>ahora mismo</b>.";
+    } catch (e) { estado(m, "No se ha podido hacer la copia: " + errTxt(e), "mal"); }
+    b1.disabled = b2.disabled = false;
   };
   const pintaRescate = () => {
     const caja = $("rescate"); if (!caja) return;

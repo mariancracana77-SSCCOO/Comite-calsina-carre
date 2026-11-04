@@ -307,3 +307,8 @@ a.hola-dato:hover, button.hola-dato:hover { border-color: var(--celeste); }
   #codigos-lista { position: absolute; left: 0; top: 0; }
   #b-imprimir-codigos { display: none; }
 }
+/* v10: recordatorio de copia y botón «Quitar el destacado» */
+.aviso-copia { text-decoration: none; color: inherit; border-left: 4px solid #d98a00; margin-bottom: 14px; }
+.aviso-copia > .ico:last-child { width: 20px; height: 20px; padding: 0; background: none; }
+.quitar-campo { margin: -6px 0 14px; align-self: flex-start; }
+#ajuste-copia { scroll-margin-top: 90px; }

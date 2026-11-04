@@ -112,6 +112,32 @@ fs.mkdirSync(OUT, { recursive: true });
       if (!(await pa.evaluate(() => __DB.avisos.some((a) => a.titulo === "Aviso de prueba")))) fallos.push(`${c.nombre}: no guarda un aviso nuevo`);
       const toast = await pa.textContent("#toast");
       if (!/avisado a 2/.test(toast || "")) fallos.push(`${c.nombre}: al publicar no avisa a los móviles (${toast})`);
+      // Destacar un aviso un día (y quitarlo con el botón)
+      await pa.goto(BASE + "admin.html#avisos"); await pa.waitForTimeout(400);
+      await pa.click('[data-editar-en="avisos:2"]'); await pa.waitForTimeout(300);
+      const hoy = await pa.evaluate(() => hoyISO());
+      await pa.fill("#f-destacar_dia", hoy); await pa.waitForTimeout(150);
+      if (await pa.isHidden('[data-vaciar="destacar_dia"]')) fallos.push(`${c.nombre}: no sale «Quitar el destacado»`);
+      if (!/Destacado hoy/.test(await pa.textContent("#ed-previa"))) fallos.push(`${c.nombre}: la vista previa no marca «Destacado hoy»`);
+      if (c.nombre === "390") await pa.screenshot({ path: path.join(OUT, "panel-390-destacar.png") });
+      await pa.click("#ed-guardar"); await pa.waitForTimeout(400);
+      const d2 = await pa.evaluate(() => __DB.avisos.find((a) => a.id === 2));
+      if (d2.destacar_dia !== hoy || d2.destacado_avisado !== false) fallos.push(`${c.nombre}: no guarda el día destacado (${JSON.stringify(d2)})`);
+      await pa.click('[data-editar-en="avisos:2"]'); await pa.waitForTimeout(300);
+      await pa.click('[data-vaciar="destacar_dia"]'); await pa.click("#ed-guardar"); await pa.waitForTimeout(400);
+      if (await pa.evaluate(() => __DB.avisos.find((a) => a.id === 2).destacar_dia)) fallos.push(`${c.nombre}: «Quitar el destacado» no lo quita`);
+      // Copia de seguridad: recordatorio en Inicio y descarga de «Solo los textos»
+      await pa.goto(BASE + "admin.html#inicio"); await pa.waitForTimeout(500);
+      if (!(await pa.$(".aviso-copia"))) fallos.push(`${c.nombre}: no recuerda hacer la copia de seguridad`);
+      await pa.click(".aviso-copia"); await pa.waitForTimeout(500);
+      const [desc] = await Promise.all([pa.waitForEvent("download", { timeout: 4000 }).catch(() => null), pa.click("#b-copia-datos")]);
+      if (!desc || !/copia-comite-calsina-.*\.json/.test(desc.suggestedFilename())) fallos.push(`${c.nombre}: no descarga la copia de seguridad`);
+      await pa.waitForTimeout(300);
+      if (c.nombre === "390") await pa.screenshot({ path: path.join(OUT, "panel-390-copia.png") });
+      if (c.nombre === "pc") {
+        const [dz] = await Promise.all([pa.waitForEvent("download", { timeout: 8000 }).catch(() => null), pa.click("#b-copia-todo")]);
+        if (!dz || !/\.zip$/.test(dz.suggestedFilename())) fallos.push(`pc: no descarga la copia con archivos`);
+      }
       if (c.nombre === "pc") {
         await pa.goto(BASE + "admin.html#inicio"); await pa.waitForTimeout(500);
         await pa.click("#det-est summary"); await pa.waitForTimeout(400);
