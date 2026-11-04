@@ -17,8 +17,8 @@
 <meta property="og:description" content="Actualidad, avisos, reuniones, actas y buzón para la plantilla.">
 <meta property="og:image" content="https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/img/og.png">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="fuentes.css?v=2">
-<link rel="stylesheet" href="styles.css?v=2">
+<link rel="stylesheet" href="fuentes.css?v=3">
+<link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 <a class="saltar" href="#contenido">Ir al contenido</a>
@@ -57,24 +57,50 @@
 <main id="contenido" tabindex="-1">
   <!-- ACTUALIDAD (portada) -->
   <section id="v-actualidad" class="vista" data-titulo="Actualidad">
-    <div class="portada">
-      <img class="banner-marca" src="img/cabecera-900.webp" srcset="img/cabecera-900.webp 900w, img/cabecera-1600.webp 1600w" sizes="(min-width: 980px) 948px, 100vw" width="1600" height="352" alt="Calsina Carré · Transporte y logística · Comité de empresa">
-      <p class="bienvenida" id="bienvenida"></p>
-      <div id="urgente"></div>
-      <div id="proxima"></div>
+    <div class="hero">
+      <div class="hero-in">
+        <div class="hero-arte" aria-hidden="true"></div>
+        <div class="hero-txt">
+          <p class="hero-eyebrow">Comité de empresa · Calsina Carré</p>
+          <h1 class="hero-titulo">Tu comité de empresa, siempre a mano</h1>
+          <p class="hero-sub" id="bienvenida"></p>
+          <div class="hero-btns">
+            <a class="btn hero-btn" href="#avisos"><span class="ic" data-ic="megafono"></span>Ver los avisos</a>
+            <a class="btn hero-btn-sec" href="#buzon"><span class="ic" data-ic="mensaje"></span>Buzón anónimo</a>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="caja">
-      <div id="novedades"></div>
-      <div id="consultas"></div>
+    <div class="caja portada-caja">
       <nav class="accesos" aria-label="Accesos rápidos">
+        <a href="#avisos"><span class="ic" data-ic="megafono"></span><span>Avisos</span></a>
         <a href="#reuniones"><span class="ic" data-ic="calendario"></span><span>Reuniones</span></a>
         <a href="#actas"><span class="ic" data-ic="acta"></span><span>Actas</span></a>
         <a href="#documentos"><span class="ic" data-ic="documento"></span><span>Documentos</span></a>
-        <a href="#buzon"><span class="ic" data-ic="mensaje"></span><span>Buzón anónimo</span></a>
+        <a href="#buzon"><span class="ic" data-ic="mensaje"></span><span>Buzón</span></a>
+        <a href="#nosotros"><span class="ic" data-ic="personas"></span><span>El comité</span></a>
       </nav>
-      <h1 class="titulo-vista">Actualidad</h1>
-      <p class="sub-vista">Noticias e información que os afecta como trabajadores.</p>
-      <div id="lista-actualidad" class="lista"><div class="esq"></div><div class="esq"></div></div>
+      <div id="novedades"></div>
+      <div class="portada-grid">
+        <aside class="col-lateral" aria-label="Lo más importante">
+          <div id="urgente"></div>
+          <div id="proxima"></div>
+          <div id="consultas"></div>
+          <div class="tarjeta contacto-card">
+            <span class="ic" data-ic="personas"></span>
+            <h2>¿Necesitas al comité?</h2>
+            <p>Habla con cualquiera de sus miembros o escríbenos de forma anónima.</p>
+            <div class="acciones"><a class="btn" href="#nosotros">Ver los miembros</a><a class="btn-linea" href="#buzon">Buzón anónimo</a></div>
+          </div>
+        </aside>
+        <div class="col-principal">
+          <div class="cab-bloque">
+            <h2 class="titulo-seccion">Actualidad</h2>
+            <p class="sub-vista">Noticias e información que os afecta como trabajadores.</p>
+          </div>
+          <div id="lista-actualidad" class="lista"><div class="esq"></div><div class="esq"></div></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -212,8 +238,8 @@
 </footer>
 
 <script src="lib/supabase.js"></script>
-<script src="comun.js?v=2"></script>
-<script src="render.js?v=2"></script>
-<script src="app.js?v=2"></script>
+<script src="comun.js?v=3"></script>
+<script src="render.js?v=3"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>

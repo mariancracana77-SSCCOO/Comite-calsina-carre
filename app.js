@@ -41,7 +41,8 @@
       a.classList.toggle("activa", sel);
       if (sel) { a.setAttribute("aria-current", "page"); a.scrollIntoView({ block: "nearest", inline: "center" }); } else a.removeAttribute("aria-current");
     });
-    document.title = $("v-" + vista).dataset.titulo + " · Comité de Empresa Calsina Carré";
+    // Instalada, la ventana ya pone el nombre de la app delante: no repetirlo
+    document.title = $("v-" + vista).dataset.titulo + (instalada ? "" : " · Comité de Empresa Calsina Carré");
     if (vista === "avisos") marcaAvisosVistos();
     if (vista === "buscar") setTimeout(() => $("buscar-todo").focus(), 50);
     if (destino) {
@@ -85,7 +86,7 @@
     // Abiertas siempre; cerradas solo las de los últimos 30 días
     const lim = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
     const lista = D.encuestas.filter((e) => abierta(e) || e.cierra >= lim);
-    $("consultas").innerHTML = lista.length ? `<h2 class="titulo-bloque">Consultas a la plantilla</h2><div class="lista">${lista.map(consultaHTML).join("")}</div>` : "";
+    $("consultas").innerHTML = lista.length ? `<div class="lista">${lista.map(consultaHTML).join("")}</div>` : "";
   };
   document.addEventListener("click", async (ev) => {
     const b = ev.target.closest("[data-voto]"); if (!b) return;
@@ -136,23 +137,26 @@
     $("bienvenida").textContent = D.paginas.bienvenida || "";
     $("bienvenida").hidden = !D.paginas.bienvenida;
     const urg = D.avisos.find((a) => a.urgente && Date.now() - new Date(a.fecha) < 14 * 86400000);
+    const txtCorto = (t, n) => { t = String(t || "").replace(/\*\*/g, "").replace(/\s+/g, " ").trim(); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
     $("urgente").innerHTML = urg ? `
-      <a class="rotulo urgente" href="#aviso-${urg.id}">
-        <span class="etq rojo">${icono("alerta")}Urgente</span>
+      <a class="destacado urgente" href="#aviso-${urg.id}">
+        <span class="destacado-etq">${icono("alerta")}Aviso urgente</span>
         <b>${esc(urg.titulo)}</b>
-        <span class="rotulo-txt">${esc(String(urg.contenido || "").replace(/\*\*/g, "").slice(0, 160))}${(urg.contenido || "").length > 160 ? "…" : ""}</span>
-        <span class="rotulo-ir">Ver el aviso completo${icono("flecha")}</span>
+        ${urg.contenido ? `<span class="destacado-txt">${esc(txtCorto(urg.contenido, 150))}</span>` : ""}
+        <span class="destacado-ir">Leer el aviso${icono("flecha")}</span>
       </a>` : "";
     const prox = D.reuniones.find((r) => r.fecha >= hoyISO());
     $("proxima").innerHTML = prox ? (() => {
-      const dias = Math.round((fechaDia(prox.fecha) - fechaDia(hoyISO())) / 86400000);
+      const dias = Math.round((fechaDia(prox.fecha) - fechaDia(hoyISO())) / 86400000), d = fechaDia(prox.fecha);
       return `
-      <a class="rotulo cita" href="#reunion-${prox.id}">
-        <span class="rotulo-etq">Próxima reunión</span>
-        <b>${esc(prox.titulo)}</b>
-        <span class="rotulo-txt">${icono("calendario")}${esc(fechaSemana(prox.fecha))}${prox.hora ? " · " + esc(horario(prox)) : ""}</span>
-        ${prox.lugar ? `<span class="rotulo-txt">${icono("lugar")}${esc(prox.lugar)}</span>` : ""}
-        <span class="faltan">${dias === 0 ? "Es hoy" : dias === 1 ? "Mañana" : "Faltan " + dias + " días"}</span>
+      <a class="destacado cita" href="#reunion-${prox.id}">
+        <span class="destacado-cab"><span class="destacado-etq">${icono("calendario")}Próxima reunión</span><span class="faltan">${dias === 0 ? "Es hoy" : dias === 1 ? "Mañana" : "En " + dias + " días"}</span></span>
+        <span class="cita-cuerpo">
+          <span class="dia" aria-hidden="true"><b>${d.getDate()}</b><span>${d.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}</span></span>
+          <span class="cita-datos"><b>${esc(prox.titulo)}</b>
+            <span class="destacado-txt">${esc(fechaSemana(prox.fecha))}${prox.hora ? " · " + esc(horario(prox)) : ""}</span>
+            ${prox.lugar ? `<span class="destacado-txt">${icono("lugar")}${esc(prox.lugar)}</span>` : ""}</span>
+        </span>
       </a>`;
     })() : "";
     pintaNovedades();

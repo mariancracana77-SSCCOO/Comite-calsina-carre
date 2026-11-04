@@ -162,7 +162,7 @@
     [null, [["inicio", "Inicio", "inicio"], ["avisos"], ["actualidad"], ["reuniones"], ["actas"]]],
     ["La plantilla", [["buzon", "Buzón anónimo", "mensaje"], ["encuestas"], ["preguntas"]]],
     ["El comité", [["miembros", "Miembros", "personas"], ["documentos"], ["textos", "Textos de la web", "texto"]]],
-    ["Herramientas", [["cartel", "Cartel con QR", "qr"], ["papelera", "Papelera", "borrar"], ["accesos", "Accesos", "candado"]]],
+    ["Herramientas", [["cartel", "Cartel con QR", "qr"], ["papelera", "Papelera", "borrar"], ["accesos", "Ajustes", "candado"]]],
   ];
   const BARRA = [["inicio", "Inicio", "inicio"], ["avisos"], ["reuniones"], ["actas"]];
   const nombreDe = (k, n) => n || SECCIONES[k]?.nombre || k;
@@ -842,8 +842,9 @@
     const yo = YO.toLowerCase();
     const { data, error } = await sb.from("admins").select("email").order("email");
     if (actual !== "accesos") return;
-    $("zona").innerHTML = `<h1 class="titulo-vista">Accesos</h1>
-      <p class="sub-vista">Emails que pueden entrar en este panel. La persona añadida entra con «¿Problemas para entrar?» → «Primera vez: crear la cuenta».</p>
+    $("zona").innerHTML = `<h1 class="titulo-vista">Ajustes</h1>
+      <h2 class="titulo-bloque">Correos con acceso al panel</h2>
+      <p class="sub-vista">Solo estos correos pueden crear su cuenta y publicar. La persona añadida entra con «¿Problemas para entrar?» → «Primera vez: crear la cuenta».</p>
       <div class="lista">${error ? `<p class="vacio">${esc(errTxt(error))}</p>` : data.map((a) => `
         <div class="tarjeta fila"><div class="fila-abre"><b>${esc(a.email)}</b>${a.email.toLowerCase() === yo ? '<span class="fila-sub">Tú</span>' : ""}</div>
         ${a.email.toLowerCase() === yo ? "" : `<button type="button" class="btn-linea peligro" data-quitar-admin="${esc(a.email)}">${icono("borrar")}Quitar</button>`}</div>`).join("")}</div>
