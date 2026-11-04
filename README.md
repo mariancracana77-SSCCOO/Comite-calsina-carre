@@ -63,6 +63,7 @@ Abre la web y el panel con datos de prueba (sin tocar la base de datos real) en 
 
 ## Versiones
 
+- **v6**: fotos de los miembros (desde el panel, solo con su permiso; se recortan y reducen en el móvil antes de subirlas) y apartados vacíos con icono y explicación.
 - **v5**: cartel A4 con QR y la imagen al compartir por WhatsApp con el estilo nuevo (camión, gasolinera e iconos de la empresa).
 - **v4**: gasolinera de la empresa junto al camión en la portada; fila de iconos con lo que tiene la empresa (transporte, almacén, carga y descarga, distribución, gasolinera) en el bloque azul; pie de página completo (logo, enlaces y aviso legal) y cabecera azul con icono en cada apartado; en PC, el calendario con las próximas reuniones al lado.
 - **v3**: portada nueva más profesional (bloque azul con la marca, accesos rápidos, columna con lo urgente y la próxima reunión); «Accesos» del panel pasa a «Ajustes»; el nombre ya no se repite en la ventana de la app.

@@ -22,6 +22,7 @@ fs.mkdirSync(OUT, { recursive: true });
     for (const c of CASOS) {
       const ctx = await b.newContext({ viewport: { width: c.w, height: c.h }, colorScheme: c.oscuro ? "dark" : "light", serviceWorkers: "block", locale: "es-ES", timezoneId: "Europe/Madrid" });
       await ctx.route("**/lib/supabase.js*", (r) => r.fulfill({ contentType: "application/javascript", body: MOCK }));
+      await ctx.route("https://ytxpubqyhnohhugpukdm.supabase.co/**", (r) => r.fulfill({ path: path.join(RAIZ, "img/icon-192.png") }));
       if (c.letra) await ctx.addInitScript((l) => localStorage.setItem("comite-letra", l), c.letra);
       const p = await ctx.newPage();
       p.on("console", (m) => { if (m.type() === "error") errores.push(`${c.nombre} web: ${m.text()}`); });
@@ -34,6 +35,12 @@ fs.mkdirSync(OUT, { recursive: true });
         if (["390", "pc", "390-oscuro"].includes(c.nombre) || (c.nombre === "390-letra" && v === "actualidad"))
           await p.screenshot({ path: path.join(OUT, `web-${c.nombre}-${v}.png`), fullPage: v === "actualidad" || c.nombre === "320" });
       }
+      // Web sin contenido: los apartados vacíos tienen que explicar qué saldrá ahí
+      for (const v of ["actualidad", "avisos", "actas", "nosotros"]) {
+        await p.goto(BASE + "?prueba-vacio#" + v); await p.waitForTimeout(450);
+        if (!(await p.$("#v-" + v + " .vacio-caja"))) fallos.push(`${c.nombre}: #${v} vacío no enseña su explicación`);
+        if (c.nombre === "390") await p.screenshot({ path: path.join(OUT, `web-390-vacio-${v}.png`), fullPage: true });
+      }
       // Votar en la consulta
       await p.goto(BASE + "#actualidad"); await p.waitForTimeout(700);
       await p.click("[data-voto]"); await p.waitForTimeout(300);
@@ -43,6 +50,7 @@ fs.mkdirSync(OUT, { recursive: true });
       // Panel: pantalla de entrar y con sesión de prueba
       const ctx2 = await b.newContext({ viewport: { width: c.w, height: c.h }, colorScheme: c.oscuro ? "dark" : "light", serviceWorkers: "block", locale: "es-ES", timezoneId: "Europe/Madrid" });
       await ctx2.route("**/lib/supabase.js*", (r) => r.fulfill({ contentType: "application/javascript", body: MOCK }));
+      await ctx2.route("https://ytxpubqyhnohhugpukdm.supabase.co/**", (r) => r.fulfill({ path: path.join(RAIZ, "img/icon-192.png") }));
       const pe = await ctx2.newPage();
       pe.on("pageerror", (e) => errores.push(`${c.nombre} entrar: ${e.message}`));
       await pe.goto(BASE + "admin.html"); await pe.waitForTimeout(500);
@@ -68,6 +76,14 @@ fs.mkdirSync(OUT, { recursive: true });
           await pa.screenshot({ path: path.join(OUT, `panel-${c.nombre}-editor-${k}.png`) });
         await pa.keyboard.press("Escape"); await pa.waitForTimeout(150);
       }
+      // Subir la foto de un miembro (se recorta y se reduce en el navegador)
+      await pa.goto(BASE + "admin.html#miembros"); await pa.waitForTimeout(400);
+      await pa.click("[data-editar-en]"); await pa.waitForTimeout(300);
+      await pa.setInputFiles("#f-foto", path.join(RAIZ, "img/og.png")); await pa.waitForTimeout(700);
+      const foto = await pa.evaluate(() => document.querySelector("#foto-previa img")?.getAttribute("src") || "");
+      if (!/miembros\/\d+\.webp/.test(foto)) fallos.push(`${c.nombre}: la foto del miembro no se sube (${foto})`);
+      if (c.nombre === "390") await pa.screenshot({ path: path.join(OUT, "panel-390-foto.png") });
+      await pa.click("#ed-guardar"); await pa.waitForTimeout(400);
       // Crear un aviso nuevo
       await pa.goto(BASE + "admin.html#avisos"); await pa.waitForTimeout(400);
       await pa.evaluate(() => document.getElementById("fab").click()); await pa.waitForTimeout(300);

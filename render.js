@@ -98,7 +98,7 @@
     const wa = tel.replace(/^\+/, "").replace(/^(?=[67]\d{8}$)/, "34");
     return `
     <article class="tarjeta miembro">
-      <div class="inicial" aria-hidden="true">${esc(ini)}</div>
+      ${m.foto && m.foto.url ? `<img class="inicial foto" src="${esc(urlSegura(m.foto.url))}" alt="" loading="lazy" width="54" height="54">` : `<div class="inicial" aria-hidden="true">${esc(ini)}</div>`}
       <div>
         <h3>${esc(m.nombre || "Nombre")}</h3>
         <p class="cargo">${esc(m.cargo)}${m.sindicato ? " · " + esc(m.sindicato) : ""}</p>

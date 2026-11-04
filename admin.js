@@ -131,6 +131,7 @@
         ["nota1", "Teléfono y email: solo si esa persona ha dado su permiso para que salgan en la web.", "nota"],
         ["telefono", "Teléfono", "tel"],
         ["email", "Email", "email"],
+        ["foto", "Foto (opcional, solo si da su permiso)", "foto"],
       ],
       titulo: (x) => x.nombre,
       chips: (x) => [x.sindicato],
@@ -537,6 +538,11 @@
         <textarea id="${id}" rows="${o.sinFormato ? 4 : 7}"${ph}>${esc(val ?? "")}</textarea>${ay}</div>`;
       case "si": return `<label class="casilla" data-campo="${col}"><input type="checkbox" id="${id}"${val ? " checked" : ""}><span>${esc(etq)}</span></label>`;
       case "opcion": return `<label class="campo" data-campo="${col}"><span>${esc(etq)}</span><select id="${id}">${[...new Set([...(o.lista || []), val].filter(Boolean))].map((x) => `<option${x === val ? " selected" : ""}>${esc(x)}</option>`).join("")}</select></label>`;
+      case "foto": return `<div class="campo" data-campo="${col}"><span>${esc(etq)}</span>
+        <div class="foto-campo"><div class="foto-previa" id="foto-previa"></div>
+          <div class="foto-btns"><label class="btn-linea subir">${icono("subir")}<span id="foto-txt">Elegir foto</span><input type="file" id="f-foto" accept="image/*"></label>
+          <button type="button" class="btn-linea peligro" id="foto-quitar" hidden>${icono("borrar")}Quitar foto</button></div></div>
+        <small class="ayuda">Se recorta en cuadrado y se reduce en el propio móvil antes de subirla (también se le quitan los datos ocultos, como el lugar donde se hizo).</small></div>`;
       case "archivos": return `<div class="campo" data-campo="${col}"><span>${esc(etq)} <small>(opcional)</small></span>
         <div id="lista-adj" class="lista-adj"></div>
         <label class="soltar" id="soltar">${icono("subir")}<b>Toca para elegir archivos</b><small>O arrástralos aquí. PDF, fotos, Word o Excel · máx. 20 MB cada uno</small>
@@ -582,6 +588,7 @@
       if (tipo === "nota") continue;
       const el = $("f-" + col);
       if (tipo === "archivos") { v[col] = ED.adj; continue; }
+      if (tipo === "foto") { v[col] = ED.foto || null; continue; }
       if (tipo === "si") { v[col] = el.checked; continue; }
       let val = el.value.trim();
       if (comprobar && o.req && !val) { el.closest("[data-campo]").classList.add("falta"); el.focus(); return [v, `Falta rellenar «${etq}».`]; }
@@ -610,7 +617,7 @@
   const camposDe = (S) => S.campos.filter(([, , , o = {}]) => ED.orig ? !o.soloNuevo : !o.soloEditar);
   const abrirEditor = (k, x, { duplicando = false } = {}) => {
     const S = SECCIONES[k];
-    ED = { k, orig: duplicando ? null : x, adj: x?.adjuntos ? [...x.adjuntos] : [], subidos: [], quitados: [], sucio: duplicando };
+    ED = { k, orig: duplicando ? null : x, adj: x?.adjuntos ? [...x.adjuntos] : [], foto: duplicando ? null : (x?.foto || null), subidos: [], quitados: [], sucio: duplicando };
     $("ed-modo").textContent = duplicando ? "Copia de " + S.uno : x ? "Editar " + S.uno : S.nuevo;
     $("ed-form").innerHTML = (x && S.avisoEditar ? `<p class="nota-campo">${icono("alerta")}${esc(S.avisoEditar)}</p>` : "")
       + camposDe(S).map((c) => campoHTML(c, x && !c[0].startsWith("_") && c[0] in x ? x[c[0]] : (typeof c[3]?.def === "function" ? c[3].def() : c[3]?.def))).join("");
@@ -623,8 +630,42 @@
     verPestana("form");
     $("editor").hidden = false; $("velo-ed").hidden = false;
     document.body.classList.add("sin-scroll");
+    pintaFoto();
     previa();
     setTimeout(() => $("ed-form").querySelector("input:not([type=checkbox]), textarea")?.focus(), 30);
+  };
+  // ---- Foto de un miembro: recorte cuadrado y reducción en el navegador antes de subirla ----
+  const pintaFoto = () => {
+    const p = $("foto-previa"); if (!p) return;
+    p.innerHTML = ED.foto ? `<img src="${esc(urlSegura(ED.foto.url))}" alt="">` : icono("personas");
+    $("foto-quitar").hidden = !ED.foto;
+    $("foto-txt").textContent = ED.foto ? "Cambiar foto" : "Elegir foto";
+  };
+  const reduceFoto = (file) => new Promise((ok, mal) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const lado = Math.min(img.naturalWidth, img.naturalHeight), t = Math.min(480, lado);
+      const c = document.createElement("canvas"); c.width = c.height = t;
+      c.getContext("2d").drawImage(img, (img.naturalWidth - lado) / 2, (img.naturalHeight - lado) / 2, lado, lado, 0, 0, t, t);
+      URL.revokeObjectURL(url);
+      c.toBlob((b) => b ? ok(b) : mal(new Error("No se ha podido preparar la foto.")), "image/webp", 0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); mal(new Error("Ese archivo no es una foto que se pueda abrir (prueba con JPG o PNG).")); };
+    img.src = url;
+  });
+  const subirFoto = async (file) => {
+    try {
+      estado($("ed-msg"), "Preparando la foto…");
+      const blob = await reduceFoto(file);
+      const ruta = `miembros/${Date.now()}.webp`;
+      const { error } = await sb.storage.from("documentos").upload(ruta, blob, { contentType: "image/webp" });
+      if (error) throw error;
+      const { data } = sb.storage.from("documentos").getPublicUrl(ruta);
+      if (ED.foto) ED.quitados.push(ED.foto);
+      ED.foto = { url: data.publicUrl, ruta, nombre: "foto.webp", tipo: "image/webp", tamano: blob.size };
+      ED.subidos.push(ED.foto); ED.sucio = true;
+      pintaFoto(); previa(); estado($("ed-msg"), "Foto lista. Recuerda pulsar «Guardar».");
+    } catch (e) { estado($("ed-msg"), errTxt(e), "mal"); }
   };
   const cerrarEditor = (forzar = false) => {
     if (!ED) return;
@@ -663,10 +704,14 @@
       t.focus(); ED.sucio = true; previa();
       return;
     }
+    if (e.target.closest("#foto-quitar")) { if (ED.foto) ED.quitados.push(ED.foto); ED.foto = null; ED.sucio = true; pintaFoto(); previa(); return; }
     const q = e.target.closest("[data-quitar-adj]");
     if (q) { ED.quitados.push(...ED.adj.splice(Number(q.dataset.quitarAdj), 1)); ED.sucio = true; pintaAdj(); previa(); }
   });
-  $("ed-form").addEventListener("change", (e) => { if (e.target.id === "f-subir") { subir([...e.target.files]); e.target.value = ""; } });
+  $("ed-form").addEventListener("change", (e) => {
+    if (e.target.id === "f-subir") { subir([...e.target.files]); e.target.value = ""; }
+    if (e.target.id === "f-foto" && e.target.files[0]) { subirFoto(e.target.files[0]); e.target.value = ""; }
+  });
   // Arrastrar archivos encima del editor
   ["dragenter", "dragover"].forEach((t) => $("editor").addEventListener(t, (e) => { if ($("soltar") && e.dataTransfer?.types.includes("Files")) { e.preventDefault(); $("soltar").classList.add("encima"); } }));
   ["dragleave", "drop"].forEach((t) => $("editor").addEventListener(t, () => $("soltar")?.classList.remove("encima")));
@@ -682,7 +727,7 @@
     const r = ED.orig ? await sb.from(S.tabla).update(v).eq("id", ED.orig.id) : await sb.from(S.tabla).insert(v).select("id").single();
     b.disabled = false;
     if (r.error) return estado(msg, errTxt(r.error), "mal");
-    borraArchivos(ED.quitados.filter((a) => !ED.adj.some((x) => x.url === a.url)));
+    borraArchivos(ED.quitados.filter((a) => !ED.adj.some((x) => x.url === a.url) && !(ED.foto && ED.foto.url === a.url)));
     const programado = ED.k === "avisos" && v.publicar_en && v.publicar_en > ahoraISO();
     const oculto = v.publicado === false || v.publicada === false;
     let txt = programado ? "Aviso programado" : ED.orig ? "Cambios guardados" : oculto ? "Guardado (no se ve en la web)" : "Publicado";

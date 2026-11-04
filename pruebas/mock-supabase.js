@@ -24,7 +24,7 @@
     ],
     preguntas: [{ id: 1, pregunta: "¿Cuántos días de asuntos propios tenemos?", respuesta: "Según el convenio, **2 días** al año.", orden: 10, creado: hace(500), actualizado: hace(500) }],
     miembros: [
-      { id: 1, nombre: "Ana García", cargo: "Presidente/a", sindicato: "CCOO", detalle: "Turno de mañana", telefono: "600000000", email: null, orden: 10 },
+      { id: 1, nombre: "Ana García", cargo: "Presidente/a", sindicato: "CCOO", detalle: "Turno de mañana", telefono: "600000000", email: null, orden: 10, foto: { url: "https://ytxpubqyhnohhugpukdm.supabase.co/storage/v1/object/public/documentos/miembros/prueba.webp", ruta: "miembros/prueba.webp" } },
       { id: 2, nombre: "Jordi Puig", cargo: "Secretario/a", sindicato: "UGT", detalle: "", telefono: null, email: "jordi@ejemplo.com", orden: 20 },
     ],
     encuestas: [{ id: 1, pregunta: "¿Preferís jornada intensiva en verano?", opciones: "Sí\nNo\nMe da igual", explicacion: "Lo llevaremos a la reunión con la empresa.", publicada: true, cierra: dia(7), creado: hace(10), actualizado: hace(10) }],
@@ -46,6 +46,8 @@
     visitas: [...Array(20)].map((_, i) => ({ dia: dia(-(i % 14)), seccion: ["total", "avisos", "actualidad", "actas", "app"][i % 5], n: 3 + (i * 7) % 11 })),
     papelera: [{ id: 1, tabla: "avisos", datos: { id: 9, titulo: "Aviso borrado de prueba" }, borrado: hace(4), por: "prueba@example.com" }],
   };
+  // Con «?prueba-vacio» en la dirección, la web arranca sin contenido (para ver los apartados vacíos)
+  if (/prueba-vacio/.test(location.search)) ["actualidad", "avisos", "reuniones", "actas", "preguntas", "miembros", "encuestas", "encuesta_votos", "documentos"].forEach((t) => { DB[t] = []; });
   let sig = 100;
   const SES = (() => { try { return localStorage.getItem("prueba-sesion") === "1"; } catch (_) { return false; } })()
     ? { access_token: "x", user: { id: "u1", email: "prueba@example.com" } } : null;
