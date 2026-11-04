@@ -63,8 +63,17 @@ fs.mkdirSync(OUT, { recursive: true });
       if (c.nombre === "390") await pe.screenshot({ path: path.join(OUT, `panel-entrar.png`) });
       await ctx2.addInitScript(() => localStorage.setItem("prueba-sesion", "1"));
       const pa = await ctx2.newPage();
+      pa.on("dialog", (d) => d.accept());
       pa.on("console", (m) => { if (m.type() === "error") errores.push(`${c.nombre} panel: ${m.text()}`); });
       pa.on("pageerror", (e) => errores.push(`${c.nombre} panel: ${e.message}`));
+      // Ajustes: poner la contraseña a otro administrador
+      await pa.goto(BASE + "admin.html#accesos"); await pa.waitForTimeout(600);
+      await pa.click('[data-poner-clave="otro@example.com"]');
+      await pa.fill('[data-form-clave="otro@example.com"] [data-clave1]', "Camion2026x");
+      await pa.fill('[data-form-clave="otro@example.com"] [data-clave2]', "Camion2026x");
+      await pa.click('[data-form-clave="otro@example.com"] button[type=submit]'); await pa.waitForTimeout(300);
+      if (!(await pa.evaluate(() => window.__CLAVE && window.__CLAVE.email === "otro@example.com"))) fallos.push(`${c.nombre}: no se puede poner la contraseña a otro administrador`);
+      await pa.click("#b-codigos").catch(() => {});
       // Ajustes: empezar a activar la verificación en dos pasos (enseña el QR y pide el código)
       await pa.goto(BASE + "admin.html#accesos"); await pa.waitForTimeout(500);
       await pa.click("#b-dos-activar"); await pa.waitForTimeout(300);

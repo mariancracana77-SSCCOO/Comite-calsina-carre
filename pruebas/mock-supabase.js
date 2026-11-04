@@ -109,7 +109,16 @@
         challengeAndVerify: async () => ({ data: {}, error: null }), unenroll: async () => ({ data: {}, error: null }),
       }, verifyOtp: async () => ({ error: null }), updateUser: async () => ({ error: null }),
     },
-    functions: { invoke: async (n, o) => ({ data: o?.body?.modo === "prueba" ? { push: { ok: 2, total: 2 } } : { enviado: true, push: { ok: 2, fallos: 0, total: 2 } }, error: null }) },
+    functions: { invoke: async (n, o) => {
+      const b = o?.body || {};
+      if (n === "cuenta") {
+        if (b.accion === "estado") return { data: { quedan: 0, cuentas: { "prueba@example.com": true, "otro@example.com": false } }, error: null };
+        if (b.accion === "codigos") return { data: { codigos: ["ABCDE-23456", "FGHJK-78923", "LMNPQ-45678", "RSTUV-92345", "WXYZA-56789", "BCDEF-34567", "GHJKL-89234", "MNPQR-67893"] }, error: null };
+        if (b.accion === "poner_clave") { window.__CLAVE = b; return { data: { ok: true, creada: true }, error: null }; }
+        if (b.accion === "usar_codigo") return { data: { ok: true, quedan: 7 }, error: null };
+      }
+      return { data: b.modo === "prueba" ? { push: { ok: 2, total: 2 } } : { enviado: true, push: { ok: 2, fallos: 0, total: 2 } }, error: null };
+    } },
     storage: { from: () => ({ upload: async () => ({ error: null }), getPublicUrl: (r) => ({ data: { publicUrl: "https://ytxpubqyhnohhugpukdm.supabase.co/" + r } }), remove: async () => ({ error: null }) }) },
   };
   window.supabase = { createClient: () => cliente };
