@@ -17,8 +17,8 @@
 <meta property="og:description" content="Actualidad, avisos, reuniones, actas y buzón para la plantilla.">
 <meta property="og:image" content="https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/img/og.png">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="fuentes.css?v=3">
-<link rel="stylesheet" href="styles.css?v=3">
+<link rel="stylesheet" href="fuentes.css?v=4">
+<link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
 <a class="saltar" href="#contenido">Ir al contenido</a>
@@ -106,9 +106,13 @@
 
   <!-- AVISOS -->
   <section id="v-avisos" class="vista" data-titulo="Avisos" hidden>
+    <div class="cab-apartado">
+      <div class="cab-apartado-in">
+        <span class="ic" data-ic="megafono"></span>
+        <div><h1>Avisos</h1><p>Comunicados cortos del comité. Los urgentes salen marcados en rojo.</p></div>
+      </div>
+    </div>
     <div class="caja">
-      <h1 class="titulo-vista">Avisos</h1>
-      <p class="sub-vista">Comunicados cortos del comité. Los urgentes salen marcados en rojo.</p>
       <div id="push-caja" class="tarjeta push-caja" hidden>
         <div class="push-cab"><span class="ic" data-ic="campana"></span><div><h2>Recibe los avisos en tu móvil</h2><p id="push-txt">Te llega una notificación cada vez que el comité publica algo, aunque tengas la web cerrada.</p></div></div>
         <div id="push-off">
@@ -127,9 +131,13 @@
 
   <!-- CALENDARIO DE REUNIONES -->
   <section id="v-reuniones" class="vista" data-titulo="Calendario de reuniones" hidden>
+    <div class="cab-apartado">
+      <div class="cab-apartado-in">
+        <span class="ic" data-ic="calendario"></span>
+        <div><h1>Calendario de reuniones</h1><p>Reuniones del comité, con la empresa y asambleas. Puedes añadirlas al calendario de tu móvil.</p></div>
+      </div>
+    </div>
     <div class="caja">
-      <h1 class="titulo-vista">Calendario de reuniones</h1>
-      <p class="sub-vista">Reuniones del comité, con la empresa y asambleas. Puedes añadirlas al calendario de tu móvil.</p>
       <div class="mes">
         <div class="mes-cab">
           <button type="button" class="mes-btn" id="mes-ant" aria-label="Mes anterior"></button>
@@ -150,8 +158,13 @@
 
   <!-- ACTAS -->
   <section id="v-actas" class="vista" data-titulo="Actas" hidden>
+    <div class="cab-apartado">
+      <div class="cab-apartado-in">
+        <span class="ic" data-ic="acta"></span>
+        <div><h1>Actas</h1><p>Los acuerdos de cada reunión y los documentos útiles para la plantilla.</p></div>
+      </div>
+    </div>
     <div class="caja">
-      <h1 class="titulo-vista">Actas</h1>
       <div class="segmentos" role="tablist" aria-label="Actas o documentos">
         <button type="button" role="tab" id="seg-actas" aria-selected="true" aria-controls="bloque-actas">Actas</button>
         <button type="button" role="tab" id="seg-documentos" aria-selected="false" aria-controls="bloque-documentos">Documentos útiles</button>
@@ -174,9 +187,13 @@
 
   <!-- SUGERENCIAS Y PREGUNTAS -->
   <section id="v-buzon" class="vista" data-titulo="Sugerencias y preguntas" hidden>
+    <div class="cab-apartado">
+      <div class="cab-apartado-in">
+        <span class="ic" data-ic="mensaje"></span>
+        <div><h1>Sugerencias y preguntas</h1><p>Escríbenos lo que quieras proponer o preguntar. Es anónimo: no guardamos tu nombre, ni tu teléfono, ni desde dónde lo envías.</p></div>
+      </div>
+    </div>
     <div class="caja">
-      <h1 class="titulo-vista">Sugerencias y preguntas</h1>
-      <p class="sub-vista">Escríbenos lo que quieras proponer o preguntar. Es anónimo: no guardamos tu nombre, ni tu teléfono, ni desde dónde lo envías.</p>
       <form id="form-buzon" class="tarjeta form-buzon" novalidate>
         <fieldset class="tipo-buzon">
           <legend>¿Qué nos quieres enviar?</legend>
@@ -197,8 +214,13 @@
 
   <!-- NOSOTROS -->
   <section id="v-nosotros" class="vista" data-titulo="Nosotros" hidden>
+    <div class="cab-apartado">
+      <div class="cab-apartado-in">
+        <span class="ic" data-ic="personas"></span>
+        <div><h1>Nosotros</h1><p>Quién forma el comité y cómo hablar con nosotros.</p></div>
+      </div>
+    </div>
     <div class="caja">
-      <h1 class="titulo-vista">Nosotros</h1>
       <div id="nosotros-texto" class="tarjeta texto"></div>
       <h2 class="titulo-bloque">Miembros del comité</h2>
       <div id="lista-miembros" class="miembros"></div>
@@ -206,8 +228,13 @@
   </section>
   <!-- BUSCAR -->
   <section id="v-buscar" class="vista" data-titulo="Buscar" hidden>
+    <div class="cab-apartado">
+      <div class="cab-apartado-in">
+        <span class="ic" data-ic="buscar"></span>
+        <div><h1>Buscar</h1><p>Busca en avisos, noticias, reuniones, actas, documentos y preguntas.</p></div>
+      </div>
+    </div>
     <div class="caja">
-      <h1 class="titulo-vista">Buscar</h1>
       <label class="buscador">
         <span class="sr-only">Qué quieres buscar</span>
         <input type="search" id="buscar-todo" placeholder="Ej.: vacaciones, nómina, turnos…" autocomplete="off" enterkeyhint="search">
@@ -219,8 +246,13 @@
 
   <!-- PRIVACIDAD -->
   <section id="v-privacidad" class="vista" data-titulo="Privacidad" hidden>
+    <div class="cab-apartado">
+      <div class="cab-apartado-in">
+        <span class="ic" data-ic="candado"></span>
+        <div><h1>Privacidad</h1><p>Qué datos se guardan y cuáles no.</p></div>
+      </div>
+    </div>
     <div class="caja">
-      <h1 class="titulo-vista">Privacidad</h1>
       <div id="privacidad-texto" class="tarjeta texto"></div>
     </div>
   </section>
@@ -233,13 +265,29 @@
 </nav>
 
 <footer class="pie">
-  <p>Comité de Empresa de Calsina Carré · Web informativa para la plantilla</p>
-  <p><a href="#privacidad">Privacidad</a> · <a href="admin.html">Acceso del comité</a></p>
+  <div class="pie-in">
+    <div class="pie-marca">
+      <div class="pie-logo"><img src="img/icon-192.png" alt="" width="48" height="48"><div><b>Calsina Carré</b><small>Comité de empresa</small></div></div>
+      <p>La web del comité de empresa para toda la plantilla. Gratis, sin publicidad y sin pedirte ningún dato.</p>
+    </div>
+    <nav class="pie-col" aria-label="Apartados">
+      <h2>Apartados</h2>
+      <a href="#actualidad">Actualidad</a><a href="#avisos">Avisos</a><a href="#reuniones">Calendario de reuniones</a><a href="#actas">Actas</a><a href="#documentos">Documentos útiles</a>
+    </nav>
+    <nav class="pie-col" aria-label="El comité">
+      <h2>El comité</h2>
+      <a href="#nosotros">Quiénes somos</a><a href="#buzon">Buzón anónimo</a><a href="#buzon">Preguntas frecuentes</a><a href="#avisos-movil">Avisos al móvil</a><a href="#buscar">Buscar</a>
+    </nav>
+  </div>
+  <div class="pie-legal">
+    <span>© <span id="pie-ano">2026</span> Comité de Empresa de Calsina Carré</span>
+    <span><a href="#privacidad">Privacidad</a> · <a href="admin.html">Acceso del comité</a></span>
+  </div>
 </footer>
 
 <script src="lib/supabase.js"></script>
-<script src="comun.js?v=3"></script>
-<script src="render.js?v=3"></script>
-<script src="app.js?v=3"></script>
+<script src="comun.js?v=4"></script>
+<script src="render.js?v=4"></script>
+<script src="app.js?v=4"></script>
 </body>
 </html>

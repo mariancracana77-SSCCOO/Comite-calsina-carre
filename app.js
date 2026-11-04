@@ -461,6 +461,7 @@
     $("instalar").hidden = false;
   }
 
+  $("pie-ano").textContent = new Date().getFullYear();
   arranca();
   registraSW();
   preparaPush();
