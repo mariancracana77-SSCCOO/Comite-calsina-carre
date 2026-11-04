@@ -130,8 +130,25 @@ fs.mkdirSync(OUT, { recursive: true });
       await pa.evaluate(() => document.getElementById("fab").click()); await pa.waitForTimeout(300);
       if (!(await pa.$(".asistente"))) fallos.push(`${c.nombre}: no sale el asistente de actas`);
       else {
-        await pa.setInputFiles("#f-ia", path.join(RAIZ, "img/og.png")); await pa.waitForTimeout(200);
-        await pa.click("#b-ia"); await pa.waitForTimeout(700);
+        await pa.setInputFiles("#f-ia", path.join(RAIZ, "img/og.png")); await pa.waitForTimeout(400);
+        // Tapar con el dedo: se pinta una raya y «Listo»
+        if (!(await pa.$(".tapador canvas"))) fallos.push(`${c.nombre}: no se abre «tapar» al añadir una foto`);
+        else {
+          const bx = await (await pa.$(".tapador canvas")).boundingBox();
+          await pa.mouse.move(bx.x + bx.width * .2, bx.y + bx.height * .3); await pa.mouse.down(); await pa.mouse.move(bx.x + bx.width * .7, bx.y + bx.height * .35, { steps: 6 }); await pa.mouse.up();
+          if (c.nombre === "390") await pa.screenshot({ path: path.join(OUT, "panel-390-tapar.png") });
+          await pa.click('.tapador [data-tap="listo"]'); await pa.waitForTimeout(300);
+        }
+        await pa.evaluate(() => document.querySelectorAll(".nota-ia").forEach((d) => { d.open = true; }));
+        await pa.fill("#notas-ia", "Reunión con Juan Pérez García. Llamar al 612 345 678 o escribir a juan@ejemplo.com. DNI 12345678Z. La compañera Marta dijo que sí.");
+        await pa.fill("#tapar-ia", "Juan Pérez García");
+        await pa.click("#b-ia"); await pa.waitForTimeout(500);
+        if (!(await pa.$(".ia-rev"))) fallos.push(`${c.nombre}: no enseña lo que se va a enviar`);
+        if (c.nombre === "390") await pa.screenshot({ path: path.join(OUT, "panel-390-revision.png") });
+        await pa.click("[data-ia-enviar]"); await pa.waitForTimeout(700);
+        const env = await pa.evaluate(() => window.__IA?.notas || "");
+        if (/P[ée]rez|612|juan@|12345678|Marta/.test(env) || !/\[PERSONA 1\]/.test(env)) fallos.push(`${c.nombre}: se envían datos sin tapar: ${env.slice(0, 200)}`);
+        if (!(await pa.inputValue("#f-resumen")).includes("Juan Pérez García pidió")) fallos.push(`${c.nombre}: el nombre no vuelve a su sitio en el acta`);
         if ((await pa.inputValue("#f-titulo")) !== "Reunión del comité de noviembre" || !(await pa.inputValue("#f-acuerdos")).includes("jornada intensiva")) fallos.push(`${c.nombre}: el asistente no rellena el acta`);
         if (!(await pa.evaluate(() => window.__IA && window.__IA.archivos.length === 1 && window.__IA.archivos[0].mime === "image/jpeg"))) fallos.push(`${c.nombre}: el asistente no envía la foto`);
         if (c.nombre === "390") await pa.screenshot({ path: path.join(OUT, "panel-390-asistente.png"), fullPage: false });

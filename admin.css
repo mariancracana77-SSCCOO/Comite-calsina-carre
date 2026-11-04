@@ -329,3 +329,21 @@ a.hola-dato:hover, button.hola-dato:hover { border-color: var(--celeste); }
 #b-ia { width: 100%; margin-top: 6px; }
 .separador-ia { display: flex; align-items: center; gap: 10px; margin: 14px 0 10px; font-weight: 700; color: var(--suave, #556373); font-size: .9rem; }
 .separador-ia::before, .separador-ia::after { content: ""; flex: 1; height: 1px; background: var(--borde, #d8e0ea); }
+/* v12: tapar datos antes de enviar al asistente */
+.ia-protege { display: flex; gap: 10px; align-items: flex-start; margin: 8px 0; padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, #2e7d32 10%, transparent); font-size: .92rem; }
+.ia-protege .ico { flex: none; width: 22px; height: 22px; color: #2e7d32; }
+.ia-rev { margin-top: 12px; padding: 12px; border-radius: 12px; border: 2px solid var(--azul, #0E5FAE); background: var(--tarjeta, #fff); display: grid; gap: 8px; }
+.ia-texto { margin: 0; max-height: 300px; overflow: auto; white-space: pre-wrap; word-break: break-word; font: inherit; font-size: .9rem; padding: 10px; border-radius: 8px; background: var(--fondo, #F3F6FA); }
+.ia-texto mark { background: #0B1E3C; color: #fff; border-radius: 4px; padding: 0 3px; }
+.ia-fotos { display: flex; gap: 8px; flex-wrap: wrap; } .ia-fotos img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; border: 1px solid var(--borde, #d8e0ea); }
+.ia-ojo { display: flex; gap: 8px; margin: 0; color: #b45309; font-weight: 600; font-size: .92rem; } .ia-ojo .ico { flex: none; }
+.tapador { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; background: #0b1220; color: #fff; }
+.tapador-cab { padding: 12px 16px; display: grid; gap: 2px; } .tapador-cab span { font-size: .9rem; color: #c9d6e6; }
+.tapador-lienzo { flex: 1; min-height: 0; display: grid; place-items: center; padding: 0 8px; overflow: hidden; }
+.tapador-lienzo canvas { max-width: 100%; max-height: 100%; touch-action: none; cursor: crosshair; background: #fff; border-radius: 4px; }
+.tapador-herr, .tapador-pie { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 10px 12px; }
+.tapador-pie { justify-content: space-between; border-top: 1px solid rgba(255,255,255,.12); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+.tapador .btn-linea { color: #fff; border-color: rgba(255,255,255,.35); background: transparent; }
+.tapador-grosor { display: inline-flex; border: 1px solid rgba(255,255,255,.35); border-radius: 10px; overflow: hidden; }
+.tapador-grosor button { min-height: 44px; padding: 0 14px; border: 0; background: transparent; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.tapador-grosor button[aria-pressed="true"] { background: #fff; color: #0B1E3C; }

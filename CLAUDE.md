@@ -9,7 +9,7 @@ La gestiona desde el panel el padre de Lorena (usuario GitHub `mariancracana77-S
 
 - Web: https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/ (GitHub Pages desde `main`, raíz)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **11**
+- Versión actual: **12**
 
 ## Reglas (las mismas que en CCOO)
 - No publicar en `main` sin que Lorena lo confirme. Trabajar en la rama indicada.
@@ -40,7 +40,7 @@ Para que el padre sea independiente (como «Apartados» en CCOO). Tablas `aparta
 - `notificar` avisa también de `publicaciones` («<Sección>: título», `#publicacion-N`).
 
 ## Asistente de actas (v11, como en CCOO)
-En «Nueva acta» (`SECCIONES.actas.asistente`), `asistenteHTML`/`prepararAsistente`/`generarActa` en `admin.js`: fotos (reducidas a 2000 px JPEG), PDF, Word (.docx leído con JSZip en el navegador) o texto, hasta 6, → función `generar-acta` (copia en `herramientas/funciones/generar-acta.ts`, `verify_jwt` activado + `is_admin()` dentro; Gemini gratuito, modelos en `MODELOS`) → rellena título, tipo (de `TIPOS_REUNION`), fecha, resumen y acuerdos. No guarda nada. Necesita el secreto `GEMINI_API_KEY` en el Supabase del comité (lo pone Lorena en Edge Functions → Secrets; nunca por el chat). Lo enviado va a Google (lo avisa el panel): solo lo usa el admin.
+En «Nueva acta» (`SECCIONES.actas.asistente`), `asistenteHTML`/`prepararAsistente`/`generarActa` en `admin.js`: fotos (reducidas a 2000 px JPEG), PDF, Word (.docx leído con JSZip en el navegador) o texto, hasta 6, → función `generar-acta` (copia en `herramientas/funciones/generar-acta.ts`, `verify_jwt` activado + `is_admin()` dentro; Gemini gratuito, modelos en `MODELOS`) → rellena título, tipo (de `TIPOS_REUNION`), fecha, resumen y acuerdos. No guarda nada. Necesita el secreto `GEMINI_API_KEY` en el Supabase del comité (lo pone Lorena en Edge Functions → Secrets; nunca por el chat). Lo enviado va a Google (lo avisa el panel): solo lo usa el admin. **v12, tapar datos** (todo en el dispositivo, comentario largo encima del código): `tapaTexto` (nombres → `[PERSONA n]`, que `devuelveNombres` repone al recibir; DNI/NIE, teléfonos, emails, cuentas, n.º Seg. Social y matrículas se quedan tapados), nombres de `miembros` + lista propia (localStorage `comite-ia-tapar`) + heurísticas (tras «Sr.», «compañero»…; dos o tres palabras con mayúscula que no estén en `NO_NOMBRES`); fotos y PDF escaneados con `abreTapador` (pintar con el dedo, se envía la imagen ya pintada); PDF con texto leído con pdf.js (`lib/pdfjs/`, 4.10.38 legacy, Apache 2.0, se carga con `import()` solo al usarlo); paso «Preparar y revisar» (`revisaEnvio`, `#ia-revision`) antes de `generarActa`.
 
 ## Iconos de lo que tiene la empresa: QUITADOS
 El padre pidió mostrar lo que tiene la empresa (camión, toro, transpaleta, distribuidor, gasolinera). Se probó como franja bajo los accesos y como fila de iconos en el bloque azul, en el cartel y en la imagen al compartir: no le gustó y se quitó de todo (v6). No volver a ponerlo. Se mantiene la gasolinera dibujada junto al camión en `hero-arte.webp`. Los iconos `camion`, `toro`, `transpaleta`, `reparto` y `surtidor` siguen definidos en `comun.js` sin usar.
