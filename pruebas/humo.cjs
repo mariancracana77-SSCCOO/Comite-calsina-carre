@@ -32,7 +32,7 @@ fs.mkdirSync(OUT, { recursive: true });
         const ancho = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
         if (ancho > 1) fallos.push(`${c.nombre} #${v}: scroll lateral de ${ancho}px`);
         if (["390", "pc", "390-oscuro"].includes(c.nombre) || (c.nombre === "390-letra" && v === "actualidad"))
-          await p.screenshot({ path: path.join(OUT, `web-${c.nombre}-${v}.png`), fullPage: v === "actualidad" });
+          await p.screenshot({ path: path.join(OUT, `web-${c.nombre}-${v}.png`), fullPage: v === "actualidad" || c.nombre === "320" });
       }
       // Votar en la consulta
       await p.goto(BASE + "#actualidad"); await p.waitForTimeout(700);
