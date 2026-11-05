@@ -192,15 +192,12 @@
   // ---------- Calendario de reuniones ----------
   // Festivos (petición n.º 3 del panel): España en rojo, Cataluña con la senyera; las reuniones, en verde.
   // OJO: cada año hay que añadir el año nuevo aquí (calendario oficial del BOE y del DOGC). Sin festivos locales.
+  // 2027 queda pendiente: Lorena lo añade cuando salga el calendario oficial.
   const FESTIVOS = {
     "2026-01-01": ["es", "Año Nuevo"], "2026-01-06": ["es", "Reyes"], "2026-04-03": ["es", "Viernes Santo"], "2026-04-06": ["cat", "Lunes de Pascua"],
     "2026-05-01": ["es", "Fiesta del Trabajo"], "2026-06-24": ["cat", "Sant Joan"], "2026-08-15": ["es", "La Asunción"], "2026-09-11": ["cat", "Diada de Catalunya"],
     "2026-10-12": ["es", "Fiesta Nacional"], "2026-11-01": ["es", "Todos los Santos"], "2026-12-06": ["es", "Día de la Constitución"], "2026-12-08": ["es", "La Inmaculada"],
     "2026-12-25": ["es", "Navidad"], "2026-12-26": ["cat", "Sant Esteve"],
-    "2027-01-01": ["es", "Año Nuevo"], "2027-01-06": ["es", "Reyes"], "2027-03-26": ["es", "Viernes Santo"], "2027-03-29": ["cat", "Lunes de Pascua"],
-    "2027-05-01": ["es", "Fiesta del Trabajo"], "2027-06-24": ["cat", "Sant Joan"], "2027-08-15": ["es", "La Asunción"], "2027-09-11": ["cat", "Diada de Catalunya"],
-    "2027-10-12": ["es", "Fiesta Nacional"], "2027-11-01": ["es", "Todos los Santos"], "2027-12-06": ["es", "Día de la Constitución"], "2027-12-08": ["es", "La Inmaculada"],
-    "2027-12-25": ["es", "Navidad"], "2027-12-26": ["cat", "Sant Esteve"],
   };
   const mesVisto = (() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
   const pintaMes = () => {
