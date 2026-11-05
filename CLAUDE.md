@@ -50,6 +50,11 @@ Copia del sistema de CCOO (ver su CLAUDE.md: «Circuito de peticiones», «Orden
 - App de revisión de Lorena (la misma que CCOO): fichas del comité con documento `c<N>`, `web: 'comite'` y título «Comité: …». Al hacer la ficha, escribir lo mismo en `peticiones_claude.ficha` (capturas solo con URL de este Supabase).
 - Publicar: en este repo, con su versión, respaldo `respaldo-v<N-1>` antes y `pruebas/humo.cjs` en verde.
 
+## Varias sesiones de Claude (lo pidió Lorena, 5/11/2026)
+- **Lo de CCOO no se hace desde aquí**: si Lorena pide algo de la web de CCOO (repo `SSCCOO`), se le manda a la sesión de CCOO («Lorena-web») con `send_message` y esta sesión no lo hace ni toca su repo, su Supabase ni su GitHub Pages. Se le dice a Lorena que se ha pasado.
+- Tablero común en el Supabase de CCOO (`kdfedwcskymaitvpryvg`): al empezar algo, `select privado.estoy_con('Comité','qué haces')`; al acabar, `select privado.estoy_con('Comité', null)`.
+- Antes de tocar `main` de este repo: `select privado.turno_coger('Comite-calsina-carre','Comité','<versión siguiente>','qué')`; si no devuelve `ok`, esperar (caduca a los 30 min). Al terminar: `select privado.turno_soltar('Comite-calsina-carre','Comité','<versión subida>' o null)` y avisar a las otras sesiones con `send_message`.
+
 ## Iconos de lo que tiene la empresa: QUITADOS
 El padre pidió mostrar lo que tiene la empresa (camión, toro, transpaleta, distribuidor, gasolinera). Se probó como franja bajo los accesos y como fila de iconos en el bloque azul, en el cartel y en la imagen al compartir: no le gustó y se quitó de todo (v6). No volver a ponerlo. Se mantiene la gasolinera dibujada junto al camión en `hero-arte.webp`. Los iconos `camion`, `toro`, `transpaleta`, `reparto` y `surtidor` siguen definidos en `comun.js` sin usar.
 
