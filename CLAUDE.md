@@ -51,6 +51,7 @@ Copia del sistema de CCOO (ver su CLAUDE.md: «Circuito de peticiones», «Orden
 - Publicar: en este repo, con su versión, respaldo `respaldo-v<N-1>` antes y `pruebas/humo.cjs` en verde.
 
 ## Varias sesiones de Claude (lo pidió Lorena, 5/11/2026)
+- **Al empezar cada turno, antes de nada**: `select privado.coord_mio('Comité')` en el Supabase de CCOO (`kdfedwcskymaitvpryvg`). Da las notas sin leer, qué hace cada sesión, los turnos, si Pages está ocupado y lo que es de esta sesión (`privado.coord_duenos`: la web del Comité, código y publicar; las peticiones del padre del Comité son de «Timbres»; nada de CCOO). Lo que es de otra sesión no se toca: se le deja una nota con `select privado.coord_nota('Comité','Lorena-web'|'Timbres'|'todas','texto')`.
 - **Lo de CCOO no se hace desde aquí**: si Lorena pide algo de la web de CCOO (repo `SSCCOO`), se le manda a la sesión de CCOO («Lorena-web») con `send_message` y esta sesión no lo hace ni toca su repo, su Supabase ni su GitHub Pages. Se le dice a Lorena que se ha pasado.
 - Tablero común en el Supabase de CCOO (`kdfedwcskymaitvpryvg`): al empezar algo, `select privado.estoy_con('Comité','qué haces')`; al acabar, `select privado.estoy_con('Comité', null)`.
 - Antes de tocar `main` de este repo: `select privado.turno_coger('Comite-calsina-carre','Comité','<versión siguiente>','qué')`; si no devuelve `ok`, esperar (caduca a los 30 min). Al terminar: `select privado.turno_soltar('Comite-calsina-carre','Comité','<versión subida>' o null)` y avisar a las otras sesiones con `send_message`.
