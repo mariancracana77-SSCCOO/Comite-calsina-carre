@@ -190,6 +190,15 @@
   };
 
   // ---------- Calendario de reuniones ----------
+  // Festivos (petición n.º 3 del panel): España en rojo, Cataluña con la senyera; las reuniones, en verde.
+  // OJO: cada año hay que añadir el año nuevo aquí (calendario oficial del BOE y del DOGC). Sin festivos locales.
+  // 2027 queda pendiente: Lorena lo añade cuando salga el calendario oficial.
+  const FESTIVOS = {
+    "2026-01-01": ["es", "Año Nuevo"], "2026-01-06": ["es", "Reyes"], "2026-04-03": ["es", "Viernes Santo"], "2026-04-06": ["cat", "Lunes de Pascua"],
+    "2026-05-01": ["es", "Fiesta del Trabajo"], "2026-06-24": ["cat", "Sant Joan"], "2026-08-15": ["es", "La Asunción"], "2026-09-11": ["cat", "Diada de Catalunya"],
+    "2026-10-12": ["es", "Fiesta Nacional"], "2026-11-01": ["es", "Todos los Santos"], "2026-12-06": ["es", "Día de la Constitución"], "2026-12-08": ["es", "La Inmaculada"],
+    "2026-12-25": ["es", "Navidad"], "2026-12-26": ["cat", "Sant Esteve"],
+  };
   const mesVisto = (() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
   const pintaMes = () => {
     const a = mesVisto.getFullYear(), m = mesVisto.getMonth();
@@ -202,14 +211,21 @@
     let h = "";
     for (let i = 0; i < primero; i++) h += "<span></span>";
     for (let d = 1; d <= dias; d++) {
-      const iso = `${a}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`, rs = porDia[iso];
-      const cls = ["dia-mes", iso === hoy ? "hoy" : "", rs ? "con" : ""].join(" ");
+      const iso = `${a}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`, rs = porDia[iso], fe = FESTIVOS[iso];
+      const cls = ["dia-mes", iso === hoy ? "hoy" : "", rs ? "con" : "", fe ? "fest-" + fe[0] : ""].join(" ");
+      const nombres = [...(rs || []).map((r) => r.titulo), ...(fe ? ["Festivo: " + fe[1]] : [])].join(", ");
       h += rs
-        ? `<a class="${cls}" href="#reunion-${rs[0].id}" aria-label="${d}: ${esc(rs.map((r) => r.titulo).join(", "))}">${d}<i></i></a>`
-        : `<span class="${cls}">${d}</span>`;
+        ? `<a class="${cls}" href="#reunion-${rs[0].id}" aria-label="${d}: ${esc(nombres)}">${d}<i></i></a>`
+        : fe ? `<button type="button" class="${cls}" data-festivo="${esc(d + " de " + mesVisto.toLocaleDateString("es-ES", { month: "long" }) + ": " + fe[1] + (fe[0] === "cat" ? " (festivo de Cataluña)" : " (festivo de España)"))}" aria-label="${d}: ${esc(nombres)}"><b>${d}</b></button>` : `<span class="${cls}">${d}</span>`;
     }
     $("mes-rejilla").innerHTML = h;
+    $("mes-festivo").textContent = ""; $("mes-festivo").hidden = true;
   };
+  // Al tocar un festivo sale su nombre debajo del calendario (lo pidió el padre)
+  $("mes-rejilla").addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-festivo]"); if (!b) return;
+    $("mes-festivo").textContent = b.dataset.festivo; $("mes-festivo").hidden = false;
+  });
   $("mes-ant").addEventListener("click", () => { mesVisto.setMonth(mesVisto.getMonth() - 1); pintaMes(); });
   $("mes-sig").addEventListener("click", () => { mesVisto.setMonth(mesVisto.getMonth() + 1); pintaMes(); });
 

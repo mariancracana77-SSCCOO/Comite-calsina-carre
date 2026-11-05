@@ -1,11 +1,11 @@
 // Permite instalar la web como app y abrirla sin conexión.
 // Cambiar VERSION junto con ?v= en los HTML y VERSION_WEB en comun.js.
-const VERSION = "14";
+const VERSION = "16";
 const CACHE = "comite-v" + VERSION;
 const ARCHIVOS = [
   "./", "index.html", "admin.html", "guia.html",
   "styles.css?v=" + VERSION, "admin.css?v=" + VERSION, "fuentes.css?v=" + VERSION,
-  "comun.js?v=" + VERSION, "render.js?v=" + VERSION, "app.js?v=" + VERSION, "admin.js?v=" + VERSION, "lib/supabase.js",
+  "comun.js?v=" + VERSION, "render.js?v=" + VERSION, "app.js?v=" + VERSION, "visor.js?v=" + VERSION, "admin.js?v=" + VERSION, "lib/supabase.js",
   "manifest.json", "img/icon-192.png", "img/icon-512.png", "img/favicon-32.png", "img/badge-96.png", "img/hero-arte.webp", "img/portada.webp", "img/portada-movil.webp", "img/apple-touch-icon.png",
   "fuentes/inter-latin-400-normal.woff2", "fuentes/inter-latin-600-normal.woff2", "fuentes/inter-latin-700-normal.woff2",
   "fuentes/montserrat-latin-700-normal.woff2", "fuentes/montserrat-latin-800-normal.woff2",

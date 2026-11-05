@@ -21,11 +21,39 @@
       ${icono("flecha")}
     </a>`;
 
+  // «Leer más» (petición n.º 4 del panel): el texto largo de anuncios y avisos sale plegado (unas 5 líneas)
+  // y se despliega con el botón. Si el texto cabe, el botón no sale (lo decide revisaPlegables al pintarse).
+  const plegable = (t) => `<div class="texto plegable">${textoHTML(t)}</div><button type="button" class="leer-mas" aria-expanded="false" hidden>Leer más</button>`;
+  const revisaPlegables = () => document.querySelectorAll(".texto.plegable").forEach((d) => {
+    const b = d.nextElementSibling; if (!b || !b.classList.contains("leer-mas")) return;
+    if (!d.getClientRects().length) return; // pestaña oculta: se mira al enseñarla (hashchange)
+    if (d.classList.contains("abierto")) { b.hidden = false; return; }
+    d.classList.toggle("corto", false);
+    const largo = d.scrollHeight > d.clientHeight + 4;
+    b.hidden = !largo; d.classList.toggle("corto", !largo);
+  });
+  let espera = 0;
+  const pronto = () => { clearTimeout(espera); espera = setTimeout(revisaPlegables, 60); };
+  new MutationObserver(pronto).observe(document.documentElement, { childList: true, subtree: true });
+  window.addEventListener("resize", pronto);
+  window.addEventListener("hashchange", pronto);
+  document.addEventListener("click", (ev) => {
+    const b = ev.target.closest(".leer-mas"); if (!b) return;
+    const d = b.previousElementSibling, abre = !d.classList.contains("abierto");
+    d.classList.toggle("abierto", abre); b.setAttribute("aria-expanded", String(abre)); b.textContent = abre ? "Leer menos" : "Leer más";
+    if (!abre) b.closest("article")?.scrollIntoView({ block: "nearest" });
+  });
+  // Si se entra con un enlace directo a un aviso o anuncio (#aviso-N, #noticia-N), sale ya desplegado
+  const abreDelEnlace = () => { const m = /^#((aviso|noticia)-\d+)$/.exec(location.hash); const d = m && document.getElementById(m[1])?.querySelector(".texto.plegable");
+    if (d && !d.classList.contains("abierto")) d.nextElementSibling?.click(); };
+  window.addEventListener("hashchange", () => setTimeout(abreDelEnlace, 150));
+  window.addEventListener("load", () => setTimeout(abreDelEnlace, 900));
+
   const noticia = (n) => `
     <article class="tarjeta" id="noticia-${n.id}">
       <div class="meta">${n.categoria && n.categoria !== "General" ? `<span class="etq">${esc(n.categoria)}</span>` : ""}${nuevo(n.creado)}<span>${esc(fechaLarga(n.fecha || hoyISO()))}</span></div>
       <h3>${esc(n.titulo || "Sin título")}</h3>
-      <div class="texto">${textoHTML(n.contenido)}</div>
+      ${plegable(n.contenido)}
       ${adjuntosHTML(n.adjuntos)}
       <div class="acciones">${botonCompartir("noticia-" + n.id, n.titulo, n.contenido)}</div>
     </article>`;
@@ -52,7 +80,7 @@
         <div class="aviso-txt">
           <div class="meta">${hoy ? '<span class="etq rojo">Destacado hoy</span>' : a.urgente ? '<span class="etq rojo">Urgente</span>' : '<span class="etq azul">Aviso</span>'}${nuevo(a.fecha)}<span>${esc(fechaLarga(a.fecha || new Date()))}</span></div>
           <h3>${esc(a.titulo || "Sin título")}</h3>
-          <div class="texto">${textoHTML(a.contenido)}</div>
+          ${plegable(a.contenido)}
           ${adjuntosHTML(a.adjuntos)}
           <div class="acciones">${botonCompartir("aviso-" + a.id, a.titulo, a.contenido)}</div>
         </div>

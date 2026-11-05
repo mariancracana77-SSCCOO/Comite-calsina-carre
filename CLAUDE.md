@@ -9,7 +9,7 @@ La gestiona desde el panel el padre de Lorena (usuario GitHub `mariancracana77-S
 
 - Web: https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/ (GitHub Pages desde `main`, raíz)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **14**
+- Versión actual: **16**
 
 ## Reglas (las mismas que en CCOO)
 - No publicar en `main` sin que Lorena lo confirme. Trabajar en la rama indicada.
@@ -65,12 +65,15 @@ El padre pidió mostrar lo que tiene la empresa (camión, toro, transpaleta, dis
 ## Archivos
 - `index.html` + `app.js`: web pública. Vistas `#actualidad` (portada), `#avisos`, `#reuniones`, `#actas` (con segmento «Documentos útiles», `#documentos`), `#buzon`, `#nosotros`, `#buscar`, `#privacidad`. Enlaces directos `#aviso-N`, `#noticia-N`, `#reunion-N`, `#acta-N`, `#consulta-N`, `#documento-N`. localStorage (todo con try/catch en `TEMA.lee/guarda`): `comite-tema`, `comite-letra`, `comite-avisos-vistos`, `comite-ultima-visita`, `comite-votos`, `comite-copia` (copia sin conexión), `comite-no-instalar`.
 - Apartados vacíos: `vacio(titulo, texto, icono, [enlace, texto])` en `app.js` (caja `.vacio-caja`). Para verlos en pruebas: `?prueba-vacio` en la dirección vacía el simulador.
+- «Leer más» (v16, petición n.º 4): en `render.js`, `plegable()` pliega el texto de anuncios y avisos (~5 líneas) y `revisaPlegables` enseña el botón solo si hace falta; con enlace directo sale desplegado.
+- Calendario (v16, petición n.º 3): en `app.js`, `FESTIVOS` (España «es» en rojo, Cataluña «cat» con la senyera; reuniones en verde; leyenda `.mes-leyenda`). **Cada año hay que añadir el siguiente** con el calendario oficial (BOE y DOGC); 2027 aún no está.
 - `render.js`: tarjetas (`R.aviso`, `R.noticia`, `R.reunion`, `R.acta`, `R.documento`, `R.consulta`, `R.pregunta`, `R.miembro`) que usan la web **y la vista previa del panel**. Cambiar aquí para que las dos coincidan.
 - `comun.js`: conexión Supabase, `esc`, `urlSegura`, `textoHTML` (párrafos, `- ` listas, `**negrita**`), fechas, adjuntos, iconos, tema/letra, `.ics`, compartir, aviso de versión nueva.
 - `admin.html` + `admin.js` + `admin.css`: panel. `SECCIONES` define campos de cada tabla (tipos: texto, largo, fecha, hora, fechahora, si, opcion, numero, tel, email, url, archivos, foto, nota). `MENU`/`BARRA`: menú lateral (PC) y barra de abajo (móvil). Páginas especiales: inicio, buzon, textos, papelera, cartel, accesos (sale como «Ajustes»: correos con acceso).
 - `cartel.html` + `cartel.js`: cartel A4 con QR (`lib/qr.js`, MIT).
 - `guia.html` + `img/guia/`: guía del panel para el padre, con capturas hechas con los datos de prueba.
 - `sw.js`: caché para instalar y usar sin conexión (los datos de Supabase siempre van a la red).
+- `visor.js` (petición n.º 5 del panel): al tocar una foto de una tarjeta (`.galeria a`) o un PDF adjunto (`a[data-visor="pdf"]`, lo pone `adjuntosHTML`) se abre encima de la página con «Cerrar» (Esc y el botón Atrás también cierran). Los PDF se pintan con pdf.js (`lib/pdfjs`, carga solo al usarlo). Word/Excel siguen abriéndose aparte. Impedir capturas no es posible en una web.
 - `pruebas/`: `mock-supabase.js` (datos de prueba en memoria; `localStorage prueba-sesion = 1` entra al panel) y `humo.cjs`.
 
 ## Al publicar una versión nueva

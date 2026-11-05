@@ -231,6 +231,10 @@ main { outline: none; }
 .texto p { margin: 6px 0; }
 .texto ul { margin: 6px 0; padding-left: 1.2em; }
 .texto { overflow-wrap: anywhere; }
+/* «Leer más» en anuncios y avisos (petición n.º 4 del panel) */
+.texto.plegable:not(.abierto):not(.corto) { max-height: 8.2em; overflow: hidden; -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent); mask-image: linear-gradient(180deg, #000 60%, transparent); }
+.leer-mas { display: inline-flex; align-items: center; min-height: 44px; margin-top: 2px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--borde); background: var(--azul-claro); color: var(--azul); font: inherit; font-weight: 700; cursor: pointer; }
+.leer-mas[hidden] { display: none; }
 .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; color: var(--suave); font-size: .85rem; }
 .etq { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 99px; background: var(--azul-claro); color: var(--azul-osc); font-weight: 700; font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; }
 .etq.rojo { background: var(--rojo); color: #fff; }
@@ -302,9 +306,21 @@ main { outline: none; }
 .mes-dias { margin: 10px 0 4px; color: var(--suave); font-size: .8rem; font-weight: 700; }
 .dia-mes { position: relative; display: grid; place-items: center; aspect-ratio: 1; border-radius: 10px; color: var(--texto); text-decoration: none; font-size: .95rem; }
 .dia-mes.hoy { outline: 2px solid var(--azul); }
-.dia-mes.con { background: var(--azul); color: #fff; font-weight: 700; }
-:root[data-theme="dark"] .dia-mes.con { color: #0c131c; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .dia-mes.con { color: #0c131c; } }
+/* Calendario (lo pidió el padre, petición n.º 3 del panel): reuniones en verde, festivos de España en rojo
+   y festivos de Cataluña con la senyera (franjas amarillas y rojas). La reunión manda si coincide con un festivo. */
+.dia-mes.fest-es { background: #d32f2f; color: #fff; font-weight: 700; }
+.dia-mes.fest-cat, .ley.fest-cat { background: repeating-linear-gradient(180deg, #FCDD09 0 11.11%, #DA121A 11.11% 22.22%); }
+.dia-mes.fest-cat { color: #111; font-weight: 800; }
+.dia-mes.fest-cat b { padding: 0 5px; border-radius: 6px; background: rgba(255, 255, 255, .9); }
+.dia-mes.con { background: #2e7d32; color: #fff; font-weight: 700; }
+button.dia-mes { border: 0; font: inherit; cursor: pointer; width: 100%; padding: 0; }
+.mes-festivo { margin: 10px 2px 0; padding: 8px 12px; border-radius: 10px; background: var(--azul-claro); color: var(--texto); font-weight: 600; }
+.mes-festivo[hidden] { display: none; }
+.mes-leyenda { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 10px 2px 0; font-size: .85rem; color: var(--suave); }
+.mes-leyenda span { display: inline-flex; align-items: center; gap: 6px; }
+.ley { display: inline-block; width: 16px; height: 16px; border-radius: 4px; }
+.ley.con { background: #2e7d32; }
+.ley.fest-es { background: #d32f2f; }
 .dia-mes i { position: absolute; bottom: 5px; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 .pasadas { margin-top: 20px; }
 .pasadas summary { cursor: pointer; font-weight: 700; color: var(--azul); padding: 10px 0; }
@@ -527,3 +543,16 @@ img.inicial.foto { object-fit: cover; padding: 0; box-shadow: 0 0 0 2px var(--ta
 .cab-apartado .miga { margin: 0 0 4px; font-size: .9rem; }
 .miga a { display: inline-flex; align-items: center; gap: 4px; color: var(--celeste); text-decoration: none; font-weight: 700; }
 .miga a .ico { width: 16px; height: 16px; }
+
+/* Visor de fotos y PDF dentro de la web (visor.js, petición n.º 5 del panel) */
+html.visor-abierto, html.visor-abierto body { overflow: hidden; }
+.visor { position: fixed; inset: 0; z-index: 1000; background: rgba(5, 12, 24, .94); display: flex; flex-direction: column; }
+.visor-cab { display: flex; align-items: center; gap: 10px; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); background: #0B1E3C; color: #fff; }
+.visor-tit { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: "Montserrat", sans-serif; }
+.visor-cerrar { display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0 16px; border-radius: 12px; border: 0; background: #fff; color: #0B1E3C; font: inherit; font-weight: 700; cursor: pointer; }
+.visor-cerrar .ico { width: 1.2em; height: 1.2em; }
+.visor-cuerpo { flex: 1; overflow: auto; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 8px 24px; outline: none; -webkit-overflow-scrolling: touch; }
+.visor-foto { max-width: 100%; max-height: 100%; margin: auto; object-fit: contain; border-radius: 8px; }
+.visor-pag { max-width: 100%; height: auto; background: #fff; border-radius: 4px; box-shadow: 0 2px 12px rgba(0, 0, 0, .5); }
+.visor-msg { margin: auto; color: #fff; text-align: center; padding: 20px; font-size: 1.05rem; }
+.visor-msg a { color: #00C6FF; }

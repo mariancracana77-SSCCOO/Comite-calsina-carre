@@ -6,7 +6,7 @@
 window.SUPABASE_URL = "https://ytxpubqyhnohhugpukdm.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_tmkeed90aj4Fv00UoTTy7Q_qBPUAaCj";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "14"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "16"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/";
 
 // ---- Utilidades ----
@@ -64,7 +64,7 @@ window.adjuntosHTML = (lista) => {
   return (fotos.length ? `<div class="galeria${fotos.length === 1 ? " una" : ""}">${fotos.map((f) =>
       `<a href="${esc(urlSegura(f.url))}" target="_blank" rel="noopener" aria-label="Ver la foto en grande"><img src="${esc(urlSegura(f.url))}" alt="" loading="lazy"></a>`).join("")}</div>` : "")
     + (docs.length ? `<div class="adjuntos">${docs.map((a) =>
-      `<a class="adjunto" href="${esc(urlSegura(a.url))}" target="_blank" rel="noopener">${icono("documento")}
+      `<a class="adjunto" href="${esc(urlSegura(a.url))}" target="_blank" rel="noopener"${a.tipo === "application/pdf" ? ` data-visor="pdf" data-titulo="${esc(a.nombre || "PDF")}"` : ""}>${icono("documento")}
         <span><b>${esc(a.nombre || "Archivo")}</b><small>${tipoTxt(a)}${a.tamano ? " · " + tamanoTxt(a.tamano) : ""}</small></span></a>`).join("")}</div>` : "");
 };
 
