@@ -525,3 +525,16 @@ img.inicial.foto { object-fit: cover; padding: 0; box-shadow: 0 0 0 2px var(--ta
 .cab-apartado .miga { margin: 0 0 4px; font-size: .9rem; }
 .miga a { display: inline-flex; align-items: center; gap: 4px; color: var(--celeste); text-decoration: none; font-weight: 700; }
 .miga a .ico { width: 16px; height: 16px; }
+
+/* Visor de fotos y PDF dentro de la web (visor.js, petición n.º 5 del panel) */
+html.visor-abierto, html.visor-abierto body { overflow: hidden; }
+.visor { position: fixed; inset: 0; z-index: 1000; background: rgba(5, 12, 24, .94); display: flex; flex-direction: column; }
+.visor-cab { display: flex; align-items: center; gap: 10px; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); background: #0B1E3C; color: #fff; }
+.visor-tit { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: "Montserrat", sans-serif; }
+.visor-cerrar { display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0 16px; border-radius: 12px; border: 0; background: #fff; color: #0B1E3C; font: inherit; font-weight: 700; cursor: pointer; }
+.visor-cerrar .ico { width: 1.2em; height: 1.2em; }
+.visor-cuerpo { flex: 1; overflow: auto; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 8px 24px; outline: none; -webkit-overflow-scrolling: touch; }
+.visor-foto { max-width: 100%; max-height: 100%; margin: auto; object-fit: contain; border-radius: 8px; }
+.visor-pag { max-width: 100%; height: auto; background: #fff; border-radius: 4px; box-shadow: 0 2px 12px rgba(0, 0, 0, .5); }
+.visor-msg { margin: auto; color: #fff; text-align: center; padding: 20px; font-size: 1.05rem; }
+.visor-msg a { color: #00C6FF; }
