@@ -304,8 +304,18 @@ main { outline: none; }
 .mes-dias { margin: 10px 0 4px; color: var(--suave); font-size: .8rem; font-weight: 700; }
 .dia-mes { position: relative; display: grid; place-items: center; aspect-ratio: 1; border-radius: 10px; color: var(--texto); text-decoration: none; font-size: .95rem; }
 .dia-mes.hoy { outline: 2px solid var(--azul); }
-/* Días con reunión en rojo (lo pidió el padre, petición n.º 3 del panel) */
-.dia-mes.con { background: #d32f2f; color: #fff; font-weight: 700; }
+/* Calendario (lo pidió el padre, petición n.º 3 del panel): reuniones en verde, festivos de España en rojo
+   y festivos de Cataluña con la senyera (franjas amarillas y rojas). La reunión manda si coincide con un festivo. */
+.dia-mes.fest-es { background: #d32f2f; color: #fff; font-weight: 700; }
+.dia-mes.fest-cat, .ley.fest-cat { background: repeating-linear-gradient(180deg, #FCDD09 0 11.11%, #DA121A 11.11% 22.22%); }
+.dia-mes.fest-cat { color: #111; font-weight: 800; }
+.dia-mes.fest-cat b { padding: 0 5px; border-radius: 6px; background: rgba(255, 255, 255, .9); }
+.dia-mes.con { background: #2e7d32; color: #fff; font-weight: 700; }
+.mes-leyenda { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 10px 2px 0; font-size: .85rem; color: var(--suave); }
+.mes-leyenda span { display: inline-flex; align-items: center; gap: 6px; }
+.ley { display: inline-block; width: 16px; height: 16px; border-radius: 4px; }
+.ley.con { background: #2e7d32; }
+.ley.fest-es { background: #d32f2f; }
 .dia-mes i { position: absolute; bottom: 5px; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 .pasadas { margin-top: 20px; }
 .pasadas summary { cursor: pointer; font-weight: 700; color: var(--azul); padding: 10px 0; }

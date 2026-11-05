@@ -190,6 +190,18 @@
   };
 
   // ---------- Calendario de reuniones ----------
+  // Festivos (petición n.º 3 del panel): España en rojo, Cataluña con la senyera; las reuniones, en verde.
+  // OJO: cada año hay que añadir el año nuevo aquí (calendario oficial del BOE y del DOGC). Sin festivos locales.
+  const FESTIVOS = {
+    "2026-01-01": ["es", "Año Nuevo"], "2026-01-06": ["es", "Reyes"], "2026-04-03": ["es", "Viernes Santo"], "2026-04-06": ["cat", "Lunes de Pascua"],
+    "2026-05-01": ["es", "Fiesta del Trabajo"], "2026-06-24": ["cat", "Sant Joan"], "2026-08-15": ["es", "La Asunción"], "2026-09-11": ["cat", "Diada de Catalunya"],
+    "2026-10-12": ["es", "Fiesta Nacional"], "2026-11-01": ["es", "Todos los Santos"], "2026-12-06": ["es", "Día de la Constitución"], "2026-12-08": ["es", "La Inmaculada"],
+    "2026-12-25": ["es", "Navidad"], "2026-12-26": ["cat", "Sant Esteve"],
+    "2027-01-01": ["es", "Año Nuevo"], "2027-01-06": ["es", "Reyes"], "2027-03-26": ["es", "Viernes Santo"], "2027-03-29": ["cat", "Lunes de Pascua"],
+    "2027-05-01": ["es", "Fiesta del Trabajo"], "2027-06-24": ["cat", "Sant Joan"], "2027-08-15": ["es", "La Asunción"], "2027-09-11": ["cat", "Diada de Catalunya"],
+    "2027-10-12": ["es", "Fiesta Nacional"], "2027-11-01": ["es", "Todos los Santos"], "2027-12-06": ["es", "Día de la Constitución"], "2027-12-08": ["es", "La Inmaculada"],
+    "2027-12-25": ["es", "Navidad"], "2027-12-26": ["cat", "Sant Esteve"],
+  };
   const mesVisto = (() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
   const pintaMes = () => {
     const a = mesVisto.getFullYear(), m = mesVisto.getMonth();
@@ -202,11 +214,12 @@
     let h = "";
     for (let i = 0; i < primero; i++) h += "<span></span>";
     for (let d = 1; d <= dias; d++) {
-      const iso = `${a}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`, rs = porDia[iso];
-      const cls = ["dia-mes", iso === hoy ? "hoy" : "", rs ? "con" : ""].join(" ");
+      const iso = `${a}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`, rs = porDia[iso], fe = FESTIVOS[iso];
+      const cls = ["dia-mes", iso === hoy ? "hoy" : "", rs ? "con" : "", fe ? "fest-" + fe[0] : ""].join(" ");
+      const nombres = [...(rs || []).map((r) => r.titulo), ...(fe ? ["Festivo: " + fe[1]] : [])].join(", ");
       h += rs
-        ? `<a class="${cls}" href="#reunion-${rs[0].id}" aria-label="${d}: ${esc(rs.map((r) => r.titulo).join(", "))}">${d}<i></i></a>`
-        : `<span class="${cls}">${d}</span>`;
+        ? `<a class="${cls}" href="#reunion-${rs[0].id}" aria-label="${d}: ${esc(nombres)}">${d}<i></i></a>`
+        : fe ? `<span class="${cls}" title="${esc(fe[1])}" aria-label="${d}: ${esc(nombres)}"><b>${d}</b></span>` : `<span class="${cls}">${d}</span>`;
     }
     $("mes-rejilla").innerHTML = h;
   };
