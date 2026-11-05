@@ -160,9 +160,9 @@ main { outline: none; }
 .hero-arte {
   width: 100%; max-width: 560px; aspect-ratio: 1240 / 461; margin: 0 auto;
   background: url(img/hero-arte.webp) center / contain no-repeat;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 88%, transparent), linear-gradient(180deg, transparent, #000 18%, #000 80%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 88%, transparent), linear-gradient(180deg, transparent, #000 18%, #000 94%, transparent);
   -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(90deg, transparent, #000 14%, #000 88%, transparent), linear-gradient(180deg, transparent, #000 18%, #000 80%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 14%, #000 88%, transparent), linear-gradient(180deg, transparent, #000 18%, #000 94%, transparent);
   mask-composite: intersect;
 }
 .hero-eyebrow { margin: 0 0 8px; font-family: "Montserrat", sans-serif; font-weight: 700; font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--celeste); }

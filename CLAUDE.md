@@ -9,7 +9,7 @@ La gestiona desde el panel el padre de Lorena (usuario GitHub `mariancracana77-S
 
 - Web: https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/ (GitHub Pages desde `main`, raíz)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **13**
+- Versión actual: **14**
 
 ## Reglas (las mismas que en CCOO)
 - No publicar en `main` sin que Lorena lo confirme. Trabajar en la rama indicada.
@@ -51,7 +51,7 @@ Copia del sistema de CCOO (ver su CLAUDE.md: «Circuito de peticiones», «Orden
 - Publicar: en este repo, con su versión, respaldo `respaldo-v<N-1>` antes y `pruebas/humo.cjs` en verde.
 
 ## Iconos de lo que tiene la empresa: QUITADOS
-El padre pidió mostrar lo que tiene la empresa (camión, toro, transpaleta, distribuidor, gasolinera). Se probó como franja bajo los accesos y como fila de iconos en el bloque azul, en el cartel y en la imagen al compartir: no le gustó y se quitó de todo (v6). No volver a ponerlo. Se mantiene la gasolinera dibujada junto al camión en `hero-arte.webp`. Los iconos `camion`, `toro`, `transpaleta`, `reparto` y `surtidor` siguen definidos en `comun.js` sin usar.
+El padre pidió mostrar lo que tiene la empresa (camión, toro, transpaleta, distribuidor, gasolinera). Se probó como franja bajo los accesos y como fila de iconos en el bloque azul, en el cartel y en la imagen al compartir: no le gustó y se quitó de todo (v6). No volver a ponerlo. Se mantiene la gasolinera dibujada junto al camión en `hero-arte.webp`. **Excepción (v14, petición n.º 2 del padre en el panel)**: él mismo pidió una carretilla en `hero-arte.webp`, abajo a la izquierda, detrás del camión (dibujo en `herramientas/portada-carretilla/carretilla.svg`, pintado encima del dibujo anterior). El logo pequeño no lleva carretilla: la petición n.º 1 (carretilla en el icono) la descartó él. Los iconos `camion`, `toro`, `transpaleta`, `reparto` y `surtidor` siguen definidos en `comun.js` sin usar.
 
 ## Archivos
 - `index.html` + `app.js`: web pública. Vistas `#actualidad` (portada), `#avisos`, `#reuniones`, `#actas` (con segmento «Documentos útiles», `#documentos`), `#buzon`, `#nosotros`, `#buscar`, `#privacidad`. Enlaces directos `#aviso-N`, `#noticia-N`, `#reunion-N`, `#acta-N`, `#consulta-N`, `#documento-N`. localStorage (todo con try/catch en `TEMA.lee/guarda`): `comite-tema`, `comite-letra`, `comite-avisos-vistos`, `comite-ultima-visita`, `comite-votos`, `comite-copia` (copia sin conexión), `comite-no-instalar`.
