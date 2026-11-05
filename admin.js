@@ -1343,7 +1343,7 @@
   // Las fotos (las del padre y las capturas de Claude) se ven dentro del mensaje; lo demás, como enlace
   const adjPet = (a) => {
     const fotos = (a || []).filter(esImagen), otros = (a || []).filter((x) => !esImagen(x));
-    return (fotos.length ? `<div class="pet-fotos">${fotos.map((x) => `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener" aria-label="Ver en grande: ${esc(x.nombre || "foto")}"><img src="${esc(urlSegura(x.url))}" alt="${esc(x.nombre || "")}" loading="lazy"></a>`).join("")}</div>` : "")
+    return (fotos.length ? `<div class="pet-fotos">${fotos.map((x) => `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener" aria-label="Ver en grande: ${esc(x.nombre || "foto")}"><img src="${esc(urlSegura(x.url))}" alt="${esc(x.nombre || "")}" loading="lazy">${x.nombre ? `<span class="pet-foto-pie">${esc(x.nombre)}</span>` : ""}</a>`).join("")}</div>` : "")
       + (otros.length ? `<p class="pet-otros">${otros.map((x) => `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener">${esc(x.nombre || "Archivo")}</a>`).join(" · ")}</p>` : "");
   };
   // Ventana para confirmar «Descartar» (que no se pulse sin querer)
@@ -1491,7 +1491,7 @@
     const { data, error } = await sb.from("peticiones_claude").select("id,creado,texto,adjuntos,estado,respuesta,mensajes,deshacer,version,propuesta,decision,ficha").order("id", { ascending: false }).limit(PET_LIMITE);
     if (!$("pet-hechas") || actual !== "peticiones") return;
     if (error) { z.innerHTML = `<p class="vacio">No se ha podido cargar: ${esc(errTxt(error))}</p>`; return; }
-    const burbuja = (m) => `<li class="pet-m ${m.quien === "claude" ? "de-claude" : "de-padre"}${m.aviso ? " aviso" : ""}"><small>${m.quien === "claude" ? "Claude" : "Tú"} · ${esc(horaPet(m.cuando))}</small>${m.texto ? `<p class="pet-texto">${esc(m.texto)}</p>` : ""}${adjPet(m.adjuntos)}</li>`;
+    const burbuja = (m) => `<li class="pet-m ${m.quien === "claude" ? "de-claude" : "de-padre"}${m.aviso ? " aviso" : ""}"><small>${m.quien === "claude" ? "Claude" : "Tú"} · ${esc(horaPet(m.cuando))}</small>${m.texto ? `<div class="pet-texto">${textoHTML(m.texto)}</div>` : ""}${adjPet(m.adjuntos)}</li>`;
     const filas = data || [], abiertas = new Set(petLee("comite-adm-pet-abiertas", [])), vistos = petLee("comite-adm-pet-vistos", {});
     const deClaude = (x) => (Array.isArray(x.mensajes) ? x.mensajes : []).filter((m) => m.quien === "claude").length;
     const enMarcha = filas.filter((x) => PET_EN_MARCHA.includes(x.estado)).length;

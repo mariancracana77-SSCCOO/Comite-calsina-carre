@@ -394,7 +394,11 @@ details.pet-item.est-en_curso, details.pet-item.est-nueva { border-left: 5px sol
 .pet-cab .pet-toca { background: var(--verde); }
 .pet-cab .pet-nuevo { background: var(--azul); }
 .pet-cuerpo { display: grid; gap: 10px; padding: 12px 16px 16px; border-top: 1px solid var(--borde); }
-.pet-texto { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.pet-texto { margin: 0; overflow-wrap: anywhere; }
+.pet-texto p { margin: 0 0 6px; }
+.pet-texto p:last-child { margin-bottom: 0; }
+.pet-texto ul { margin: 2px 0 6px; padding-left: 20px; }
+.pet-texto strong { font-weight: 800; }
 .pet-resp { margin: 0; padding: 8px 12px; border-left: 4px solid var(--azul); border-radius: 0 10px 10px 0; background: var(--azul-claro); white-space: pre-wrap; overflow-wrap: anywhere; }
 .pet-chat { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .pet-m { display: grid; gap: 2px; padding: 8px 12px; border-radius: 12px; background: var(--fondo); border: 1px solid var(--borde); max-width: 92%; min-width: 0; }
@@ -403,9 +407,10 @@ details.pet-item.est-en_curso, details.pet-item.est-nueva { border-left: 5px sol
 .pet-m.aviso { font-style: italic; }
 .pet-m small { color: var(--suave); font-weight: 700; }
 .pet-m p { margin: 0; }
-.pet-fotos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.pet-fotos { display: grid; gap: 8px; margin-top: 6px; }
 .pet-fotos a { display: block; border-radius: 8px; overflow: hidden; border: 1px solid var(--borde); background: var(--tarjeta); max-width: 100%; }
-.pet-fotos img { display: block; max-width: min(100%, 320px); max-height: 240px; width: auto; height: auto; object-fit: contain; }
+.pet-fotos img { display: block; width: 100%; max-height: 75vh; height: auto; object-fit: contain; background: #0B1E3C; }
+.pet-foto-pie { display: block; text-decoration: none; padding: 6px 10px; font-size: .9em; font-weight: 600; color: var(--texto); }
 .pet-otros { margin: 0; font-size: .9rem; overflow-wrap: anywhere; }
 .pet-otros a, .pet-fotos + .pet-otros a { color: var(--azul); }
 .pet-ficha { display: grid; gap: 6px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--borde); background: var(--fondo); }
