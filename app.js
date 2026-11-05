@@ -471,7 +471,9 @@
     try {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
-      pintaPush(sub && Notification.permission === "granted");
+      // Si este móvil solo tiene los avisos del panel (comite-push-panel) y no los de la web, la web no los da por activados
+      const soloPanel = !!sub && !TEMA.lee("comite-push") && TEMA.lee("comite-push-panel") === sub.endpoint;
+      pintaPush(sub && !soloPanel && Notification.permission === "granted");
     } catch (_) { pintaPush(false); }
   };
   $("push-activar").addEventListener("click", async () => {
@@ -490,6 +492,7 @@
       const j = sub.toJSON();
       const r = await sb.rpc("suscribir_push", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
       if (r.error) throw r.error;
+      TEMA.guarda("comite-push", j.endpoint); // para que el panel sepa que la web también usa esta dirección
       pintaPush(true);
       estado(est, "Listo. Te avisaremos cuando el comité publique algo.", "bien");
     } catch (e) {
@@ -500,7 +503,10 @@
     const est = $("push-estado");
     try {
       const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
-      if (sub) { await sb.rpc("desuscribir_push", { p_endpoint: sub.endpoint }); await sub.unsubscribe(); }
+      // Si el panel usa esta misma dirección para sus avisos (comite-push-panel), se quita de los de la web sin apagarla en el móvil
+      const delPanel = !!sub && TEMA.lee("comite-push-panel") === sub.endpoint;
+      if (sub) { await sb.rpc("desuscribir_push", { p_endpoint: sub.endpoint }); if (!delPanel) await sub.unsubscribe(); }
+      try { localStorage.removeItem("comite-push"); } catch (_) {}
       pintaPush(false); $("push-acepto").checked = false;
       estado(est, "Avisos desactivados en este móvil.", "bien");
     } catch (e) { estado(est, "No se han podido desactivar. Prueba de nuevo.", "mal"); }

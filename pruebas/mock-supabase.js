@@ -54,6 +54,19 @@
     admins: [{ email: "prueba@example.com" }, { email: "otro@example.com" }],
     visitas: [...Array(20)].map((_, i) => ({ dia: dia(-(i % 14)), seccion: ["total", "avisos", "actualidad", "actas", "app"][i % 5], n: 3 + (i * 7) % 11 })),
     papelera: [{ id: 1, tabla: "avisos", datos: { id: 9, titulo: "Aviso borrado de prueba" }, borrado: hace(4), por: "prueba@example.com" }],
+    // Pedir un cambio a Claude: una de cada estado que enseña algo distinto
+    peticiones_claude: [
+      { id: 5, creado: hace(3), texto: "Que el botón del buzón salga más grande en el móvil.", adjuntos: [], estado: "en_curso", respuesta: null, mensajes: [{ quien: "claude", cuando: hace(2), texto: "Recibido. Lo estoy preparando: te enseño cómo queda en un rato." }], deshacer: null, version: null, propuesta: null, decision: null, ficha: null },
+      { id: 4, creado: hace(26), texto: "En la portada, que los avisos urgentes salgan antes que las reuniones.\nY que se vea la fecha.", adjuntos: [{ nombre: "portada.jpg", url: "https://ytxpubqyhnohhugpukdm.supabase.co/storage/v1/object/public/peticiones/1-portada.jpg", tipo: "image/jpeg", tamano: 180000 }],
+        estado: "lista", respuesta: "Hecho. Mira las capturas y dime si se publica.", deshacer: null, version: 13, propuesta: hace(1), decision: null,
+        mensajes: [{ quien: "padre", cuando: hace(25), texto: "Y que la fecha salga en negrita.", adjuntos: [] }, { quien: "claude", cuando: hace(1), texto: "Ya está. Te dejo dos capturas: en el móvil y en el ordenador (versión 13).", adjuntos: [{ nombre: "captura-movil.jpg", url: "https://ytxpubqyhnohhugpukdm.supabase.co/storage/v1/object/public/peticiones/2-movil.jpg", tipo: "image/jpeg" }] }],
+        ficha: { titulo: "Avisos urgentes antes que las reuniones", entendido: "Que en la portada los avisos urgentes salgan arriba de las reuniones, con la fecha en negrita.", hecho: ["Los avisos urgentes salen los primeros en la portada.", "La fecha de cada aviso sale en negrita."], capturas: [{ url: "https://ytxpubqyhnohhugpukdm.supabase.co/storage/v1/object/public/peticiones/3-pc.jpg", texto: "En el ordenador" }] } },
+      { id: 3, creado: hace(80), texto: "Poner el teléfono de todos los trabajadores en la web.", adjuntos: [], estado: "no_hecha", respuesta: "No lo he hecho: la web no puede llevar datos personales de los trabajadores.", mensajes: [], deshacer: null, version: null, propuesta: null, decision: null, ficha: null },
+      { id: 2, creado: hace(200), texto: "Cambiar el color de los botones de la portada.", adjuntos: [], estado: "publicada", respuesta: "Publicado.", mensajes: [], deshacer: null, version: 12, propuesta: hace(190), decision: "publicar", ficha: { titulo: "Botones de la portada en azul", entendido: "Botones de la portada en el azul del comité.", hecho: ["Botones en azul."], capturas: [] } },
+      { id: 1, creado: hace(400), texto: "Quitar el cartel de la portada.", adjuntos: [], estado: "descartada", respuesta: "Descartada por el panel.", mensajes: [], deshacer: null, version: null, propuesta: hace(390), decision: "descartar", ficha: null },
+    ],
+    peticiones_estado: [{ id: 1, pausa: false }],
+    push_admin: [],
   };
   // Con «?prueba-vacio» en la dirección, la web arranca sin contenido (para ver los apartados vacíos)
   if (/prueba-vacio/.test(location.search)) ["actualidad", "avisos", "reuniones", "actas", "preguntas", "miembros", "encuestas", "encuesta_votos", "documentos"].forEach((t) => { DB[t] = []; });
@@ -102,6 +115,14 @@
       if (n === "clave_push_publica") return { data: "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U", error: null };
       if (n === "enviar_buzon") { if ((a.p_texto || "").length < 5) return { data: null, error: { message: "El mensaje es demasiado corto." } }; DB.buzon.push({ id: sig++, tipo: a.p_tipo, texto: a.p_texto, dia: new Date().toISOString().slice(0, 10), leido: false, archivado: false }); return { data: "ok", error: null }; }
       if (n === "votar_encuesta") { const v = DB.encuesta_votos.find((x) => x.encuesta_id === a.p_id && x.opcion === a.p_opcion); if (v) v.n++; else DB.encuesta_votos.push({ encuesta_id: a.p_id, opcion: a.p_opcion, n: 1 }); return { data: "ok", error: null }; }
+      const pet = (id) => DB.peticiones_claude.find((x) => x.id === id);
+      if (n === "anadir_a_peticion") { const x = pet(a.p_id); if (!x) return { data: "no", error: null }; (x.mensajes ||= []).push({ quien: "padre", cuando: new Date().toISOString(), texto: a.p_texto, adjuntos: a.p_adjuntos || [] }); if (x.estado !== "en_curso") x.estado = "nueva"; return { data: "ok", error: null }; }
+      if (n === "pedir_lorena") { const x = pet(a.p_id); if (!x) return { data: "no", error: null }; if (x.avisar_lorena) return { data: "ya", error: null }; x.avisar_lorena = new Date().toISOString(); (x.mensajes ||= []).push({ quien: "padre", cuando: x.avisar_lorena, texto: "Has pedido que lo mire Lorena.", aviso: true }); return { data: "ok", error: null }; }
+      if (n === "deshacer_peticion") { const x = pet(a.p_id); if (!x || x.estado !== "publicada") return { data: "no_publicada", error: null }; if (x.deshacer) return { data: "ya", error: null }; x.deshacer = new Date().toISOString(); return { data: "ok", error: null }; }
+      if (n === "decidir_peticion") { const x = pet(a.p_id); if (!x || x.estado !== "lista" || !x.propuesta || x.decision) return { data: "no_propuesta", error: null }; x.decision = a.p_decision; x.decision_el = new Date().toISOString(); if (a.p_decision === "descartar") x.estado = "descartada"; return { data: "ok", error: null }; }
+      if (n === "suscribir_push_admin") { DB.push_admin.push({ endpoint: a.p_endpoint }); return { data: "ok", error: null }; }
+      if (n === "desuscribir_push_admin") { DB.push_admin = DB.push_admin.filter((x) => x.endpoint !== a.p_endpoint); return { data: "ok", error: null }; }
+      if (n === "push_admin_activo") return { data: DB.push_admin.some((x) => x.endpoint === a.p_endpoint), error: null };
       if (n === "recuperar_borrado") { const p = DB.papelera.find((x) => x.id === a.p_id); DB.papelera = DB.papelera.filter((x) => x !== p); DB[p.tabla].push(p.datos); return { data: p.tabla, error: null }; }
       return { data: null, error: null };
     },
@@ -121,6 +142,7 @@
     functions: { invoke: async (n, o) => {
       const b = o?.body || {};
       if (n === "generar-acta") { window.__IA = b; return { data: { acta: { titulo: "Reunión del comité de noviembre", tipo: "Reunión del comité", fecha: "2026-11-03", resumen: "Se habló de los turnos de verano y de la ropa de trabajo." + (/\[PERSONA 1\]/.test(b.notas) ? " [PERSONA 1] pidió la jornada intensiva." : ""), acuerdos: "- Pedir a la empresa la jornada intensiva\n- Revisar los vestuarios", avisos: "" } }, error: null }; }
+      if (n === "timbre") { (window.__TIMBRE ||= []).push(b); return { data: { ok: true }, error: null }; }
       if (n === "cuenta") {
         if (b.accion === "estado") return { data: { quedan: 0, cuentas: { "prueba@example.com": true, "otro@example.com": false } }, error: null };
         if (b.accion === "codigos") return { data: { codigos: ["ABCDE-23456", "FGHJK-78923", "LMNPQ-45678", "RSTUV-92345", "WXYZA-56789", "BCDEF-34567", "GHJKL-89234", "MNPQR-67893"] }, error: null };
@@ -129,7 +151,7 @@
       }
       return { data: b.modo === "prueba" ? { push: { ok: 2, total: 2 } } : { enviado: true, push: { ok: 2, fallos: 0, total: 2 } }, error: null };
     } },
-    storage: { from: () => ({ upload: async () => ({ error: null }), getPublicUrl: (r) => ({ data: { publicUrl: "https://ytxpubqyhnohhugpukdm.supabase.co/" + r } }), remove: async () => ({ error: null }) }) },
+    storage: { from: (bucket) => ({ upload: async (ruta, f) => { (window.__SUBIDOS ||= []).push({ bucket, ruta, tipo: f?.type, tamano: f?.size }); return { error: null }; }, getPublicUrl: (r) => ({ data: { publicUrl: "https://ytxpubqyhnohhugpukdm.supabase.co/storage/v1/object/public/" + bucket + "/" + r } }), remove: async () => ({ error: null }) }) },
   };
   window.supabase = { createClient: () => cliente };
   window.__DB = DB;

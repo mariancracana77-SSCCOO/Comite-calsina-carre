@@ -9,7 +9,7 @@ La gestiona desde el panel el padre de Lorena (usuario GitHub `mariancracana77-S
 
 - Web: https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/ (GitHub Pages desde `main`, raíz)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **12**
+- Versión actual: **13**
 
 ## Reglas (las mismas que en CCOO)
 - No publicar en `main` sin que Lorena lo confirme. Trabajar en la rama indicada.
@@ -41,6 +41,14 @@ Para que el padre sea independiente (como «Apartados» en CCOO). Tablas `aparta
 
 ## Asistente de actas (v11, como en CCOO)
 En «Nueva acta» (`SECCIONES.actas.asistente`), `asistenteHTML`/`prepararAsistente`/`generarActa` en `admin.js`: fotos (reducidas a 2000 px JPEG), PDF, Word (.docx leído con JSZip en el navegador) o texto, hasta 6, → función `generar-acta` (copia en `herramientas/funciones/generar-acta.ts`, `verify_jwt` activado + `is_admin()` dentro; Gemini gratuito, modelos en `MODELOS`) → rellena título, tipo (de `TIPOS_REUNION`), fecha, resumen y acuerdos. No guarda nada. Necesita el secreto `GEMINI_API_KEY` en el Supabase del comité (lo pone Lorena en Edge Functions → Secrets; nunca por el chat). Lo enviado va a Google (lo avisa el panel): solo lo usa el admin. **v12, tapar datos** (todo en el dispositivo, comentario largo encima del código): `tapaTexto` (nombres → `[PERSONA n]`, que `devuelveNombres` repone al recibir; DNI/NIE, teléfonos, emails, cuentas, n.º Seg. Social y matrículas se quedan tapados), nombres de `miembros` + lista propia (localStorage `comite-ia-tapar`) + heurísticas (tras «Sr.», «compañero»…; dos o tres palabras con mayúscula que no estén en `NO_NOMBRES`); fotos y PDF escaneados con `abreTapador` (pintar con el dedo, se envía la imagen ya pintada); PDF con texto leído con pdf.js (`lib/pdfjs/`, 4.10.38 legacy, Apache 2.0, se carga con `import()` solo al usarlo); paso «Preparar y revisar» (`revisaEnvio`, `#ia-revision`) antes de `generarActa`.
+
+## Pedir un cambio a Claude (v13, lo pidió Lorena el 5/11/2026)
+Copia del sistema de CCOO (ver su CLAUDE.md: «Circuito de peticiones», «Orden de cada petición», medidor, revisor barato, etc.; las reglas son las mismas). Lo atiende la misma sesión de Claude «Timbres».
+- Supabase del comité: tablas `peticiones_claude` (texto, adjuntos, estado nueva/en_curso/lista/publicada/descartada/no_hecha/deshecha, respuesta, mensajes, ficha, propuesta, decision, version, avisar_lorena, deshacer…; solo admins), `peticiones_estado` (id 1, `pausa`), `push_admin` (móviles del panel; sin políticas), `captura_fichas` y `privado.nueva_ficha_captura()`; bucket público `peticiones` (50 MB, fotos/vídeo/audio, sube solo admin). Disparadores: `peticiones_no_se_borran`/`peticiones_no_se_vacian` (los chats no se borran ni se cambian, solo se añade al final; no quitarlos) y `peticiones_avisa_padre` (cuando Claude escribe, llama a `avisar-padre`). RPC solo admins: `anadir_a_peticion`, `pedir_lorena`, `deshacer_peticion`, `decidir_peticion`, `suscribir_push_admin`, `desuscribir_push_admin`, `push_admin_activo`.
+- Funciones (copias en `herramientas/funciones/`): `timbre` (comenta «Comité: …» en la PR buzón n.º 2 del repo **SSCCOO**; necesita el secreto `GITHUB_TOKEN` en este Supabase, lo pone Lorena), `avisar-padre` (push SOLO a `push_admin`, nunca a `push_subs`), `captura` (sube capturas al bucket con una ficha de un solo uso).
+- Panel: página `peticiones` en «Herramientas» y tarjeta en Inicio (bloque «Pedir un cambio a Claude» de `admin.js`, estilos `.pet-*` en `admin.css`). localStorage `comite-adm-pet-filtro`, `comite-adm-pet-abiertas`, `comite-adm-pet-vistos`, `comite-push-panel`. `app.js` no cuenta como avisos de la web un móvil con solo `comite-push-panel` (la web guarda `comite-push`) y al apagar los de la web no apaga los del panel. `sw.js` abre/enfoca `admin.html` si la notificación apunta allí.
+- App de revisión de Lorena (la misma que CCOO): fichas del comité con documento `c<N>`, `web: 'comite'` y título «Comité: …». Al hacer la ficha, escribir lo mismo en `peticiones_claude.ficha` (capturas solo con URL de este Supabase).
+- Publicar: en este repo, con su versión, respaldo `respaldo-v<N-1>` antes y `pruebas/humo.cjs` en verde.
 
 ## Iconos de lo que tiene la empresa: QUITADOS
 El padre pidió mostrar lo que tiene la empresa (camión, toro, transpaleta, distribuidor, gasolinera). Se probó como franja bajo los accesos y como fila de iconos en el bloque azul, en el cartel y en la imagen al compartir: no le gustó y se quitó de todo (v6). No volver a ponerlo. Se mantiene la gasolinera dibujada junto al camión en `hero-arte.webp`. Los iconos `camion`, `toro`, `transpaleta`, `reparto` y `surtidor` siguen definidos en `comun.js` sin usar.
