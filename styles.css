@@ -320,6 +320,17 @@ button.dia-mes { border: 0; font: inherit; cursor: pointer; width: 100%; padding
 .ley.con { background: #2e7d32; }
 .ley.fest-es { background: #d32f2f; }
 .dia-mes i { position: absolute; bottom: 5px; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+/* Vista «Año entero» (petición n.º 6): 12 meses pequeños, 2 columnas en el móvil, 3 o 4 en el PC */
+.mes-vistas { display: grid; width: 100%; margin: 0 0 10px; }
+.mes.ano { max-width: none; }
+.ano-rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 8rem), 1fr)); gap: 14px 12px; margin-top: 10px; }
+.ano-rejilla[hidden], #mes-cuerpo[hidden] { display: none; }
+.ano-mes .mes-dias { margin: 4px 0 2px; font-size: .62rem; }
+.ano-mes .mes-dias, .ano-mes .mes-rejilla { gap: 2px; }
+.ano-mes .dia-mes { font-size: .68rem; border-radius: 5px; }
+.ano-mes .dia-mes i { display: none; }
+.ano-mes .dia-mes.fest-cat b { padding: 0; background: none; text-shadow: 0 0 2px #fff, 0 0 3px #fff, 0 0 4px #fff; }
+.ano-mes-nombre { display: block; width: 100%; min-height: 36px; padding: 4px 6px; border: 0; border-radius: 8px; background: var(--azul-claro); color: var(--azul-osc); font: inherit; font-weight: 700; font-size: .9rem; text-align: left; cursor: pointer; }
 .pasadas { margin-top: 20px; }
 .pasadas summary { cursor: pointer; font-weight: 700; color: var(--azul); padding: 10px 0; }
 
@@ -484,6 +495,10 @@ textarea, .campo input, .campo select, .campo textarea {
   #v-reuniones .mes { grid-column: 1; grid-row: 1 / span 3; position: sticky; top: 140px; }
   #v-reuniones .caja > :not(.mes) { grid-column: 2; }
   #v-reuniones .caja > .titulo-bloque:first-of-type { margin-top: 0; }
+  /* Año entero: el calendario ocupa todo el ancho y las reuniones van debajo */
+  #v-reuniones .caja:has(.mes.ano) { display: block; }
+  #v-reuniones .mes.ano { position: static; margin-bottom: 8px; }
+  #v-reuniones .caja:has(.mes.ano) > .titulo-bloque:first-of-type { margin-top: 24px; }
 }
 /* Pie en el móvil: los enlaces en dos columnas */
 @media (max-width: 759px) {
