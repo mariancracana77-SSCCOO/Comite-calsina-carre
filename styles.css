@@ -157,12 +157,16 @@ main { outline: none; }
 .hero::before { width: 900px; height: 900px; right: -420px; top: -640px; border: 2px solid rgba(0, 198, 255, .35); box-shadow: 0 0 40px rgba(0, 198, 255, .18); }
 .hero::after { width: 1100px; height: 1100px; left: -700px; bottom: -980px; border: 2px solid rgba(0, 198, 255, .22); }
 .hero-in { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; display: grid; gap: 4px; align-items: center; }
+/* Portada (lo pidió el padre, 5/11/2026): camión de lona con carretilla, CC y gasolinera. El fondo de la imagen se ha igualado al
+   azul de la web (#0B1E3C) y los bordes se difuminan con máscaras para que se funda con el degradado y los círculos del .hero.
+   En el móvil, img/portada-movil.webp (carretilla y camión, sin las CC: lo pidió Lorena); en pantallas anchas, img/portada.webp entera. */
 .hero-arte {
-  width: 100%; max-width: 560px; aspect-ratio: 1240 / 461; margin: 0 auto;
-  background: url(img/hero-arte.webp) center / contain no-repeat;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 88%, transparent), linear-gradient(180deg, transparent, #000 18%, #000 80%, transparent);
+  width: calc(100% + 32px); max-width: 640px; aspect-ratio: 900 / 396; margin: 0 -16px;
+  justify-self: center;
+  background: url(img/portada-movil.webp) center / cover no-repeat;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent), linear-gradient(180deg, transparent, #000 12%, #000 78%, transparent);
   -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(90deg, transparent, #000 14%, #000 88%, transparent), linear-gradient(180deg, transparent, #000 18%, #000 80%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent), linear-gradient(180deg, transparent, #000 12%, #000 78%, transparent);
   mask-composite: intersect;
 }
 .hero-eyebrow { margin: 0 0 8px; font-family: "Montserrat", sans-serif; font-weight: 700; font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--celeste); }
@@ -176,7 +180,8 @@ main { outline: none; }
 @media (min-width: 760px) {
   .hero { padding: 36px 24px 84px; }
   .hero-in { grid-template-columns: .9fr 1.1fr; gap: 28px; }
-  .hero-arte { order: 2; max-width: none; }
+  .hero-arte { order: 2; max-width: none; width: 100%; margin: 0; aspect-ratio: 16 / 9; background-image: url(img/portada.webp);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 90%, transparent), linear-gradient(180deg, transparent, #000 22%, #000 72%, transparent); -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent, #000 14%, #000 90%, transparent), linear-gradient(180deg, transparent, #000 22%, #000 72%, transparent); mask-composite: intersect; }
   .hero-titulo { font-size: 2.35rem; }
 }
 .portada-caja { padding-top: 0; }
