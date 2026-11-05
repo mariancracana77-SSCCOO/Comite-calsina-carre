@@ -62,6 +62,7 @@ El padre pidió mostrar lo que tiene la empresa (camión, toro, transpaleta, dis
 - `cartel.html` + `cartel.js`: cartel A4 con QR (`lib/qr.js`, MIT).
 - `guia.html` + `img/guia/`: guía del panel para el padre, con capturas hechas con los datos de prueba.
 - `sw.js`: caché para instalar y usar sin conexión (los datos de Supabase siempre van a la red).
+- `visor.js` (petición n.º 5 del panel): al tocar una foto de una tarjeta (`.galeria a`) o un PDF adjunto (`a[data-visor="pdf"]`, lo pone `adjuntosHTML`) se abre encima de la página con «Cerrar» (Esc y el botón Atrás también cierran). Los PDF se pintan con pdf.js (`lib/pdfjs`, carga solo al usarlo). Word/Excel siguen abriéndose aparte. Impedir capturas no es posible en una web.
 - `pruebas/`: `mock-supabase.js` (datos de prueba en memoria; `localStorage prueba-sesion = 1` entra al panel) y `humo.cjs`.
 
 ## Al publicar una versión nueva
