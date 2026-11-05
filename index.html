@@ -142,19 +142,19 @@
     <div class="caja">
       <div class="mes" id="mes-calendario">
         <div class="segmentos mes-vistas" role="tablist" aria-label="Ver el calendario">
-          <button type="button" role="tab" id="ver-mes" aria-selected="true">Mes</button>
-          <button type="button" role="tab" id="ver-ano" aria-selected="false">Año entero</button>
+          <button type="button" role="tab" id="ver-mes" aria-selected="true" aria-controls="mes-cuerpo">Mes</button>
+          <button type="button" role="tab" id="ver-ano" aria-selected="false" aria-controls="ano-rejilla">Año entero</button>
         </div>
         <div class="mes-cab">
           <button type="button" class="mes-btn" id="mes-ant" aria-label="Mes anterior"></button>
           <h2 id="mes-nombre" aria-live="polite"></h2>
           <button type="button" class="mes-btn" id="mes-sig" aria-label="Mes siguiente"></button>
         </div>
-        <div id="mes-cuerpo">
+        <div id="mes-cuerpo" role="tabpanel" aria-labelledby="ver-mes">
           <div class="mes-dias" aria-hidden="true"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
           <div class="mes-rejilla" id="mes-rejilla"></div>
         </div>
-        <div class="ano-rejilla" id="ano-rejilla" hidden></div>
+        <div class="ano-rejilla" id="ano-rejilla" role="tabpanel" aria-labelledby="ver-ano" hidden></div>
         <p class="mes-festivo" id="mes-festivo" role="status" aria-live="polite" hidden></p>
         <p class="mes-leyenda"><span><i class="ley con"></i>Reunión del comité</span><span><i class="ley con empresa"></i>Reunión con la empresa</span><span><i class="ley fest-es"></i>Festivo de España</span><span><i class="ley fest-cat"></i>Festivo de Cataluña</span></p>
       </div>

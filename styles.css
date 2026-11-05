@@ -324,7 +324,7 @@ button.dia-mes { border: 0; font: inherit; cursor: pointer; width: 100%; padding
 .ley.con { background: #2e7d32; }
 .dia-mes i { position: absolute; bottom: 5px; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 /* Vista «Año entero» (petición n.º 6): 12 meses pequeños, 2 columnas en el móvil, 3 o 4 en el PC */
-.mes-vistas { display: grid; width: 100%; margin: 0 0 10px; }
+.mes .mes-vistas { display: grid; width: 100%; margin: 0 0 10px; }
 .mes.ano { max-width: none; }
 .ano-rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 8rem), 1fr)); gap: 14px 12px; margin-top: 10px; }
 .ano-rejilla[hidden], #mes-cuerpo[hidden] { display: none; }
