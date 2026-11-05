@@ -44,13 +44,15 @@ self.addEventListener("push", (e) => {
   }));
 });
 
-// Al tocar el aviso: abre la web en lo que se ha publicado (o la trae delante si ya estaba abierta)
+// Al tocar el aviso: abre la web en lo que se ha publicado (o la trae delante si ya estaba abierta).
+// Si el aviso lleva al panel (admin.html#…), usa una ventana del panel abierta o abre una nueva.
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
   const url = new URL(e.notification.data?.url || "./", self.registration.scope).href;
+  const alPanel = url.includes("admin.html"); // avisos del panel (Claude contesta): a una ventana del panel, no a la web
   e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((ventanas) => {
-    const misma = ventanas.find((v) => v.url.startsWith(self.registration.scope) && !v.url.includes("admin.html"));
-    if (misma) return misma.focus().then((v) => v.navigate ? v.navigate(url) : v);
+    const misma = ventanas.find((v) => v.url.startsWith(self.registration.scope) && v.url.includes("admin.html") === alPanel);
+    if (misma) return misma.focus().then((v) => v.navigate ? v.navigate(url) : v).catch(() => self.clients.openWindow(url));
     return self.clients.openWindow(url);
   }));
 });
