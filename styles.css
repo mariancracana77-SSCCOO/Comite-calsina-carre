@@ -169,7 +169,9 @@ main { outline: none; }
   mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent), linear-gradient(180deg, transparent, #000 12%, #000 78%, transparent);
   mask-composite: intersect;
 }
-.hero-eyebrow { margin: 0 0 8px; font-family: "Montserrat", sans-serif; font-weight: 700; font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--celeste); }
+/* El nombre de arriba destaca más (lo pidió el padre con la portada nueva): más grande, más claro y con una pastilla tenue detrás */
+.hero-eyebrow { display: inline-block; margin: 0 0 10px; padding: 5px 12px; border-radius: 12px; background: rgba(0, 198, 255, .14); border: 1px solid rgba(0, 198, 255, .35);
+  font-family: "Montserrat", sans-serif; font-weight: 800; font-size: .8rem; line-height: 1.35; letter-spacing: .06em; text-transform: uppercase; color: #BFF1FF; text-shadow: 0 1px 6px rgba(0, 0, 0, .45); }
 .hero-titulo { margin: 0; font-family: "Montserrat", sans-serif; font-weight: 800; font-size: 1.75rem; line-height: 1.12; letter-spacing: -.01em; text-wrap: balance; }
 .hero-sub { margin: 12px 0 0; font-size: 1rem; line-height: 1.55; color: rgba(255, 255, 255, .82); max-width: 34em; }
 .hero-btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
