@@ -159,9 +159,9 @@ main { outline: none; }
 .hero-in { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; display: grid; gap: 4px; align-items: center; }
 /* Portada (lo pidió el padre, 5/11/2026): camión de lona con carretilla, CC y gasolinera. El fondo de la imagen se ha igualado al
    azul de la web (#0B1E3C) y los bordes se difuminan con máscaras para que se funda con el degradado y los círculos del .hero.
-   En el móvil, img/portada-movil.webp (carretilla, camión y parte de las CC, ampliados); en pantallas anchas, img/portada.webp entera. */
+   En el móvil, img/portada-movil.webp (carretilla y camión, sin las CC: lo pidió Lorena); en pantallas anchas, img/portada.webp entera. */
 .hero-arte {
-  width: calc(100% + 32px); max-width: 640px; aspect-ratio: 900 / 410; margin: 0 -16px;
+  width: calc(100% + 32px); max-width: 640px; aspect-ratio: 900 / 396; margin: 0 -16px;
   justify-self: center;
   background: url(img/portada-movil.webp) center / cover no-repeat;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent), linear-gradient(180deg, transparent, #000 12%, #000 78%, transparent);
