@@ -437,3 +437,8 @@ details.pet-item.est-en_curso, details.pet-item.est-nueva { border-left: 5px sol
 .pet-form .ayuda, .pet-avisos .ayuda, .pet-lorena .ayuda { font-size: .9rem; margin: 0; }
 .pet-cab .etq { border-radius: 10px; }
 .pet-avisos .estado:empty { display: none; }
+/* En oscuro, .btn lleva letra oscura (para el azul de fondo) y ganaba a .btn.sec: los botones secundarios salían casi invisibles */
+:root[data-theme="dark"] .btn.sec { color: var(--texto); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.sec { color: var(--texto); } }
+:root[data-theme="dark"] .btn.sec.pet-descarta { color: var(--rojo); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.sec.pet-descarta { color: var(--rojo); } }
