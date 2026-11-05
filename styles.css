@@ -295,9 +295,8 @@ main { outline: none; }
 .mes-dias { margin: 10px 0 4px; color: var(--suave); font-size: .8rem; font-weight: 700; }
 .dia-mes { position: relative; display: grid; place-items: center; aspect-ratio: 1; border-radius: 10px; color: var(--texto); text-decoration: none; font-size: .95rem; }
 .dia-mes.hoy { outline: 2px solid var(--azul); }
-.dia-mes.con { background: var(--azul); color: #fff; font-weight: 700; }
-:root[data-theme="dark"] .dia-mes.con { color: #0c131c; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .dia-mes.con { color: #0c131c; } }
+/* Días con reunión en rojo (lo pidió el padre, petición n.º 3 del panel) */
+.dia-mes.con { background: #d32f2f; color: #fff; font-weight: 700; }
 .dia-mes i { position: absolute; bottom: 5px; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 .pasadas { margin-top: 20px; }
 .pasadas summary { cursor: pointer; font-weight: 700; color: var(--azul); padding: 10px 0; }
