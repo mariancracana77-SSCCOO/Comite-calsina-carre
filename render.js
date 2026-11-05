@@ -26,6 +26,7 @@
   const plegable = (t) => `<div class="texto plegable">${textoHTML(t)}</div><button type="button" class="leer-mas" aria-expanded="false" hidden>Leer más</button>`;
   const revisaPlegables = () => document.querySelectorAll(".texto.plegable").forEach((d) => {
     const b = d.nextElementSibling; if (!b || !b.classList.contains("leer-mas")) return;
+    if (!d.getClientRects().length) return; // pestaña oculta: se mira al enseñarla (hashchange)
     if (d.classList.contains("abierto")) { b.hidden = false; return; }
     d.classList.toggle("corto", false);
     const largo = d.scrollHeight > d.clientHeight + 4;
@@ -35,6 +36,7 @@
   const pronto = () => { clearTimeout(espera); espera = setTimeout(revisaPlegables, 60); };
   new MutationObserver(pronto).observe(document.documentElement, { childList: true, subtree: true });
   window.addEventListener("resize", pronto);
+  window.addEventListener("hashchange", pronto);
   document.addEventListener("click", (ev) => {
     const b = ev.target.closest(".leer-mas"); if (!b) return;
     const d = b.previousElementSibling, abre = !d.classList.contains("abierto");
