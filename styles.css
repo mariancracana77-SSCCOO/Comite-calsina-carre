@@ -311,6 +311,9 @@ main { outline: none; }
 .dia-mes.fest-cat { color: #111; font-weight: 800; }
 .dia-mes.fest-cat b { padding: 0 5px; border-radius: 6px; background: rgba(255, 255, 255, .9); }
 .dia-mes.con { background: #2e7d32; color: #fff; font-weight: 700; }
+button.dia-mes { border: 0; font: inherit; cursor: pointer; width: 100%; padding: 0; }
+.mes-festivo { margin: 10px 2px 0; padding: 8px 12px; border-radius: 10px; background: var(--azul-claro); color: var(--texto); font-weight: 600; }
+.mes-festivo[hidden] { display: none; }
 .mes-leyenda { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 10px 2px 0; font-size: .85rem; color: var(--suave); }
 .mes-leyenda span { display: inline-flex; align-items: center; gap: 6px; }
 .ley { display: inline-block; width: 16px; height: 16px; border-radius: 4px; }

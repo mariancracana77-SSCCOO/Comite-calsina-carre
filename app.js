@@ -216,10 +216,16 @@
       const nombres = [...(rs || []).map((r) => r.titulo), ...(fe ? ["Festivo: " + fe[1]] : [])].join(", ");
       h += rs
         ? `<a class="${cls}" href="#reunion-${rs[0].id}" aria-label="${d}: ${esc(nombres)}">${d}<i></i></a>`
-        : fe ? `<span class="${cls}" title="${esc(fe[1])}" aria-label="${d}: ${esc(nombres)}"><b>${d}</b></span>` : `<span class="${cls}">${d}</span>`;
+        : fe ? `<button type="button" class="${cls}" data-festivo="${esc(d + " de " + mesVisto.toLocaleDateString("es-ES", { month: "long" }) + ": " + fe[1] + (fe[0] === "cat" ? " (festivo de Cataluña)" : " (festivo de España)"))}" aria-label="${d}: ${esc(nombres)}"><b>${d}</b></button>` : `<span class="${cls}">${d}</span>`;
     }
     $("mes-rejilla").innerHTML = h;
+    $("mes-festivo").textContent = ""; $("mes-festivo").hidden = true;
   };
+  // Al tocar un festivo sale su nombre debajo del calendario (lo pidió el padre)
+  $("mes-rejilla").addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-festivo]"); if (!b) return;
+    $("mes-festivo").textContent = b.dataset.festivo; $("mes-festivo").hidden = false;
+  });
   $("mes-ant").addEventListener("click", () => { mesVisto.setMonth(mesVisto.getMonth() - 1); pintaMes(); });
   $("mes-sig").addEventListener("click", () => { mesVisto.setMonth(mesVisto.getMonth() + 1); pintaMes(); });
 
