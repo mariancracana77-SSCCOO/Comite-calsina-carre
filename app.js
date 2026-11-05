@@ -192,12 +192,14 @@
   // ---------- Calendario de reuniones ----------
   // Festivos (petición n.º 3 del panel): España en rojo, Cataluña con la senyera; las reuniones, en verde.
   // OJO: cada año hay que añadir el año nuevo aquí (calendario oficial del BOE y del DOGC). Sin festivos locales.
+  // Solo los festivos laborales oficiales para Cataluña (columna «Cataluña» del anexo del BOE).
+  // 2026: BOE 28/10/2025 (BOE-A-2025-21667); el 1 de noviembre y el 6 de diciembre caen en domingo y no están.
   const FESTIVOS = {
     "2026-01-01": ["es", "Año Nuevo"], "2026-01-06": ["es", "Reyes"], "2026-04-03": ["es", "Viernes Santo"], "2026-04-06": ["cat", "Lunes de Pascua"],
     "2026-05-01": ["es", "Fiesta del Trabajo"], "2026-06-24": ["cat", "Sant Joan"], "2026-08-15": ["es", "La Asunción"], "2026-09-11": ["cat", "Diada de Catalunya"],
-    "2026-10-12": ["es", "Fiesta Nacional"], "2026-11-01": ["es", "Todos los Santos"], "2026-12-06": ["es", "Día de la Constitución"], "2026-12-08": ["es", "La Inmaculada"],
+    "2026-10-12": ["es", "Fiesta Nacional"], "2026-12-08": ["es", "La Inmaculada"],
     "2026-12-25": ["es", "Navidad"], "2026-12-26": ["cat", "Sant Esteve"],
-    // 2027 (petición n.º 6): BOE 13/10/2026 (BOE-A-2026-21254) y DOGC 1/4/2026 (ORDRE EMT/52/2026).
+    // 2027 (petición n.º 6): BOE 13/10/2026 (BOE-A-2026-21254), columna Cataluña; DOGC 1/4/2026 (ORDRE EMT/52/2026).
     // El 15 de agosto y Sant Esteve caen en domingo y no están en el calendario laboral.
     "2027-01-01": ["es", "Año Nuevo"], "2027-01-06": ["es", "Reyes"], "2027-03-26": ["es", "Viernes Santo"], "2027-03-29": ["cat", "Lunes de Pascua"],
     "2027-05-01": ["es", "Fiesta del Trabajo"], "2027-06-24": ["cat", "Sant Joan"], "2027-09-11": ["cat", "Diada de Catalunya"],
