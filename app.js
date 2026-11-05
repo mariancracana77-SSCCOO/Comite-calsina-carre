@@ -218,7 +218,8 @@
     for (let i = 0; i < primero; i++) h += "<span></span>";
     for (let d = 1; d <= dias; d++) {
       const iso = `${a}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`, rs = porDia[iso], fe = FESTIVOS[iso];
-      const cls = ["dia-mes", iso === hoy ? "hoy" : "", rs ? "con" : "", fe ? "fest-" + fe[0] : ""].join(" ");
+      const emp = rs && rs.some((r) => r.tipo === "Reunión con la empresa"); // con la empresa en azul, las demás en verde (n.º 6)
+      const cls = ["dia-mes", iso === hoy ? "hoy" : "", rs ? (emp ? "con empresa" : "con") : "", fe ? "fest-" + fe[0] : ""].join(" ");
       const nombres = [...(rs || []).map((r) => r.titulo), ...(fe ? ["Festivo: " + fe[1]] : [])].join(", ");
       h += rs
         ? `<a class="${cls}" href="#reunion-${rs[0].id}" aria-label="${d} de ${mes}: ${esc(nombres)}">${d}<i></i></a>`
