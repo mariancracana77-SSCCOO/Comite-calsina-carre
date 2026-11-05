@@ -469,7 +469,7 @@ details.pet-item.est-lorena { border-left: 5px solid var(--celeste); }
 .pet-opcion { min-height: 56px; font-size: 1.05rem; justify-content: center; text-align: center; white-space: normal; }
 .pet-pregunta .estado:empty, .pet-acciones .estado:empty, .pet-mini .estado:empty { display: none; }
 .pet-acciones { display: grid; gap: 8px; }
-.pet-acciones .btn { min-height: 52px; font-size: 1rem; }
+.pet-acciones .btn { min-height: 52px; font-size: 1rem; width: 100%; justify-content: center; }
 .pet-mini { display: flex; flex-wrap: wrap; gap: 4px 12px; padding-top: 4px; border-top: 1px dashed var(--borde); }
 .pet-mini .btn-texto { min-height: 44px; display: inline-flex; align-items: center; gap: 6px; color: var(--suave); }
 .pet-lorena-caja { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 12px 14px; border-radius: 12px; border: 2px solid var(--celeste); background: var(--azul-claro); }
