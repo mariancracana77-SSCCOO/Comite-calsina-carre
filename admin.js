@@ -1371,11 +1371,16 @@
     return ult && ult.quien === "claude" && Array.isArray(ult.opciones) && ult.opciones.length && !x.pasada_lorena ? ult.opciones.filter((o) => typeof o === "string" && o.trim()).slice(0, 6) : null;
   };
   const petAccion = (x) => !x.pasada_lorena && ((x.estado === "lista" && x.propuesta && !x.decision) || x.estado === "no_hecha" || !!petPregunta(x));
-  // Grupo de cada petición: lo que le toca a él, en marcha, hechas, pasadas a Lorena o quitadas de su lista
-  const petGrupo = (x) => x.oculta_padre ? "quitadas" : x.pasada_lorena ? "lorena" : petAccion(x) ? "toca" : PET_EN_MARCHA.includes(x.estado) ? "marcha" : "hechas";
-  const PET_GRUPOS = [["toca", "Te toca a ti"], ["marcha", "En marcha"], ["hechas", "Hechas"], ["lorena", "Pasadas a Lorena"], ["quitadas", "Quitadas de tu lista"]];
+  // Dos bloques bien separados (lo pidió Lorena, 5/11/2026): «Lo tuyo» (te toca a ti / esperando) arriba y abierto,
+  // y «Confirmado por Lorena» (ya en la web: Lorena da el visto bueno a todo lo que se publica). Lo cerrado y lo quitado, plegado abajo.
+  const petGrupo = (x) => x.oculta_padre ? "quitadas" : petAccion(x) ? "toca" : x.pasada_lorena || PET_EN_MARCHA.includes(x.estado) ? "marcha" : x.estado === "publicada" ? "confirmado" : "cerradas";
+  const PET_BLOQUES = [
+    { k: "tuyo", t: "Lo tuyo", sub: "Lo que has pedido", grupos: [["toca", "Te toca a ti"], ["marcha", "Esperando"]] },
+    { k: "ok", t: "Confirmado por Lorena", sub: "Ya está en la web", grupos: [["confirmado", ""]] },
+  ];
+  const PET_PLEGADOS = [["cerradas", "Cerradas sin cambios"], ["quitadas", "Quitadas de tu lista"]];
   const PET_CORTO = { nueva: "Enviada", en_curso: "Claude está con ella", lista: "Preparada", publicada: "En la web", descartada: "Descartada", no_hecha: "No se ha hecho", deshecha: "Quitada de la web" };
-  const petEtiqueta = (x) => x.pasada_lorena ? ["lorena", "Lo sigue Lorena"] : petPregunta(x) ? ["toca", "Claude te pregunta"] : x.estado === "lista" && x.propuesta && !x.decision ? ["toca", "Mira las fotos"] : [x.estado, PET_CORTO[x.estado] || x.estado];
+  const petEtiqueta = (x) => x.pasada_lorena ? ["lorena", "Lo sigue Lorena"] : x.estado === "lista" && x.decision === "publicar" ? ["lorena", "Esperando a Lorena"] : petPregunta(x) ? ["toca", "Claude te pregunta"] : x.estado === "lista" && x.propuesta && !x.decision ? ["toca", "Mira las fotos"] : [x.estado, PET_CORTO[x.estado] || x.estado];
   const CAPTURA_OK = new RegExp("^" + SUPABASE_URL.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&") + "/");
   const fichaPet = (x) => {
     const f = x.ficha || {}, hecho = Array.isArray(f.hecho) ? f.hecho : [];
@@ -1511,7 +1516,7 @@
     const item = (x) => {
       const id = esc(x.id), ms = Array.isArray(x.mensajes) ? x.mensajes : [], nuevos = deClaude(x) - (vistos[x.id] ?? 0);
       const grupo = petGrupo(x), [etqClase, etqTxt] = petEtiqueta(x), preg = petPregunta(x);
-      const abierta = grupo === "toca" || abiertas.has(x.id), fuera = grupo === "lorena" || grupo === "quitadas";
+      const abierta = grupo === "toca" || abiertas.has(x.id), fuera = !!x.pasada_lorena || grupo === "quitadas";
       return `<details class="tarjeta pet-item est-${esc(x.estado)}${x.pasada_lorena ? " est-lorena" : ""}" data-pet="${id}" data-grupo="${grupo}"${abierta ? " open" : ""}>
         <summary class="pet-sum"><span class="pet-tit"><span class="pet-num">N.º ${id}</span> ${esc(petTitulo(x))}</span>
           <span class="pet-cab"><span class="etq pet-etq e-${esc(etqClase)}">${esc(etqTxt)}</span>${nuevos > 0 ? `<span class="pet-nuevo">${nuevos === 1 ? "1 mensaje nuevo" : `${nuevos} nuevos`}</span>` : ""}<small>${esc(horaPet(x.creado))}</small></span></summary>
@@ -1557,16 +1562,23 @@
       </details>`;
     };
     const porGrupo = {}; filas.forEach((x) => { (porGrupo[petGrupo(x)] ||= []).push(x); });
-    const seccion = ([k, t]) => {
+    const grupoHTML = ([k, t]) => {
       const xs = porGrupo[k]; if (!xs?.length) return "";
-      const cuerpo = xs.map(item).join("");
-      return k === "quitadas"
-        ? `<details class="pet-grupo pet-quitadas" data-grupo-caja="${k}"><summary class="pet-grupo-tit">${esc(t)} <span>${xs.length}</span></summary>${cuerpo}</details>`
-        : `<section class="pet-grupo" data-grupo-caja="${k}"><h3 class="pet-grupo-tit${k === "toca" ? " toca" : ""}">${esc(t)} <span>${xs.length}</span></h3>${cuerpo}</section>`;
+      return `<section class="pet-grupo" data-grupo-caja="${k}">${t ? `<h4 class="pet-grupo-tit${k === "toca" ? " toca" : ""}">${esc(t)} <span>${xs.length}</span></h4>` : ""}${xs.map(item).join("")}</section>`;
+    };
+    const cuenta = (gs) => gs.reduce((n, [k]) => n + (porGrupo[k]?.length || 0), 0);
+    const bloque = (b) => {
+      const n = cuenta(b.grupos);
+      return `<section class="pet-bloque b-${b.k}" data-bloque="${b.k}"><h3 class="pet-bloque-tit">${icono(b.k === "ok" ? "check" : "personas")}<span>${esc(b.t)}<small>${esc(b.sub)}</small></span><b>${n}</b></h3>
+        ${n ? b.grupos.map(grupoHTML).join("") : `<p class="pet-bloque-vacio">${b.k === "ok" ? "Todavía nada." : "No tienes nada pendiente."}</p>`}</section>`;
+    };
+    const plegado = ([k, t]) => {
+      const xs = porGrupo[k]; if (!xs?.length) return "";
+      return `<details class="pet-grupo pet-quitadas" data-grupo-caja="${k}"><summary class="pet-grupo-tit">${esc(t)} <span>${xs.length}</span></summary>${xs.map(item).join("")}</details>`;
     };
     z.innerHTML = filas.length ? `${filas.length > 1 ? `<label class="pet-busca">${icono("buscar")}<input type="search" id="pet-busca" placeholder="Buscar en lo que has pedido" aria-label="Buscar en lo que has pedido" autocomplete="off"></label>` : ""}
       <p class="vacio pet-nada" id="pet-nada" hidden>No sale ninguna con eso.</p>
-      ${PET_GRUPOS.map(seccion).join("")}`
+      ${PET_BLOQUES.map(bloque).join("")}${PET_PLEGADOS.map(plegado).join("")}`
       + (filas.length >= PET_LIMITE ? `<button type="button" class="btn sec pet-mas" id="pet-mas">${icono("mas")}Ver las más antiguas</button>` : "")
       : `<div class="vacio-caja"><span class="vacio-ic">${icono("magia")}</span><b>Todavía no has pedido nada</b><p>Lo que pidas saldrá aquí.</p></div>`;
     // Buscador: esconde lo que no coincide y los grupos vacíos
@@ -1577,6 +1589,7 @@
         d.hidden = !ok; if (ok) n++;
       });
       z.querySelectorAll("[data-grupo-caja]").forEach((g) => { g.hidden = !g.querySelector("details.pet-item:not([hidden])"); if (q && g.tagName === "DETAILS" && !g.hidden) g.open = true; });
+      z.querySelectorAll("[data-bloque]").forEach((b) => { if (b.querySelector("details.pet-item")) b.hidden = !b.querySelector("details.pet-item:not([hidden])"); });
       const nada = $("pet-nada"); if (nada) nada.hidden = n > 0;
     };
     let espera; $("pet-busca")?.addEventListener("input", () => { clearTimeout(espera); espera = setTimeout(aplica, 200); });
