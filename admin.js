@@ -1346,10 +1346,10 @@
     return (fotos.length ? `<div class="pet-fotos">${fotos.map((x) => `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener" aria-label="Ver en grande: ${esc(x.nombre || "foto")}"><img src="${esc(urlSegura(x.url))}" alt="${esc(x.nombre || "")}" loading="lazy">${x.nombre ? `<span class="pet-foto-pie">${esc(x.nombre)}</span>` : ""}</a>`).join("")}</div>` : "")
       + (otros.length ? `<p class="pet-otros">${otros.map((x) => `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener">${esc(x.nombre || "Archivo")}</a>`).join(" · ")}</p>` : "");
   };
-  // Ventana para confirmar «Descartar» (que no se pulse sin querer)
-  const confirmaDescartar = (id) => new Promise((ok) => {
+  // Ventana para confirmar (que no se pulse sin querer). Frases cortas: lo pidió Lorena para su padre.
+  const confirmaPet = ({ tit, txt, si, no = "No, volver", rojo = true }) => new Promise((ok) => {
     const antes = document.activeElement, v = document.createElement("div"); v.className = "pet-velo";
-    v.innerHTML = `<div class="pet-modal" role="dialog" aria-modal="true" aria-labelledby="pet-modal-tit"><h2 id="pet-modal-tit">¿Descartar la petición n.º&nbsp;${esc(id)}?</h2><p>Si la descartas, este cambio <b>no se publica</b> y Claude no sigue con él. Si solo quieres cambiar algo, pulsa «No, volver» y luego «Añadir algo o mejorarlo».</p><div class="pet-modal-botones"><button type="button" class="btn sec" data-no>No, volver</button><button type="button" class="btn pet-descarta-si" data-si>Sí, descartar</button></div></div>`;
+    v.innerHTML = `<div class="pet-modal" role="dialog" aria-modal="true" aria-labelledby="pet-modal-tit"><h2 id="pet-modal-tit">${esc(tit)}</h2>${txt ? `<p>${txt}</p>` : ""}<div class="pet-modal-botones"><button type="button" class="btn sec" data-no>${esc(no)}</button><button type="button" class="btn${rojo ? " pet-descarta-si" : ""}" data-si>${esc(si)}</button></div></div>`;
     const fin = (r) => { document.removeEventListener("keydown", tecla, true); v.remove(); antes?.focus?.(); ok(r); };
     const tecla = (e) => {
       if (e.key === "Escape") { e.stopPropagation(); fin(false); }
@@ -1359,45 +1359,59 @@
     document.addEventListener("keydown", tecla, true);
     document.body.appendChild(v); v.querySelector("[data-no]").focus();
   });
-  const petTitulo = (x) => (x.ficha?.titulo || String(x.texto || "").split("\n")[0]).slice(0, 90);
-  const petAccion = (x) => (x.estado === "lista" && x.propuesta && !x.decision) || x.estado === "no_hecha";
+  const confirmaDescartar = (id) => confirmaPet({ tit: `¿Descartar la n.º ${id}?`, txt: "<b>No se publica</b> y Claude no sigue con ella.", si: "Sí, descartar" });
+  // Título corto y claro (lo pidió Lorena): el de la ficha o la primera frase, cortada en una palabra
+  const petTitulo = (x) => {
+    const t = String(x.ficha?.titulo || String(x.texto || "").split(/\n|(?<=[.!?])\s/)[0] || "Petición").trim();
+    return t.length <= 60 ? t : t.slice(0, 60).replace(/\s+\S*$/, "") + "…";
+  };
+  // Pregunta de Claude con botones: su último mensaje lleva opciones y el padre aún no ha contestado
+  const petPregunta = (x) => {
+    const ms = Array.isArray(x.mensajes) ? x.mensajes : [], ult = ms[ms.length - 1];
+    return ult && ult.quien === "claude" && Array.isArray(ult.opciones) && ult.opciones.length && !x.pasada_lorena ? ult.opciones.filter((o) => typeof o === "string" && o.trim()).slice(0, 6) : null;
+  };
+  const petAccion = (x) => !x.pasada_lorena && ((x.estado === "lista" && x.propuesta && !x.decision) || x.estado === "no_hecha" || !!petPregunta(x));
+  // Grupo de cada petición: lo que le toca a él, en marcha, hechas, pasadas a Lorena o quitadas de su lista
+  const petGrupo = (x) => x.oculta_padre ? "quitadas" : x.pasada_lorena ? "lorena" : petAccion(x) ? "toca" : PET_EN_MARCHA.includes(x.estado) ? "marcha" : "hechas";
+  const PET_GRUPOS = [["toca", "Te toca a ti"], ["marcha", "En marcha"], ["hechas", "Hechas"], ["lorena", "Pasadas a Lorena"], ["quitadas", "Quitadas de tu lista"]];
+  const PET_CORTO = { nueva: "Enviada", en_curso: "Claude está con ella", lista: "Preparada", publicada: "En la web", descartada: "Descartada", no_hecha: "No se ha hecho", deshecha: "Quitada de la web" };
+  const petEtiqueta = (x) => x.pasada_lorena ? ["lorena", "Lo sigue Lorena"] : petPregunta(x) ? ["toca", "Claude te pregunta"] : x.estado === "lista" && x.propuesta && !x.decision ? ["toca", "Mira las fotos"] : [x.estado, PET_CORTO[x.estado] || x.estado];
   const CAPTURA_OK = new RegExp("^" + SUPABASE_URL.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&") + "/");
   const fichaPet = (x) => {
     const f = x.ficha || {}, hecho = Array.isArray(f.hecho) ? f.hecho : [];
     const caps = (Array.isArray(f.capturas) ? f.capturas : []).filter((c) => CAPTURA_OK.test(c?.url || "")).map((c) => ({ url: c.url, nombre: c.texto || "Captura", tipo: "image/jpeg" }));
     if (!f.entendido && !hecho.length && !caps.length && !x.version) return "";
-    return `<div class="pet-ficha"><b>${icono("magia")}Lo que ha hecho Claude</b>
-      ${f.entendido ? `<p><span class="pet-ficha-etq">Lo ha entendido así:</span> ${esc(f.entendido)}</p>` : ""}
+    return `<div class="pet-ficha"><b>${icono("magia")}Lo que ha hecho ${x.pasada_lorena ? "Lorena" : "Claude"}</b>
       ${hecho.length ? `<ul>${hecho.map((h) => `<li>${esc(h)}</li>`).join("")}</ul>` : ""}
       ${adjPet(caps)}
-      ${x.version && ["publicada", "deshecha"].includes(x.estado) ? `<p class="pet-pie">Se publicó en la versión ${esc(x.version)}.</p>` : ""}</div>`;
+      ${x.version && ["publicada", "deshecha"].includes(x.estado) ? `<p class="pet-pie"><b>${x.estado === "publicada" ? "En la web" : "Se quitó de la web"}</b> · versión ${esc(x.version)}</p>` : ""}
+      ${f.entendido ? `<details class="pet-mas-info"><summary>Cómo lo ha entendido</summary><p>${esc(f.entendido)}</p></details>` : ""}</div>`;
   };
 
   const pintaPeticiones = async () => {
     PET_ARCH = [];
+    // Pantalla sencilla (lo pidió Lorena: su padre se lía con tanto texto): frases cortas, botones grandes y lo largo plegado
     $("zona").innerHTML = `<h1 class="titulo-vista">Pedir un cambio a Claude</h1>
-      <p class="sub-vista">Escribe lo que quieres cambiar o añadir en la web o en el panel. Para no escribir, toca el micrófono del teclado del móvil y dilo en voz alta. Puedes añadir fotos, capturas de pantalla y vídeos cortos. Al enviarlo, Claude se entera al momento, lo prepara y avisa a Lorena: no se publica nada sin que ella lo diga.</p>
-      <div class="tarjeta pet-avisos" id="pet-avisos" hidden>
-        <p class="pet-avisos-tit">${icono("campana")}<b>Avisos en este móvil</b></p>
-        <p class="ayuda" id="pet-avisos-txt">Te llega un aviso al móvil cuando Claude te contesta o te toca decidir algo. Solo a ti: no les llega a los trabajadores.</p>
-        <button type="button" class="btn" id="pet-avisos-btn">${icono("campana")}Avisarme en este móvil</button>
-        <p class="estado" id="pet-avisos-msg" role="status" aria-live="polite"></p>
-      </div>
-      <p class="pet-pausa" id="pet-pausa" role="status" hidden>${icono("reloj")}<span>Ahora mismo Claude está en pausa. Puedes enviar igual: lo verá más tarde, cuando Lorena lo vuelva a encender.</span></p>
-      <div class="tarjeta pet-consejos"><b>Para que salga bien</b><ul>
-        <li><b>Una cosa por petición.</b> Si quieres tres cambios, envía tres peticiones.</li>
-        <li>Si se te olvida algo, no hagas otra: búscala abajo, en «Lo que has pedido», y toca «Añadir algo a esta petición».</li>
-        <li>Una foto o una captura de lo que quieres cambiar ayuda mucho.</li>
-      </ul></div>
+      <p class="sub-vista">Dile qué quieres cambiar. <b>Claude lo prepara y te enseña fotos.</b> No se publica nada sin Lorena.</p>
+      <p class="pet-pausa" id="pet-pausa" role="status" hidden>${icono("reloj")}<span><b>Claude está en pausa.</b> Puedes enviar igual.</span></p>
       <form class="tarjeta pet-form" id="pet-form" novalidate>
         <label for="pet-texto">¿Qué quieres?</label>
-        <textarea id="pet-texto" rows="5" maxlength="5000" spellcheck="true" autocapitalize="sentences" placeholder="Ej.: En la portada, que los avisos urgentes salgan antes que las reuniones."></textarea>
-        <p class="ayuda">Claude ve las fotos y lo que se ve en los vídeos, pero no oye el sonido: lo importante, escríbelo o díctalo aquí.</p>
-        <label class="btn-linea pet-adjuntar">${icono("camara")}Añadir fotos o vídeos<input type="file" id="pet-archivos" multiple accept="image/*,video/*,audio/*" hidden></label>
+        <textarea id="pet-texto" rows="4" maxlength="5000" spellcheck="true" autocapitalize="sentences" placeholder="Escribe o toca el micrófono del teclado y dilo."></textarea>
+        <label class="btn-linea pet-adjuntar pet-grande">${icono("camara")}Hacer foto o subir captura<input type="file" id="pet-archivos" multiple accept="image/*,video/*,audio/*" hidden></label>
         <ul class="pet-lista" id="pet-lista"></ul>
         <p class="estado" id="pet-msg" role="status" aria-live="polite"></p>
         <button class="btn" type="submit" id="pet-enviar">${icono("check")}Enviar a Claude</button>
+        <details class="pet-mas-info pet-consejos"><summary>Consejos</summary><ul>
+          <li><b>Una cosa por petición.</b></li>
+          <li>Una foto de lo que quieres cambiar ayuda mucho.</li>
+          <li>Claude ve los vídeos, pero <b>no oye el sonido</b>: escríbelo.</li>
+        </ul></details>
       </form>
+      <div class="tarjeta pet-avisos" id="pet-avisos" hidden>
+        <p class="pet-avisos-tit">${icono("campana")}<b id="pet-avisos-txt">Te aviso al móvil cuando Claude te conteste.</b></p>
+        <button type="button" class="btn" id="pet-avisos-btn">${icono("campana")}Avisarme en este móvil</button>
+        <p class="estado" id="pet-avisos-msg" role="status" aria-live="polite"></p>
+      </div>
       <h2 class="titulo-bloque">Lo que has pedido</h2>
       <div id="pet-hechas"><div class="esq"></div></div>`;
     const t = $("pet-texto");
@@ -1419,7 +1433,7 @@
         t.value = ""; creceTexto(t); PET_ARCH = []; listaArch($("pet-lista"), PET_ARCH);
         msgP("pet-msg", "Enviada. Avisando a Claude…");
         const r = await sb.functions.invoke("timbre", { body: { id: nueva?.id } }).catch(() => null);
-        msgP("pet-msg", !$("pet-pausa")?.hidden ? "Enviada. Claude está en pausa: la verá cuando Lorena lo vuelva a encender." : r?.data?.ok ? "Enviada. Claude ya está avisado y se pone con ello. Lorena recibirá un aviso cuando esté listo." : "Enviada. Claude la mirará en la próxima revisión (cada hora, de 8 a 22).", "bien");
+        msgP("pet-msg", !$("pet-pausa")?.hidden ? "Enviada. Claude está en pausa: la verá más tarde." : r?.data?.ok ? "Enviada. Claude ya está avisado." : "Enviada. Claude la verá en menos de una hora.", "bien");
         await pintaHechas();
       } catch (er) { msgP("pet-msg", errTxt(er), "mal"); }
       b.disabled = false;
@@ -1446,7 +1460,7 @@
     } catch (_) { /* sin avisos en este navegador */ }
     if (!$("pet-avisos")) return;
     caja.classList.toggle("activo", activo);
-    txt.textContent = activo ? "Activados: te llega un aviso a este móvil cuando Claude te contesta o te toca decidir algo. Solo a ti." : "Te llega un aviso al móvil cuando Claude te contesta o te toca decidir algo. Solo a ti: no les llega a los trabajadores.";
+    txt.textContent = activo ? "Avisos activados en este móvil." : "Te aviso al móvil cuando Claude te conteste.";
     btn.innerHTML = activo ? `${icono("cerrar")}Dejar de avisarme en este móvil` : `${icono("campana")}Avisarme en este móvil`;
     btn.className = activo ? "btn sec" : "btn";
     btn.onclick = async () => {
@@ -1488,63 +1502,83 @@
   const PET_ANADE = {}; // archivos elegidos para añadir a cada petición (por id)
   const pintaHechas = async () => {
     const z = $("pet-hechas"); if (!z) return;
-    const { data, error } = await sb.from("peticiones_claude").select("id,creado,texto,adjuntos,estado,respuesta,mensajes,deshacer,version,propuesta,decision,ficha").order("id", { ascending: false }).limit(PET_LIMITE);
+    const { data, error } = await sb.from("peticiones_claude").select("id,creado,texto,adjuntos,estado,respuesta,mensajes,deshacer,version,propuesta,decision,ficha,pasada_lorena,oculta_padre").order("id", { ascending: false }).limit(PET_LIMITE);
     if (!$("pet-hechas") || actual !== "peticiones") return;
     if (error) { z.innerHTML = `<p class="vacio">No se ha podido cargar: ${esc(errTxt(error))}</p>`; return; }
     const burbuja = (m) => `<li class="pet-m ${m.quien === "claude" ? "de-claude" : "de-padre"}${m.aviso ? " aviso" : ""}"><small>${m.quien === "claude" ? "Claude" : "Tú"} · ${esc(horaPet(m.cuando))}</small>${m.texto ? `<div class="pet-texto">${textoHTML(m.texto)}</div>` : ""}${adjPet(m.adjuntos)}</li>`;
     const filas = data || [], abiertas = new Set(petLee("comite-adm-pet-abiertas", [])), vistos = petLee("comite-adm-pet-vistos", {});
     const deClaude = (x) => (Array.isArray(x.mensajes) ? x.mensajes : []).filter((m) => m.quien === "claude").length;
-    const enMarcha = filas.filter((x) => PET_EN_MARCHA.includes(x.estado)).length;
-    let filtro = petLee("comite-adm-pet-filtro", "marcha"); if (filtro === "marcha" && !enMarcha && filas.length) filtro = "todas";
-    const chip = (k, t, n) => `<button type="button" class="pet-chip" data-pet-filtro="${k}" aria-pressed="${filtro === k}">${t}${n != null ? ` <span>${n}</span>` : ""}</button>`;
-    const cabecera = filas.length ? `<div class="pet-filtros" role="group" aria-label="Qué peticiones ver">${chip("marcha", "En marcha", enMarcha)}${chip("hechas", "Terminadas", filas.length - enMarcha)}${chip("todas", "Todas", null)}</div>
-      ${filas.length > 4 ? `<label class="pet-busca">${icono("buscar")}<input type="search" id="pet-busca" placeholder="Buscar en lo que has pedido" aria-label="Buscar en lo que has pedido" autocomplete="off"></label>` : ""}
-      <p class="vacio pet-nada" id="pet-nada" hidden>No hay ninguna aquí. Toca «Todas» para verlas todas.</p>` : "";
-    z.innerHTML = filas.length ? cabecera + filas.map((x) => {
+    const item = (x) => {
       const id = esc(x.id), ms = Array.isArray(x.mensajes) ? x.mensajes : [], nuevos = deClaude(x) - (vistos[x.id] ?? 0);
-      const abierta = abiertas.has(x.id) || petAccion(x), rojo = ["no_hecha", "descartada"].includes(x.estado);
-      return `<details class="tarjeta pet-item est-${esc(x.estado)}" data-pet="${id}" data-grupo="${PET_EN_MARCHA.includes(x.estado) ? "marcha" : "hechas"}"${abierta ? " open" : ""}>
-        <summary class="pet-sum"><span class="pet-tit">${esc(petTitulo(x))}</span>
-          <span class="pet-cab"><span class="etq">${esc(PET_ESTADO[x.estado] || x.estado)}</span>${petAccion(x) ? `<span class="pet-toca">Te toca a ti</span>` : ""}${nuevos > 0 ? `<span class="pet-nuevo">${nuevos === 1 ? "1 mensaje nuevo" : `${nuevos} mensajes nuevos`}</span>` : ""}<small>N.º ${id} · ${esc(horaPet(x.creado))}${ms.length ? ` · ${ms.length} ${ms.length === 1 ? "mensaje" : "mensajes"}` : ""}</small></span></summary>
+      const grupo = petGrupo(x), [etqClase, etqTxt] = petEtiqueta(x), preg = petPregunta(x);
+      const abierta = grupo === "toca" || abiertas.has(x.id), fuera = grupo === "lorena" || grupo === "quitadas";
+      return `<details class="tarjeta pet-item est-${esc(x.estado)}${x.pasada_lorena ? " est-lorena" : ""}" data-pet="${id}" data-grupo="${grupo}"${abierta ? " open" : ""}>
+        <summary class="pet-sum"><span class="pet-tit"><span class="pet-num">N.º ${id}</span> ${esc(petTitulo(x))}</span>
+          <span class="pet-cab"><span class="etq pet-etq e-${esc(etqClase)}">${esc(etqTxt)}</span>${nuevos > 0 ? `<span class="pet-nuevo">${nuevos === 1 ? "1 mensaje nuevo" : `${nuevos} nuevos`}</span>` : ""}<small>${esc(horaPet(x.creado))}</small></span></summary>
         <div class="pet-cuerpo">
-        <p class="pet-texto">${esc(x.texto)}</p>
-        ${adjPet(x.adjuntos)}
-        ${ms.length ? `<ul class="pet-chat" aria-label="Lo añadido después">${ms.map(burbuja).join("")}</ul>` : ""}
-        ${x.respuesta ? `<p class="pet-resp"><b>Claude:</b> ${esc(x.respuesta)}</p>` : ""}
+        <ul class="pet-chat" aria-label="Conversación"><li class="pet-m de-padre"><small>Tú · ${esc(horaPet(x.creado))}</small><div class="pet-texto">${textoHTML(x.texto || "")}</div>${adjPet(x.adjuntos)}</li>${ms.map(burbuja).join("")}</ul>
+        ${x.respuesta && !["publicada", "lista"].includes(x.estado) ? `<p class="pet-resp"><b>Claude:</b> ${esc(x.respuesta)}</p>` : ""}
+        ${preg ? `<div class="pet-pregunta" role="group" aria-label="Contesta a Claude"><p class="pet-decide-tit">${icono("mensaje")}Contesta a Claude:</p>
+          ${preg.map((o, i) => `<button type="button" class="btn pet-opcion" data-opcion="${id}" data-i="${i}">${esc(o)}</button>`).join("")}
+          <button type="button" class="btn sec pet-opcion" data-otra="${id}">${icono("editar")}Otra cosa</button>
+          <p class="estado" role="status" aria-live="polite" id="pet-preg-msg-${id}"></p></div>` : ""}
         ${fichaPet(x)}
-        ${x.estado === "lista" && x.propuesta && !x.decision ? `<div class="pet-decide" role="group" aria-label="¿Qué hago con esta petición?">
-          <p class="pet-decide-tit">${icono("ojo")}Mira las fotos de arriba. ¿Te gusta cómo queda?</p>
-          <button type="button" class="btn pet-publica" data-decide="${id}" data-que="publicar">${icono("check")}Publicar</button>
-          <button type="button" class="btn sec" data-anade-abre-2="${id}">${icono("mas")}Añadir algo o mejorarlo</button>
-          <button type="button" class="btn sec pet-descarta" data-decide="${id}" data-que="descartar">${icono("cerrar")}Descartar</button>
+        ${x.pasada_lorena ? `<p class="pet-lorena-caja">${icono("personas")}<span><b>Se la has pasado a Lorena.</b> Te contará aquí lo que haga.</span></p>` : ""}
+        ${!fuera && x.estado === "lista" && x.propuesta && !x.decision ? `<div class="pet-decide" role="group" aria-label="¿Te gusta cómo queda?">
+          <p class="pet-decide-tit">${icono("ojo")}¿Te gusta cómo queda?</p>
+          <button type="button" class="btn pet-publica" data-decide="${id}" data-que="publicar">${icono("check")}Sí, publicar</button>
+          <button type="button" class="btn sec" data-anade-abre-2="${id}">${icono("editar")}Quiero cambiar algo</button>
+          <button type="button" class="btn sec pet-descarta" data-decide="${id}" data-que="descartar">${icono("cerrar")}No, descartar</button>
           <p class="estado" role="status" aria-live="polite" id="pet-decide-msg-${id}"></p>
         </div>` : ""}
-        ${x.estado === "lista" && x.decision === "publicar" ? `<p class="pet-pausa">${icono("reloj")}<span>Has dicho «Publicar». Claude lo sube a la web y te avisa aquí.</span></p>` : ""}
-        <div class="pet-lorena"><p class="ayuda">${rojo ? "Si no estás de acuerdo, avisa a Lorena: le llega un aviso al móvil y lo mira ella." : "¿Quieres que lo mire Lorena? Le llega un aviso al móvil."}</p><button type="button" class="btn${rojo ? " pet-rojo" : " sec"}" data-avisa-lorena="${id}">${icono("campana")}Avisar a Lorena</button><p class="estado" role="status" aria-live="polite" id="pet-lorena-msg-${id}"></p></div>
-        ${x.estado === "publicada" ? (x.deshacer ? `<p class="pet-pausa">${icono("reloj")}<span>Has pedido volver a como estaba antes. Claude lo deshace y avisa a Lorena.</span></p>` : `<div class="pet-lorena"><p class="ayuda">¿No te gusta cómo ha quedado o algo ha salido mal? La web vuelve a estar como antes de esta petición.</p><button type="button" class="btn sec" data-deshacer="${id}">${icono("recuperar")}Volver a como estaba antes</button><p class="estado" role="status" aria-live="polite" id="pet-deshacer-msg-${id}"></p></div>`) : ""}
-        <button type="button" class="btn sec pet-anade-abre" data-anade-abre="${id}" aria-expanded="false">${icono("mas")}Añadir algo a esta petición</button>
+        ${x.estado === "lista" && x.decision === "publicar" ? `<p class="pet-pausa">${icono("reloj")}<span><b>Has dicho «Publicar».</b> Claude lo sube y te avisa.</span></p>` : ""}
+        ${x.estado === "descartada" ? `<p class="pet-pie">Descartada: no se publica nada.</p>` : ""}
+        ${x.estado === "publicada" ? (x.deshacer ? `<p class="pet-pausa">${icono("reloj")}<span><b>Lo estamos quitando de la web.</b> Te avisaremos.</span></p>` : `<div class="pet-acciones"><button type="button" class="btn sec pet-descarta" data-deshacer="${id}">${icono("recuperar")}No me gusta, quitarlo</button><p class="estado" role="status" aria-live="polite" id="pet-deshacer-msg-${id}"></p></div>`) : ""}
+        ${!fuera ? `<div class="pet-acciones">
+          <button type="button" class="btn sec pet-anade-abre" data-anade-abre="${id}" aria-expanded="false">${icono("mas")}Añadir algo a esta petición</button>
+          <button type="button" class="btn sec pet-pasar" data-pasar="${id}">${icono("personas")}Que lo siga Lorena</button>
+          <p class="estado" role="status" aria-live="polite" id="pet-pasar-msg-${id}"></p>
+        </div>` : ""}
         <form class="pet-anade" data-anade="${id}" hidden novalidate>
           <label for="pet-anade-${id}">¿Qué quieres añadir?</label>
-          <textarea id="pet-anade-${id}" rows="3" maxlength="5000" spellcheck="true" autocapitalize="sentences" placeholder="Ej.: y que también salga en el cartel."></textarea>
-          <label class="btn-linea pet-adjuntar">${icono("camara")}Añadir fotos o vídeos<input type="file" multiple accept="image/*,video/*,audio/*" hidden data-anade-arch></label>
+          <textarea id="pet-anade-${id}" rows="3" maxlength="5000" spellcheck="true" autocapitalize="sentences" placeholder="Escribe o dilo con el micrófono."></textarea>
+          <label class="btn-linea pet-adjuntar">${icono("camara")}Foto o captura<input type="file" multiple accept="image/*,video/*,audio/*" hidden data-anade-arch></label>
           <ul class="pet-lista" data-anade-lista></ul>
           <p class="estado" id="pet-anade-msg-${id}" role="status" aria-live="polite"></p>
           <button class="btn" type="submit">${icono("check")}Enviar a Claude</button>
         </form>
+        <div class="pet-mini">
+          ${x.oculta_padre ? `<button type="button" class="btn-texto" data-quitar="${id}" data-poner="1">${icono("recuperar")}Volver a ponerla en mi lista</button>`
+            : `${!x.pasada_lorena ? `<button type="button" class="btn-texto" data-avisa-lorena="${id}">${icono("campana")}Avisar a Lorena</button>` : ""}<button type="button" class="btn-texto" data-quitar="${id}">${icono("cerrar")}Quitar de mi lista</button>`}
+          <button type="button" class="btn-texto" data-otra-nueva>${icono("mas")}Pedir otra cosa nueva</button>
+          <p class="estado" role="status" aria-live="polite" id="pet-lorena-msg-${id}"></p>
         </div>
-      </details>`; }).join("") + (filas.length >= PET_LIMITE ? `<button type="button" class="btn sec pet-mas" id="pet-mas">${icono("mas")}Ver las más antiguas</button>` : "")
-      : `<div class="vacio-caja"><span class="vacio-ic">${icono("magia")}</span><b>Todavía no has pedido nada</b><p>Cuando envíes una petición, saldrá aquí con lo que conteste Claude.</p></div>`;
-    // Filtro, buscador, plegar y «mensajes nuevos»
+        </div>
+      </details>`;
+    };
+    const porGrupo = {}; filas.forEach((x) => { (porGrupo[petGrupo(x)] ||= []).push(x); });
+    const seccion = ([k, t]) => {
+      const xs = porGrupo[k]; if (!xs?.length) return "";
+      const cuerpo = xs.map(item).join("");
+      return k === "quitadas"
+        ? `<details class="pet-grupo pet-quitadas" data-grupo-caja="${k}"><summary class="pet-grupo-tit">${esc(t)} <span>${xs.length}</span></summary>${cuerpo}</details>`
+        : `<section class="pet-grupo" data-grupo-caja="${k}"><h3 class="pet-grupo-tit${k === "toca" ? " toca" : ""}">${esc(t)} <span>${xs.length}</span></h3>${cuerpo}</section>`;
+    };
+    z.innerHTML = filas.length ? `${filas.length > 1 ? `<label class="pet-busca">${icono("buscar")}<input type="search" id="pet-busca" placeholder="Buscar en lo que has pedido" aria-label="Buscar en lo que has pedido" autocomplete="off"></label>` : ""}
+      <p class="vacio pet-nada" id="pet-nada" hidden>No sale ninguna con eso.</p>
+      ${PET_GRUPOS.map(seccion).join("")}`
+      + (filas.length >= PET_LIMITE ? `<button type="button" class="btn sec pet-mas" id="pet-mas">${icono("mas")}Ver las más antiguas</button>` : "")
+      : `<div class="vacio-caja"><span class="vacio-ic">${icono("magia")}</span><b>Todavía no has pedido nada</b><p>Lo que pidas saldrá aquí.</p></div>`;
+    // Buscador: esconde lo que no coincide y los grupos vacíos
     const aplica = () => {
       const q = sinTildes($("pet-busca")?.value.trim()); let n = 0;
       z.querySelectorAll("details.pet-item").forEach((d) => {
-        const ok = (filtro === "todas" || q || d.dataset.grupo === filtro) && (!q || q.split(/\s+/).every((p) => sinTildes(d.textContent).includes(p)));
+        const ok = !q || q.split(/\s+/).every((p) => sinTildes(d.textContent).includes(p));
         d.hidden = !ok; if (ok) n++;
       });
+      z.querySelectorAll("[data-grupo-caja]").forEach((g) => { g.hidden = !g.querySelector("details.pet-item:not([hidden])"); if (q && g.tagName === "DETAILS" && !g.hidden) g.open = true; });
       const nada = $("pet-nada"); if (nada) nada.hidden = n > 0;
-      z.querySelectorAll("[data-pet-filtro]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.petFiltro === filtro)));
     };
-    z.querySelectorAll("[data-pet-filtro]").forEach((b) => { b.onclick = () => { filtro = b.dataset.petFiltro; petGuarda("comite-adm-pet-filtro", filtro); aplica(); }; });
     let espera; $("pet-busca")?.addEventListener("input", () => { clearTimeout(espera); espera = setTimeout(aplica, 200); });
     $("pet-mas")?.addEventListener("click", () => { PET_LIMITE += 30; pintaHechas(); });
     // Las que ya salen abiertas cuentan como vistas (sin quitar ahora la marca «nuevo»); el toggle del primer pintado no se guarda
@@ -1558,29 +1592,71 @@
       petGuarda("comite-adm-pet-abiertas", [...ab].slice(-40));
     }));
     aplica();
-    // Si Claude dice que no, el padre puede pedir que lo mire Lorena (le llega un aviso al móvil)
+    // Contestar a Claude con un botón: llega como un mensaje suyo normal
+    z.querySelectorAll("[data-opcion]").forEach((b) => { b.onclick = async () => {
+      const id = Number(b.dataset.opcion), x = filas.find((f) => f.id === id), txt = petPregunta(x)?.[Number(b.dataset.i)], mid = `pet-preg-msg-${id}`;
+      if (!txt) return;
+      z.querySelectorAll(`[data-opcion="${id}"]`).forEach((o) => { o.disabled = true; });
+      msgP(mid, "Enviando…");
+      try {
+        const { data: r, error } = await sb.rpc("anadir_a_peticion", { p_id: id, p_texto: txt, p_adjuntos: [] });
+        if (error) throw error;
+        if (r !== "ok") throw new Error("No se ha podido enviar. Prueba otra vez.");
+        await sb.functions.invoke("timbre", { body: { id, anadido: true } }).catch(() => null);
+        await pintaHechas();
+      } catch (er) { msgP(mid, errTxt(er), "mal"); z.querySelectorAll(`[data-opcion="${id}"]`).forEach((o) => { o.disabled = false; }); }
+    }; });
+    z.querySelectorAll("[data-otra]").forEach((b) => { b.onclick = () => z.querySelector(`[data-anade-abre="${b.dataset.otra}"]`)?.click() || (() => { const f = z.querySelector(`[data-anade="${b.dataset.otra}"]`); if (f) { f.hidden = false; f.querySelector("textarea").focus(); } })(); });
+    // «Pedir otra cosa nueva»: sube al formulario de arriba (el padre usaba «Añadir algo» para pedir cosas distintas)
+    z.querySelectorAll("[data-otra-nueva]").forEach((b) => { b.onclick = () => { const t = $("pet-texto"); t?.scrollIntoView({ behavior: "smooth", block: "center" }); t?.focus({ preventScroll: true }); }; });
+    // «Que lo siga Lorena»: sale de su lista y la sigue ella (nada se borra)
+    z.querySelectorAll("[data-pasar]").forEach((b) => { b.onclick = async () => {
+      const id = Number(b.dataset.pasar), mid = `pet-pasar-msg-${id}`;
+      if (!(await confirmaPet({ tit: `¿Se la pasas a Lorena?`, txt: "La sigue ella y <b>te cuenta aquí</b> lo que haga.", si: "Sí, que la siga Lorena", rojo: false }))) return;
+      b.disabled = true; msgP(mid, "Pasándosela…");
+      try {
+        const { data: r, error } = await sb.rpc("pasar_a_lorena", { p_id: id });
+        if (error) throw error;
+        if (r !== "ok" && r !== "ya") throw new Error("No se ha podido pasar. Prueba otra vez.");
+        await sb.functions.invoke("timbre", { body: { id, pasar: true } }).catch(() => null);
+        await pintaHechas();
+      } catch (er) { msgP(mid, errTxt(er), "mal"); b.disabled = false; }
+    }; });
+    // «Quitar de mi lista» / «Volver a ponerla»: solo la esconde (el chat se guarda)
+    z.querySelectorAll("[data-quitar]").forEach((b) => { b.onclick = async () => {
+      const id = Number(b.dataset.quitar), poner = !!b.dataset.poner, mid = `pet-lorena-msg-${id}`;
+      if (!poner && !(await confirmaPet({ tit: "¿Quitarla de tu lista?", txt: "No se borra: la encuentras abajo, en «Quitadas de tu lista».", si: "Sí, quitarla", rojo: false }))) return;
+      b.disabled = true;
+      try {
+        const { data: r, error } = await sb.rpc("quitar_de_mi_lista", { p_id: id, p_quitar: !poner });
+        if (error) throw error;
+        if (r !== "ok") throw new Error("No se ha podido. Prueba otra vez.");
+        await pintaHechas();
+      } catch (er) { msgP(mid, errTxt(er), "mal"); b.disabled = false; }
+    }; });
+    // «Avisar a Lorena»: le llega un aviso al móvil (la petición sigue en su lista)
     z.querySelectorAll("[data-avisa-lorena]").forEach((b) => { b.onclick = async () => {
       const id = Number(b.dataset.avisaLorena), mid = `pet-lorena-msg-${id}`; b.disabled = true;
       msgP(mid, "Avisando a Lorena…");
       try {
         const { data: r, error } = await sb.rpc("pedir_lorena", { p_id: id });
         if (error) throw error;
-        if (r === "ya") { msgP(mid, "Ya la avisaste hace poco. Si no contesta, vuelve a probar dentro de media hora."); return; }
+        if (r === "ya") { msgP(mid, "Ya la avisaste hace poco."); return; }
         if (r !== "ok") throw new Error("No se ha podido avisar. Prueba otra vez.");
         const tr = await sb.functions.invoke("timbre", { body: { id, avisar: true } }).catch(() => null);
         await pintaHechas();
-        msgP(mid, tr?.data?.ok ? "Avisada. Le llegará un aviso al móvil." : "Apuntado. Lorena lo verá cuando mire las peticiones.", "bien");
+        msgP(mid, tr?.data?.ok ? "Avisada." : "Apuntado. Lorena lo verá.", "bien");
       } catch (er) { msgP(mid, errTxt(er), "mal"); b.disabled = false; }
     }; });
-    // Volver a como estaba antes de una petición ya publicada (Claude lo deshace con la copia de antes)
+    // «No me gusta, quitarlo»: vuelve a como estaba antes de esta petición (Claude lo deshace con la copia de antes)
     z.querySelectorAll("[data-deshacer]").forEach((b) => { b.onclick = async () => {
       const id = Number(b.dataset.deshacer), mid = `pet-deshacer-msg-${id}`;
-      if (!confirm(`¿Volver a dejar la web como estaba antes de la petición n.º ${id}? Lo que se cambió en esa petición se quita.`)) return;
+      if (!(await confirmaPet({ tit: "¿Quitarlo de la web?", txt: "La web vuelve a estar <b>como antes</b> de esta petición.", si: "Sí, quitarlo" }))) return;
       b.disabled = true; msgP(mid, "Pidiéndolo…");
       try {
         const { data: r, error } = await sb.rpc("deshacer_peticion", { p_id: id });
         if (error) throw error;
-        if (r !== "ok" && r !== "ya") throw new Error(r === "no_publicada" ? "Esta petición no está publicada: no hay nada que deshacer." : "No se ha podido pedir. Prueba otra vez.");
+        if (r !== "ok" && r !== "ya") throw new Error(r === "no_publicada" ? "Esta petición no está publicada: no hay nada que quitar." : "No se ha podido pedir. Prueba otra vez.");
         await sb.functions.invoke("timbre", { body: { id, deshacer: true } }).catch(() => null);
         await pintaHechas();
       } catch (er) { msgP(mid, errTxt(er), "mal"); b.disabled = false; }
@@ -1591,7 +1667,7 @@
       const id = Number(b.dataset.decide), que = b.dataset.que, mid = `pet-decide-msg-${id}`;
       if (que === "descartar" && !(await confirmaDescartar(id))) return;
       z.querySelectorAll(`[data-decide="${id}"]`).forEach((x) => { x.disabled = true; });
-      msgP(mid, que === "publicar" ? "Avisando a Claude para que lo publique…" : "Descartando…");
+      msgP(mid, que === "publicar" ? "Avisando a Claude…" : "Descartando…");
       try {
         const { data: r, error } = await sb.rpc("decidir_peticion", { p_id: id, p_decision: que });
         if (error) throw error;

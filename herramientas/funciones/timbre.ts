@@ -2,6 +2,7 @@
 // v2 (lo pidió Lorena, 5/11/2026): comenta en la PR buzón n.º 13 del repo Comite-calsina-carre (despierta a «Timbres Comité»).
 // Solo avisa ahí: el token GITHUB_TOKEN tiene que tener permiso en este repo (Issues y Pull requests). Si no, devuelve el error y queda la revisión de cada hora.
 // La llave va en el secreto GITHUB_TOKEN (la pone Lorena en Supabase > Edge Functions > Secrets, nunca en el chat). Sin ella no hace nada.
+// { id, pasar: true }: el padre pulsa «Que lo siga Lorena» (RPC pasar_a_lorena, columna pasada_lorena).
 // verify_jwt desactivado: la función comprueba ella misma is_admin() con la sesión del panel o el secreto interno x-cron-secret (prueba desde SQL).
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -42,11 +43,15 @@ Deno.serve(async (req) => {
   });
   const { data: esAdmin } = await sb.rpc("is_admin");
   if (!esAdmin) return json({ error: "Solo las cuentas del panel" }, 403);
-  let id = 0, actualizada = false, anadido = false, avisar = false, deshacer = false, decision = false;
-  try { const b = await req.json(); id = Number(b.id) || 0; actualizada = !!b.actualizada; anadido = !!b.anadido; avisar = !!b.avisar; deshacer = !!b.deshacer; decision = !!b.decision; } catch { /* sin cuerpo */ }
-  const { data: p } = await sb.from("peticiones_claude").select("id,estado,creado,actualizado,espera,mensajes,avisar_lorena,deshacer,decision,decision_el").eq("id", id).maybeSingle();
+  let id = 0, actualizada = false, anadido = false, avisar = false, deshacer = false, decision = false, pasar = false;
+  try { const b = await req.json(); id = Number(b.id) || 0; actualizada = !!b.actualizada; anadido = !!b.anadido; avisar = !!b.avisar; deshacer = !!b.deshacer; decision = !!b.decision; pasar = !!b.pasar; } catch { /* sin cuerpo */ }
+  const { data: p } = await sb.from("peticiones_claude").select("id,estado,creado,actualizado,espera,mensajes,avisar_lorena,deshacer,decision,decision_el,pasada_lorena").eq("id", id).maybeSingle();
   const cuando = p ? new Date(p.actualizado || p.creado).getTime() : 0;
   const reciente = Date.now() - cuando <= 10 * 60 * 1000;
+  if (pasar) {
+    if (!p || !p.pasada_lorena || Date.now() - new Date(p.pasada_lorena).getTime() > 10 * 60 * 1000) return json({ ok: false, motivo: "no_pasar" });
+    return comenta(`Petición n.º ${p.id}: el padre se la pasa a Lorena («Que lo siga Lorena»). Avísala al móvil; la sigue ella.`);
+  }
   if (decision) {
     if (!p || !p.decision || !p.decision_el || Date.now() - new Date(p.decision_el).getTime() > 10 * 60 * 1000) return json({ ok: false, motivo: "no_decision" });
     return comenta(p.decision === "publicar" ? `Petición n.º ${p.id}: el padre ha visto las capturas y dice PUBLICAR.` : `Petición n.º ${p.id}: el padre ha visto las capturas y dice DESCARTAR.`);

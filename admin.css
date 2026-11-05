@@ -447,3 +447,36 @@ details.pet-item.est-en_curso, details.pet-item.est-nueva { border-left: 5px sol
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.sec { color: var(--texto); } }
 :root[data-theme="dark"] .btn.sec.pet-descarta { color: var(--rojo); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.sec.pet-descarta { color: var(--rojo); } }
+
+/* Peticiones más fáciles para el padre (lo pidió Lorena, 5/11/2026): grupos, botones grandes, menos texto */
+.pet-grupo { margin-bottom: 14px; }
+.pet-grupo[hidden] { display: none; }
+.pet-grupo-tit { display: flex; align-items: center; gap: 8px; margin: 6px 0 10px; font-family: "Montserrat", "Inter", sans-serif; font-weight: 800; font-size: 1.05rem; color: var(--azul-osc); }
+.pet-grupo-tit span { min-width: 1.8em; padding: 1px 8px; border-radius: 99px; background: var(--azul-claro); color: var(--azul-osc); text-align: center; font-size: .9rem; }
+.pet-grupo-tit.toca { color: var(--verde); }
+.pet-grupo-tit.toca span { background: var(--verde); color: var(--tarjeta); }
+details.pet-quitadas > summary { cursor: pointer; list-style: none; min-height: 48px; color: var(--suave); }
+details.pet-quitadas > summary::-webkit-details-marker { display: none; }
+details.pet-item[hidden] { display: none; }
+details.pet-item.est-lorena { border-left: 5px solid var(--celeste); }
+.pet-num { color: var(--suave); font-weight: 700; margin-right: 2px; }
+.pet-etq { font-weight: 800; }
+.pet-etq.e-toca { background: var(--verde); color: var(--tarjeta); }
+.pet-etq.e-lorena { background: var(--celeste); color: #0B1E3C; }
+.pet-etq.e-no_hecha, .pet-etq.e-descartada { background: var(--rojo); color: var(--tarjeta); }
+.pet-etq.e-publicada { background: var(--azul); color: var(--tarjeta); }
+.pet-pregunta { display: grid; gap: 8px; padding: 12px; border: 2px solid var(--verde); border-radius: 12px; background: var(--fondo); }
+.pet-opcion { min-height: 56px; font-size: 1.05rem; justify-content: center; text-align: center; white-space: normal; }
+.pet-pregunta .estado:empty, .pet-acciones .estado:empty, .pet-mini .estado:empty { display: none; }
+.pet-acciones { display: grid; gap: 8px; }
+.pet-acciones .btn { min-height: 52px; font-size: 1rem; }
+.pet-mini { display: flex; flex-wrap: wrap; gap: 4px 12px; padding-top: 4px; border-top: 1px dashed var(--borde); }
+.pet-mini .btn-texto { min-height: 44px; display: inline-flex; align-items: center; gap: 6px; color: var(--suave); }
+.pet-lorena-caja { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 12px 14px; border-radius: 12px; border: 2px solid var(--celeste); background: var(--azul-claro); }
+.pet-lorena-caja .ico { flex: none; color: var(--azul); }
+.pet-grande { min-height: 56px; font-size: 1.05rem; justify-self: stretch; justify-content: center; }
+details.pet-mas-info > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 700; color: var(--azul); }
+details.pet-mas-info ul, details.pet-mas-info p { margin: 4px 0 0; }
+details.pet-mas-info ul { padding-left: 20px; display: grid; gap: 4px; }
+.pet-consejos { display: block; margin: 0; }
+@media (min-width: 600px) { .pet-acciones { grid-template-columns: 1fr 1fr; } .pet-acciones .estado { grid-column: 1 / -1; } }
