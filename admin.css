@@ -465,6 +465,7 @@ details.pet-item.est-lorena { border-left: 5px solid var(--celeste); }
 .pet-etq.e-lorena { background: var(--celeste); color: #0B1E3C; }
 .pet-etq.e-no_hecha, .pet-etq.e-descartada { background: var(--rojo); color: var(--tarjeta); }
 .pet-etq.e-publicada { background: var(--azul); color: var(--tarjeta); }
+.pet-etq.e-confirmado { background: var(--verde); color: var(--tarjeta); }
 .pet-pregunta { display: grid; gap: 8px; padding: 12px; border: 2px solid var(--verde); border-radius: 12px; background: var(--fondo); }
 .pet-opcion { min-height: 56px; font-size: 1.05rem; justify-content: center; text-align: center; white-space: normal; }
 .pet-pregunta .estado:empty, .pet-acciones .estado:empty, .pet-mini .estado:empty { display: none; }
@@ -494,3 +495,4 @@ details.pet-mas-info ul { padding-left: 20px; display: grid; gap: 4px; }
 .b-tuyo .pet-bloque-tit > b { background: var(--verde); }
 .pet-bloque .pet-grupo-tit { font-size: 1rem; }
 .pet-bloque-vacio { margin: 0 0 10px; font-weight: 600; }
+.pet-m.de-lorena { border-left-color: var(--verde); }

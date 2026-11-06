@@ -1370,17 +1370,19 @@
     const ms = Array.isArray(x.mensajes) ? x.mensajes : [], ult = ms[ms.length - 1];
     return ult && ult.quien === "claude" && Array.isArray(ult.opciones) && ult.opciones.length && !x.pasada_lorena ? ult.opciones.filter((o) => typeof o === "string" && o.trim()).slice(0, 6) : null;
   };
-  const petAccion = (x) => !x.pasada_lorena && ((x.estado === "lista" && x.propuesta && !x.decision) || x.estado === "no_hecha" || !!petPregunta(x));
+  // Visto bueno de Lorena (su app lo apunta en ficha.visto_bueno_lorena al pulsar «Bien, publícalo»; igual que en CCOO v136)
+  const petVistoBueno = (x) => !!x.ficha?.visto_bueno_lorena && !["descartada", "deshecha"].includes(x.estado);
+  const petAccion = (x) => !petVistoBueno(x) && !x.pasada_lorena && ((x.estado === "lista" && x.propuesta && !x.decision) || x.estado === "no_hecha" || !!petPregunta(x));
   // Dos bloques bien separados (lo pidió Lorena, 5/11/2026): «Lo tuyo» (te toca a ti / esperando) arriba y abierto,
   // y «Confirmado por Lorena» (ya en la web: Lorena da el visto bueno a todo lo que se publica). Lo cerrado y lo quitado, plegado abajo.
-  const petGrupo = (x) => x.oculta_padre ? "quitadas" : petAccion(x) ? "toca" : x.pasada_lorena || PET_EN_MARCHA.includes(x.estado) ? "marcha" : x.estado === "publicada" ? "confirmado" : "cerradas";
+  const petGrupo = (x) => x.oculta_padre ? "quitadas" : petAccion(x) ? "toca" : x.estado === "publicada" || petVistoBueno(x) ? "confirmado" : x.pasada_lorena || PET_EN_MARCHA.includes(x.estado) ? "marcha" : "cerradas";
   const PET_BLOQUES = [
     { k: "tuyo", t: "Lo tuyo", sub: "Lo que has pedido", grupos: [["toca", "Te toca a ti"], ["marcha", "Esperando"]] },
-    { k: "ok", t: "Confirmado por Lorena", sub: "Ya está en la web", grupos: [["confirmado", ""]] },
+    { k: "ok", t: "Confirmado por Lorena", sub: "Con su visto bueno o ya en la web", grupos: [["confirmado", ""]] },
   ];
   const PET_PLEGADOS = [["cerradas", "Cerradas sin cambios"], ["quitadas", "Quitadas de tu lista"]];
   const PET_CORTO = { nueva: "Enviada", en_curso: "Claude está con ella", lista: "Preparada", publicada: "En la web", descartada: "Descartada", no_hecha: "No se ha hecho", deshecha: "Quitada de la web" };
-  const petEtiqueta = (x) => x.pasada_lorena ? ["lorena", "Lo sigue Lorena"] : x.estado === "lista" && x.decision === "publicar" ? ["lorena", "Esperando a Lorena"] : petPregunta(x) ? ["toca", "Claude te pregunta"] : x.estado === "lista" && x.propuesta && !x.decision ? ["toca", "Mira las fotos"] : [x.estado, PET_CORTO[x.estado] || x.estado];
+  const petEtiqueta = (x) => petVistoBueno(x) && x.estado !== "publicada" ? ["confirmado", "Lorena dijo que sí: subiéndose"] : x.pasada_lorena ? ["lorena", "Lo sigue Lorena"] : x.estado === "lista" && x.decision === "publicar" ? ["lorena", "Esperando a Lorena"] : petPregunta(x) ? ["toca", "Claude te pregunta"] : x.estado === "lista" && x.propuesta && !x.decision ? ["toca", "Mira las fotos"] : [x.estado, PET_CORTO[x.estado] || x.estado];
   const CAPTURA_OK = new RegExp("^" + SUPABASE_URL.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&") + "/");
   const fichaPet = (x) => {
     const f = x.ficha || {}, hecho = Array.isArray(f.hecho) ? f.hecho : [];
@@ -1510,7 +1512,7 @@
     const { data, error } = await sb.from("peticiones_claude").select("id,creado,texto,adjuntos,estado,respuesta,mensajes,deshacer,version,propuesta,decision,ficha,pasada_lorena,oculta_padre").order("id", { ascending: false }).limit(PET_LIMITE);
     if (!$("pet-hechas") || actual !== "peticiones") return;
     if (error) { z.innerHTML = `<p class="vacio">No se ha podido cargar: ${esc(errTxt(error))}</p>`; return; }
-    const burbuja = (m) => `<li class="pet-m ${m.quien === "claude" ? "de-claude" : "de-padre"}${m.aviso ? " aviso" : ""}"><small>${m.quien === "claude" ? "Claude" : "Tú"} · ${esc(horaPet(m.cuando))}</small>${m.texto ? `<div class="pet-texto">${textoHTML(m.texto)}</div>` : ""}${adjPet(m.adjuntos)}</li>`;
+    const burbuja = (m) => `<li class="pet-m ${m.quien === "claude" || m.quien === "lorena" ? "de-claude" : "de-padre"}${m.quien === "lorena" ? " de-lorena" : ""}${m.aviso ? " aviso" : ""}"><small>${m.quien === "claude" ? "Claude" : m.quien === "lorena" ? "Lorena" : "Tú"} · ${esc(horaPet(m.cuando))}</small>${m.texto ? `<div class="pet-texto">${textoHTML(m.texto)}</div>` : ""}${adjPet(m.adjuntos)}</li>`;
     const filas = data || [], abiertas = new Set(petLee("comite-adm-pet-abiertas", [])), vistos = petLee("comite-adm-pet-vistos", {});
     const deClaude = (x) => (Array.isArray(x.mensajes) ? x.mensajes : []).filter((m) => m.quien === "claude").length;
     const item = (x) => {
@@ -1529,7 +1531,8 @@
           <p class="estado" role="status" aria-live="polite" id="pet-preg-msg-${id}"></p></div>` : ""}
         ${fichaPet(x)}
         ${x.pasada_lorena ? `<p class="pet-lorena-caja">${icono("personas")}<span><b>Se la has pasado a Lorena.</b> Te contará aquí lo que haga.</span></p>` : ""}
-        ${!fuera && x.estado === "lista" && x.propuesta && !x.decision ? `<div class="pet-decide" role="group" aria-label="¿Te gusta cómo queda?">
+        ${petVistoBueno(x) && x.estado !== "publicada" ? `<p class="pet-lorena-caja">${icono("check")}<span><b>Lorena le ha dado el visto bueno${x.ficha.visto_bueno_lorena && !isNaN(Date.parse(x.ficha.visto_bueno_lorena)) ? ` (${esc(horaPet(x.ficha.visto_bueno_lorena))})` : ""}.</b> Claude lo sube a la web y te avisa aquí. No tienes que hacer nada.</span></p>` : ""}
+        ${!fuera && !petVistoBueno(x) && x.estado === "lista" && x.propuesta && !x.decision ? `<div class="pet-decide" role="group" aria-label="¿Te gusta cómo queda?">
           <p class="pet-decide-tit">${icono("ojo")}¿Te gusta cómo queda?</p>
           <button type="button" class="btn pet-publica" data-decide="${id}" data-que="publicar">${icono("check")}Sí, publicar</button>
           <button type="button" class="btn sec" data-anade-abre-2="${id}">${icono("editar")}Quiero cambiar algo</button>
@@ -1554,7 +1557,7 @@
         </form>
         <div class="pet-mini">
           ${x.oculta_padre ? `<button type="button" class="btn-texto" data-quitar="${id}" data-poner="1">${icono("recuperar")}Volver a ponerla en mi lista</button>`
-            : `${!x.pasada_lorena ? `<button type="button" class="btn-texto" data-avisa-lorena="${id}">${icono("campana")}Avisar a Lorena</button>` : ""}<button type="button" class="btn-texto" data-quitar="${id}">${icono("cerrar")}Quitar de mi lista</button>`}
+            : `${!x.pasada_lorena && !petVistoBueno(x) ? `<button type="button" class="btn-texto" data-avisa-lorena="${id}">${icono("campana")}Avisar a Lorena</button>` : ""}<button type="button" class="btn-texto" data-quitar="${id}">${icono("cerrar")}Quitar de mi lista</button>`}
           <button type="button" class="btn-texto" data-otra-nueva>${icono("mas")}Pedir otra cosa nueva</button>
           <p class="estado" role="status" aria-live="polite" id="pet-lorena-msg-${id}"></p>
         </div>

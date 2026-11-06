@@ -202,6 +202,7 @@ fs.mkdirSync(OUT, { recursive: true });
       await pa.goto(BASE + "admin.html#peticiones"); await pa.waitForTimeout(600);
       if (!(await pa.$('[data-grupo-caja="toca"] .pet-grupo-tit'))) fallos.push(`${c.nombre}: en las peticiones no sale «Te toca a ti»`);
       if (!(await pa.$('[data-bloque="tuyo"]')) || (await pa.evaluate(() => { const t = document.querySelector('[data-bloque="tuyo"]'), o = document.querySelector('[data-bloque="ok"]'); return !o || !(t.compareDocumentPosition(o) & 4); }))) fallos.push(`${c.nombre}: no salen «Lo tuyo» arriba y «Confirmado por Lorena» debajo`);
+      if (!(await pa.$('[data-bloque="ok"] details[data-pet="7"] .pet-etq.e-confirmado')) || (await pa.$('[data-decide="7"]'))) fallos.push(`${c.nombre}: la que tiene el visto bueno de Lorena no sale en «Confirmado por Lorena» o pide decidir`);
       if (!(await pa.$('[data-grupo-caja="toca"] details[data-pet="6"][open] [data-opcion="6"]'))) fallos.push(`${c.nombre}: la pregunta de Claude no sale con botones`);
       if (c.nombre === "390") await pa.screenshot({ path: path.join(OUT, "panel-390-peticiones.png"), fullPage: true });
       if (!(await pa.$('details[data-pet="4"][open] .pet-ficha img'))) fallos.push(`${c.nombre}: no se ven «Lo que ha hecho Claude» y sus capturas`);
