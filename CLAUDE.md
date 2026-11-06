@@ -12,7 +12,7 @@ La gestiona desde el panel el padre de Lorena (usuario GitHub `mariancracana77-S
 - Versión actual: **19**
 
 ## Reglas (las mismas que en CCOO)
-- No publicar en `main` sin que Lorena lo confirme. Trabajar en la rama indicada.
+- No publicar en `main` sin que Lorena lo confirme (salvo lo que pide el padre con «Me gusta, adelante»: ver la decisión de Lorena del 6/11/2026 en «Pedir un cambio a Claude»). Trabajar en la rama indicada.
 - Responder siempre en **español**, claro y sin tecnicismos.
 - **Sin emojis** en la interfaz (iconos SVG de `comun.js`, función `icono()`).
 - **Todo gratis**. **Sin datos personales** de trabajadores; teléfono/email de miembros solo con su permiso.
