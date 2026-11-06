@@ -1509,7 +1509,7 @@
   const PET_ANADE = {}; // archivos elegidos para añadir a cada petición (por id)
   const pintaHechas = async () => {
     const z = $("pet-hechas"); if (!z) return;
-    const { data, error } = await sb.from("peticiones_claude").select("id,creado,texto,adjuntos,estado,respuesta,mensajes,deshacer,version,propuesta,decision,ficha,pasada_lorena,oculta_padre").order("id", { ascending: false }).limit(PET_LIMITE);
+    const { data, error } = await sb.from("peticiones_claude").select("id,creado,texto,adjuntos,estado,respuesta,mensajes,deshacer,version,propuesta,decision,decision_el,ficha,pasada_lorena,oculta_padre").order("id", { ascending: false }).limit(PET_LIMITE);
     if (!$("pet-hechas") || actual !== "peticiones") return;
     if (error) { z.innerHTML = `<p class="vacio">No se ha podido cargar: ${esc(errTxt(error))}</p>`; return; }
     const burbuja = (m) => `<li class="pet-m ${m.quien === "claude" || m.quien === "lorena" ? "de-claude" : "de-padre"}${m.quien === "lorena" ? " de-lorena" : ""}${m.aviso ? " aviso" : ""}"><small>${m.quien === "claude" ? "Claude" : m.quien === "lorena" ? "Lorena" : "Tú"} · ${esc(horaPet(m.cuando))}</small>${m.texto ? `<div class="pet-texto">${textoHTML(m.texto)}</div>` : ""}${adjPet(m.adjuntos)}</li>`;
@@ -1533,13 +1533,13 @@
         ${x.pasada_lorena ? `<p class="pet-lorena-caja">${icono("personas")}<span><b>Se la has pasado a Lorena.</b> Te contará aquí lo que haga.</span></p>` : ""}
         ${petVistoBueno(x) && x.estado !== "publicada" ? `<p class="pet-lorena-caja">${icono("check")}<span><b>Lorena le ha dado el visto bueno${x.ficha.visto_bueno_lorena && !isNaN(Date.parse(x.ficha.visto_bueno_lorena)) ? ` (${esc(horaPet(x.ficha.visto_bueno_lorena))})` : ""}.</b> Claude lo sube a la web y te avisa aquí. No tienes que hacer nada.</span></p>` : ""}
         ${!fuera && !petVistoBueno(x) && x.estado === "lista" && x.propuesta && !x.decision ? `<div class="pet-decide" role="group" aria-label="¿Te gusta cómo queda?">
-          <p class="pet-decide-tit">${icono("ojo")}¿Te gusta cómo queda?</p>
-          <button type="button" class="btn pet-publica" data-decide="${id}" data-que="publicar">${icono("check")}Sí, publicar</button>
+          <p class="pet-decide-tit">${icono("ojo")}Mira las fotos. Si te gusta, pulsa «Me gusta, adelante». Lorena lo sube a la web.</p>
+          <button type="button" class="btn pet-publica" data-decide="${id}" data-que="publicar">${icono("check")}Me gusta, adelante</button>
           <button type="button" class="btn sec" data-anade-abre-2="${id}">${icono("editar")}Quiero cambiar algo</button>
           <button type="button" class="btn sec pet-descarta" data-decide="${id}" data-que="descartar">${icono("cerrar")}No, descartar</button>
           <p class="estado" role="status" aria-live="polite" id="pet-decide-msg-${id}"></p>
         </div>` : ""}
-        ${x.estado === "lista" && x.decision === "publicar" ? `<p class="pet-pausa">${icono("reloj")}<span><b>Has dicho «Publicar».</b> Claude lo sube y te avisa.</span></p>` : ""}
+        ${x.estado === "lista" && x.decision === "publicar" ? `<p class="pet-pausa">${icono("reloj")}<span>${x.decision_el && Date.now() - Date.parse(x.decision_el) > 45 * 60000 ? "<b>Está tardando.</b> Lorena ya lo sabe." : "<b>Hecho:</b> en unos minutos lo verás en la web."}</span></p>` : ""}
         ${x.estado === "descartada" ? `<p class="pet-pie">Descartada: no se publica nada.</p>` : ""}
         ${x.estado === "publicada" ? (x.deshacer ? `<p class="pet-pausa">${icono("reloj")}<span><b>Lo estamos quitando de la web.</b> Te avisaremos.</span></p>` : `<div class="pet-acciones"><button type="button" class="btn sec pet-descarta" data-deshacer="${id}">${icono("recuperar")}No me gusta, quitarlo</button><p class="estado" role="status" aria-live="polite" id="pet-deshacer-msg-${id}"></p></div>`) : ""}
         ${!fuera ? `<div class="pet-acciones">
@@ -1683,7 +1683,7 @@
       const id = Number(b.dataset.decide), que = b.dataset.que, mid = `pet-decide-msg-${id}`;
       if (que === "descartar" && !(await confirmaDescartar(id))) return;
       z.querySelectorAll(`[data-decide="${id}"]`).forEach((x) => { x.disabled = true; });
-      msgP(mid, que === "publicar" ? "Avisando a Claude…" : "Descartando…");
+      msgP(mid, que === "publicar" ? "Enviando…" : "Descartando…");
       try {
         const { data: r, error } = await sb.rpc("decidir_peticion", { p_id: id, p_decision: que });
         if (error) throw error;
