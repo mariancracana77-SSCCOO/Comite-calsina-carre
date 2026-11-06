@@ -200,7 +200,11 @@ fs.mkdirSync(OUT, { recursive: true });
       }
       // Pedir un cambio a Claude: enviar con una foto, añadir, decidir, avisar a Lorena y volver a como estaba
       await pa.goto(BASE + "admin.html#peticiones"); await pa.waitForTimeout(600);
-      if (!(await pa.$(".pet-toca"))) fallos.push(`${c.nombre}: en las peticiones no sale «Te toca a ti»`);
+      if (!(await pa.$('[data-grupo-caja="toca"] .pet-grupo-tit'))) fallos.push(`${c.nombre}: en las peticiones no sale «Te toca a ti»`);
+      if (!(await pa.$('[data-bloque="tuyo"]')) || (await pa.evaluate(() => { const t = document.querySelector('[data-bloque="tuyo"]'), o = document.querySelector('[data-bloque="ok"]'); return !o || !(t.compareDocumentPosition(o) & 4); }))) fallos.push(`${c.nombre}: no salen «Lo tuyo» arriba y «Confirmado por Lorena» debajo`);
+      if (!(await pa.$('[data-bloque="ok"] details[data-pet="7"] .pet-etq.e-confirmado')) || (await pa.$('[data-decide="7"]'))) fallos.push(`${c.nombre}: la que tiene el visto bueno de Lorena no sale en «Confirmado por Lorena» o pide decidir`);
+      if (!(await pa.$('[data-grupo-caja="toca"] details[data-pet="6"][open] [data-opcion="6"]'))) fallos.push(`${c.nombre}: la pregunta de Claude no sale con botones`);
+      if (c.nombre === "390") await pa.screenshot({ path: path.join(OUT, "panel-390-peticiones.png"), fullPage: true });
       if (!(await pa.$('details[data-pet="4"][open] .pet-ficha img'))) fallos.push(`${c.nombre}: no se ven «Lo que ha hecho Claude» y sus capturas`);
       if (!(await pa.$('details[data-pet="5"] .pet-nuevo'))) fallos.push(`${c.nombre}: no marca los mensajes nuevos de Claude`);
       if (await pa.isVisible("#fab")) fallos.push(`${c.nombre}: en las peticiones se ve el botón «Nuevo»`);
@@ -213,6 +217,8 @@ fs.mkdirSync(OUT, { recursive: true });
       if (!/Claude ya está avisado/.test(await pa.textContent("#pet-msg"))) fallos.push(`${c.nombre}: no dice que Claude está avisado`);
       await pa.click('details[data-pet="5"] > summary'); await pa.click('[data-anade-abre="5"]'); await pa.fill("#pet-anade-5", "Y también en el panel."); await pa.click('form[data-anade="5"] button[type=submit]'); await pa.waitForTimeout(500);
       if (!(await pa.evaluate(() => __DB.peticiones_claude.find((x) => x.id === 5).mensajes.some((m) => m.texto === "Y también en el panel.") && __TIMBRE.some((t) => t.id === 5 && t.anadido)))) fallos.push(`${c.nombre}: no añade a una petición`);
+      await pa.click('[data-opcion="6"][data-i="0"]'); await pa.waitForTimeout(500);
+      if (!(await pa.evaluate(() => __DB.peticiones_claude.find((x) => x.id === 6).mensajes.some((m) => m.quien === "padre" && m.texto === "Verde") && __TIMBRE.some((t) => t.id === 6 && t.anadido)))) fallos.push(`${c.nombre}: el botón de respuesta no llega a Claude`);
       await pa.click('[data-decide="4"][data-que="descartar"]'); await pa.waitForTimeout(200);
       if (!(await pa.$(".pet-modal"))) fallos.push(`${c.nombre}: «Descartar» no pide confirmación`);
       if (c.nombre === "390") await pa.screenshot({ path: path.join(OUT, "panel-390-peticiones-descartar.png") });
@@ -220,12 +226,17 @@ fs.mkdirSync(OUT, { recursive: true });
       if (await pa.evaluate(() => __DB.peticiones_claude.find((x) => x.id === 4).decision)) fallos.push(`${c.nombre}: «No, volver» descarta igual`);
       await pa.click('[data-decide="4"][data-que="publicar"]'); await pa.waitForTimeout(500);
       if (!(await pa.evaluate(() => __DB.peticiones_claude.find((x) => x.id === 4).decision === "publicar" && __TIMBRE.some((t) => t.id === 4 && t.decision)))) fallos.push(`${c.nombre}: «Publicar» no se guarda`);
-      await pa.click('[data-pet-filtro="todas"]'); await pa.waitForTimeout(150);
       await pa.click('[data-avisa-lorena="3"]'); await pa.waitForTimeout(500);
       if (!(await pa.evaluate(() => __DB.peticiones_claude.find((x) => x.id === 3).avisar_lorena && __TIMBRE.some((t) => t.id === 3 && t.avisar)))) fallos.push(`${c.nombre}: «Avisar a Lorena» no funciona`);
       await pa.click('details[data-pet="2"] > summary'); await pa.waitForTimeout(100);
-      await pa.click('[data-deshacer="2"]'); await pa.waitForTimeout(500);
+      await pa.click('[data-deshacer="2"]'); await pa.waitForTimeout(200); await pa.click(".pet-modal [data-si]"); await pa.waitForTimeout(500);
       if (!(await pa.evaluate(() => __DB.peticiones_claude.find((x) => x.id === 2).deshacer && __TIMBRE.some((t) => t.id === 2 && t.deshacer)))) fallos.push(`${c.nombre}: «Volver a como estaba antes» no funciona`);
+      // «Que lo siga Lorena» y «Quitar de mi lista» (nada se borra)
+      await pa.click('details[data-pet="5"] [data-pasar="5"]'); await pa.waitForTimeout(200); await pa.click(".pet-modal [data-si]"); await pa.waitForTimeout(500);
+      if (!(await pa.evaluate(() => __DB.peticiones_claude.find((x) => x.id === 5).pasada_lorena && __TIMBRE.some((t) => t.id === 5 && t.pasar)))) fallos.push(`${c.nombre}: «Que lo siga Lorena» no funciona`);
+      if (!(await pa.$('[data-bloque="tuyo"] details[data-pet="5"] .pet-lorena-caja'))) fallos.push(`${c.nombre}: la pasada a Lorena no sale en «Lo tuyo»`);
+      if (await pa.$('[data-grupo-caja="cerradas"] details[data-pet="1"]') === null) fallos.push(`${c.nombre}: la descartada no sale en «Cerradas sin cambios»`); await pa.click('[data-grupo-caja="cerradas"] > summary'); await pa.click('details[data-pet="1"] > summary'); await pa.waitForTimeout(100); await pa.click('[data-quitar="1"]'); await pa.waitForTimeout(200); await pa.click(".pet-modal [data-si]"); await pa.waitForTimeout(500);
+      if (!(await pa.evaluate(() => __DB.peticiones_claude.find((x) => x.id === 1).oculta_padre)) || !(await pa.$('[data-grupo-caja="quitadas"] details[data-pet="1"]'))) fallos.push(`${c.nombre}: «Quitar de mi lista» no funciona`);
       const anchoPet = await pa.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       if (anchoPet > 1) fallos.push(`${c.nombre} panel #peticiones abiertas: scroll lateral de ${anchoPet}px`);
       if (c.nombre === "pc") {

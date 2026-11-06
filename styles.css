@@ -169,7 +169,9 @@ main { outline: none; }
   mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent), linear-gradient(180deg, transparent, #000 12%, #000 78%, transparent);
   mask-composite: intersect;
 }
-.hero-eyebrow { margin: 0 0 8px; font-family: "Montserrat", sans-serif; font-weight: 700; font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--celeste); }
+/* El nombre de arriba destaca más (lo pidió el padre con la portada nueva): más grande, más claro y con una pastilla tenue detrás */
+.hero-eyebrow { display: inline-block; margin: 0 0 10px; padding: 5px 12px; border-radius: 12px; background: rgba(0, 198, 255, .14); border: 1px solid rgba(0, 198, 255, .35);
+  font-family: "Montserrat", sans-serif; font-weight: 800; font-size: .8rem; line-height: 1.35; letter-spacing: .06em; text-transform: uppercase; color: #BFF1FF; text-shadow: 0 1px 6px rgba(0, 0, 0, .45); }
 .hero-titulo { margin: 0; font-family: "Montserrat", sans-serif; font-weight: 800; font-size: 1.75rem; line-height: 1.12; letter-spacing: -.01em; text-wrap: balance; }
 .hero-sub { margin: 12px 0 0; font-size: 1rem; line-height: 1.55; color: rgba(255, 255, 255, .82); max-width: 34em; }
 .hero-btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
@@ -306,11 +308,15 @@ main { outline: none; }
 .dia-mes.hoy { outline: 2px solid var(--azul); }
 /* Calendario (lo pidió el padre, petición n.º 3 del panel): reuniones en verde, festivos de España en rojo
    y festivos de Cataluña con la senyera (franjas amarillas y rojas). La reunión manda si coincide con un festivo. */
-.dia-mes.fest-es { background: #d32f2f; color: #fff; font-weight: 700; }
+/* n.º 6: festivos de España con la bandera (rojo, amarillo, rojo) y reuniones con la empresa en azul */
+.dia-mes.fest-es, .ley.fest-es { background: linear-gradient(180deg, #AA151B 0 25%, #F1BF00 25% 75%, #AA151B 75%); }
+.dia-mes.fest-es { color: #111; font-weight: 800; }
+.dia-mes.fest-es b { padding: 0 5px; border-radius: 6px; background: rgba(255, 255, 255, .9); }
 .dia-mes.fest-cat, .ley.fest-cat { background: repeating-linear-gradient(180deg, #FCDD09 0 11.11%, #DA121A 11.11% 22.22%); }
 .dia-mes.fest-cat { color: #111; font-weight: 800; }
 .dia-mes.fest-cat b { padding: 0 5px; border-radius: 6px; background: rgba(255, 255, 255, .9); }
 .dia-mes.con { background: #2e7d32; color: #fff; font-weight: 700; }
+.dia-mes.con.empresa, .ley.con.empresa { background: #0E5FAE; }
 button.dia-mes { border: 0; font: inherit; cursor: pointer; width: 100%; padding: 0; }
 .mes-festivo { margin: 10px 2px 0; padding: 8px 12px; border-radius: 10px; background: var(--azul-claro); color: var(--texto); font-weight: 600; }
 .mes-festivo[hidden] { display: none; }
@@ -318,8 +324,18 @@ button.dia-mes { border: 0; font: inherit; cursor: pointer; width: 100%; padding
 .mes-leyenda span { display: inline-flex; align-items: center; gap: 6px; }
 .ley { display: inline-block; width: 16px; height: 16px; border-radius: 4px; }
 .ley.con { background: #2e7d32; }
-.ley.fest-es { background: #d32f2f; }
 .dia-mes i { position: absolute; bottom: 5px; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+/* Vista «Año entero» (petición n.º 6): 12 meses pequeños, 2 columnas en el móvil, 3 o 4 en el PC */
+.mes .mes-vistas { display: grid; width: 100%; margin: 0 0 10px; }
+.mes.ano { max-width: none; }
+.ano-rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 8rem), 1fr)); gap: 14px 12px; margin-top: 10px; }
+.ano-rejilla[hidden], #mes-cuerpo[hidden] { display: none; }
+.ano-mes .mes-dias { margin: 4px 0 2px; font-size: .62rem; }
+.ano-mes .mes-dias, .ano-mes .mes-rejilla { gap: 2px; }
+.ano-mes .dia-mes { font-size: .68rem; border-radius: 5px; }
+.ano-mes .dia-mes i { display: none; }
+.ano-mes .dia-mes.fest-es b, .ano-mes .dia-mes.fest-cat b { padding: 0; background: none; text-shadow: 0 0 2px #fff, 0 0 3px #fff, 0 0 4px #fff; }
+.ano-mes-nombre { display: block; width: 100%; min-height: 36px; padding: 4px 6px; border: 0; border-radius: 8px; background: var(--azul-claro); color: var(--azul-osc); font: inherit; font-weight: 700; font-size: .9rem; text-align: left; cursor: pointer; }
 .pasadas { margin-top: 20px; }
 .pasadas summary { cursor: pointer; font-weight: 700; color: var(--azul); padding: 10px 0; }
 
@@ -484,6 +500,10 @@ textarea, .campo input, .campo select, .campo textarea {
   #v-reuniones .mes { grid-column: 1; grid-row: 1 / span 3; position: sticky; top: 140px; }
   #v-reuniones .caja > :not(.mes) { grid-column: 2; }
   #v-reuniones .caja > .titulo-bloque:first-of-type { margin-top: 0; }
+  /* Año entero: el calendario ocupa todo el ancho y las reuniones van debajo */
+  #v-reuniones .caja:has(.mes.ano) { display: block; }
+  #v-reuniones .mes.ano { position: static; margin-bottom: 8px; }
+  #v-reuniones .caja:has(.mes.ano) > .titulo-bloque:first-of-type { margin-top: 24px; }
 }
 /* Pie en el móvil: los enlaces en dos columnas */
 @media (max-width: 759px) {
