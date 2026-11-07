@@ -9,7 +9,7 @@ La gestiona desde el panel el padre de Lorena (usuario GitHub `mariancracana77-S
 
 - Web: https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/ (GitHub Pages desde `main`, raíz)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **19**
+- Versión actual: **20**
 
 ## Reglas (las mismas que en CCOO)
 - No publicar en `main` sin que Lorena lo confirme (salvo lo que pide el padre con «Me gusta, adelante»: ver la decisión de Lorena del 6/11/2026 en «Pedir un cambio a Claude»). Trabajar en la rama indicada.
