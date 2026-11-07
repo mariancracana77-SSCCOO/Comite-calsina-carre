@@ -325,17 +325,28 @@ button.dia-mes { border: 0; font: inherit; cursor: pointer; width: 100%; padding
 .ley { display: inline-block; width: 16px; height: 16px; border-radius: 4px; }
 .ley.con { background: #2e7d32; }
 .dia-mes i { position: absolute; bottom: 5px; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
-/* Vista «Año entero» (petición n.º 6): 12 meses pequeños, 2 columnas en el móvil, 3 o 4 en el PC */
+/* Vista «Año entero» (petición n.º 6): 12 meses pequeños.
+   n.º 8 (lo pidió el padre): todo el año en una pantalla, sin bajar. 3 columnas en el móvil (4 filas),
+   4 en tableta y 6 en el PC (2 filas); los días son más bajos que en la vista de un mes. */
 .mes .mes-vistas { display: grid; width: 100%; margin: 0 0 10px; }
-.mes.ano { max-width: none; }
-.ano-rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 8rem), 1fr)); gap: 14px 12px; margin-top: 10px; }
+.mes.ano { max-width: none; padding: 10px 8px; }
+.ano-rejilla { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 6px; margin-top: 6px; }
+@media (min-width: 600px) { .ano-rejilla { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 10px; } }
+@media (min-width: 1100px) { .ano-rejilla { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px 12px; } }
 .ano-rejilla[hidden], #mes-cuerpo[hidden] { display: none; }
-.ano-mes .mes-dias { margin: 4px 0 2px; font-size: .62rem; }
-.ano-mes .mes-dias, .ano-mes .mes-rejilla { gap: 2px; }
-.ano-mes .dia-mes { font-size: .68rem; border-radius: 5px; }
+.ano-mes { min-width: 0; }
+.ano-mes .mes-dias { margin: 2px 0 0; font-size: .55rem; }
+.ano-mes .mes-dias, .ano-mes .mes-rejilla { gap: 1px; }
+.ano-mes .dia-mes { aspect-ratio: auto; height: 1.3em; font-size: .6rem; line-height: 1; border-radius: 3px; overflow: hidden; }
+@media (max-width: 359px) { .mes.ano { padding: 8px 5px; } .ano-rejilla { gap: 6px 4px; } .ano-mes .dia-mes { font-size: .5rem; letter-spacing: -.04em; } .ano-mes .mes-dias { font-size: .48rem; } }
+/* Con letra grande o muy grande, en el móvil los números del año no crecen (si no, se pisan) */
+@media (max-width: 599px) { :root[data-letra] .ano-mes .dia-mes { font-size: 11px; height: 16px; } :root[data-letra] .ano-mes .mes-dias { font-size: 10px; } }
+@media (max-width: 359px) { :root[data-letra] .ano-mes .dia-mes { font-size: 9.5px; letter-spacing: -.04em; } }
+@media (min-width: 600px) { .ano-mes .dia-mes { font-size: .7rem; height: 1.45em; } .ano-mes .mes-dias { font-size: .62rem; } }
+@media (min-width: 600px) { :root[data-letra] .ano-mes .dia-mes { font-size: 13px; height: 20px; } :root[data-letra] .ano-mes .mes-dias { font-size: 11px; } }
 .ano-mes .dia-mes i { display: none; }
 .ano-mes .dia-mes.fest-es b, .ano-mes .dia-mes.fest-cat b { padding: 0; background: none; text-shadow: 0 0 2px #fff, 0 0 3px #fff, 0 0 4px #fff; }
-.ano-mes-nombre { display: block; width: 100%; min-height: 36px; padding: 4px 6px; border: 0; border-radius: 8px; background: var(--azul-claro); color: var(--azul-osc); font: inherit; font-weight: 700; font-size: .9rem; text-align: left; cursor: pointer; }
+.ano-mes-nombre { display: block; width: 100%; min-height: 24px; padding: 1px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 0; border-radius: 8px; background: var(--azul-claro); color: var(--azul-osc); font: inherit; font-weight: 700; font-size: .8rem; text-align: left; cursor: pointer; }
 .pasadas { margin-top: 20px; }
 .pasadas summary { cursor: pointer; font-weight: 700; color: var(--azul); padding: 10px 0; }
 
