@@ -3,13 +3,14 @@
 Contexto para Claude Code. Léelo antes de tocar nada.
 
 ## Qué es
-Web/app (PWA) gratuita y solo informativa del **comité de empresa** de Calsina Carré para toda la plantilla. **No es la web del sindicato**: la de la Sección Sindical CCOO es otro repositorio (`SSCCOO`, otro Supabase). Aquí nada de logos, colores ni textos de CCOO; el comité representa a trabajadores de cualquier sindicato (campo opcional `sindicato` en miembros).
+Web/app (PWA) gratuita y solo informativa del **comité de empresa** de Calsina Carré (Comité CC) para toda la plantilla. **No es la web del sindicato**: la de la Sección Sindical CCOO es otro repositorio (`SSCCOO`, otro Supabase). Aquí nada de logos, colores ni textos de CCOO; el comité representa a trabajadores de cualquier sindicato (campo opcional `sindicato` en miembros).
 
 La gestiona desde el panel el padre de Lorena (usuario GitHub `mariancracana77-SSCCOO`). Lorena es quien desarrolla y habla con Claude. El panel copia a propósito la **estructura del panel de CCOO** (el padre está acostumbrado a él): no cambiarla sin que lo pidan.
 
 - Web: https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/ (GitHub Pages desde `main`, raíz)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **20**
+- Versión actual: **22**
+- **Nombre** (lo pidieron Lorena y su padre el 9/11/2026, al volver a la cuenta de siempre): se ve «Calsina Carré» en títulos, cabecera, pie, portada (también en el camión), manifest y cartel, como en la v20. La v21 sin nombres quedó solo en local (rama `limpio`).
 
 ## Reglas (las mismas que en CCOO)
 - No publicar en `main` sin que Lorena lo confirme (salvo lo que pide el padre con «Me gusta, adelante»: ver la decisión de Lorena del 6/11/2026 en «Pedir un cambio a Claude»). Trabajar en la rama indicada.
@@ -76,6 +77,7 @@ El padre pidió mostrar lo que tiene la empresa (camión, toro, transpaleta, dis
 - `guia.html` + `img/guia/`: guía del panel para el padre, con capturas hechas con los datos de prueba.
 - `sw.js`: caché para instalar y usar sin conexión (los datos de Supabase siempre van a la red).
 - `visor.js` (petición n.º 5 del panel): al tocar una foto de una tarjeta (`.galeria a`) o un PDF adjunto (`a[data-visor="pdf"]`, lo pone `adjuntosHTML`) se abre encima de la página con «Cerrar» (Esc y el botón Atrás también cierran). Los PDF se pintan con pdf.js (`lib/pdfjs`, carga solo al usarlo). Word/Excel siguen abriéndose aparte. Impedir capturas no es posible en una web.
+- **v22 (revisión profesional)**: `WEB_URL` (comun.js) y el QR de `cartel.js` salen de `new URL("./", location.href)`; lo que hay que cambiar a mano si cambia la dirección está en el README («Si cambia la dirección de la web»: `og:url`/`og:image` de `index.html`, «Volver al inicio» de `404.html`, `config_privada.web_url` y Auth Site URL/Redirect URLs de Supabase). `404.html`: página propia sin scripts, todo dentro (estilos en la página, logo y favicon como `data:`), porque GitHub Pages la sirve a cualquier profundidad. `favicon.ico`, `robots.txt` (permite todo, sin sitemap), `img/logo-96.webp` (logo de la cabecera y del pie; `icon-192.png` sigue para el manifest, el cartel y las notificaciones). `img/og.png` reducida a 256 colores (~130 KB; al rehacerla con `herramientas/og.cjs`, reducirla igual). `sw.js`: instala con `cache: "reload"` y en las páginas espera a la red como mucho 4 s (`ESPERA_RED`) antes de usar la copia. `visor.js`: las páginas del PDF se dibujan al acercarse (IntersectionObserver) y se borran al alejarse; el contenido es enfocable y Tab alterna entre «Cerrar» y el PDF. `admin.js`: si el panel está dentro de un iframe, no se muestra; subidas limitadas a `ACEPTA_SUBIDA`/`subidaPermitida` (JPG, PNG, WebP, PDF y oficina; nunca SVG ni HTML). `comun.js`: flechas en los `role="tablist"`. Foco con `--foco` (azul en claro, celeste en oscuro; celeste sobre los fondos azul noche). Texto de Cookies por defecto con todas las claves `comite-` (`COOKIES_POR_DEFECTO` en `app.js`: si se añade una clave, ponerla allí y en el texto de Supabase). «Borrar mis datos» también da de baja los avisos al móvil.
 - `pruebas/`: `mock-supabase.js` (datos de prueba en memoria; `localStorage prueba-sesion = 1` entra al panel) y `humo.cjs`.
 
 ## Al publicar una versión nueva
@@ -97,7 +99,7 @@ Cambiar el número en: `?v=N` de los HTML, `VERSION_WEB` en `comun.js` y `VERSIO
 - Las consultas de supabase-js no se envían si no se esperan: usar `await` o `.then()`.
 
 ## Supabase
-- Proyecto `ytxpubqyhnohhugpukdm` (`comite-calsina-carre`, eu-west-3). Clave publicable en `comun.js`.
+- Proyecto `ytxpubqyhnohhugpukdm` (eu-west-3). Clave publicable en `comun.js`.
 - Tablas: `admins`, `actualidad` (publicado), `avisos` (urgente, publicar_en), `reuniones`, `actas`, `preguntas` (orden), `miembros` (orden, `foto` jsonb {url, ruta}: campo tipo «foto» del panel, se recorta a 480 px cuadrados en webp en el navegador antes de subirla a `documentos/miembros/`, lo que también quita los datos EXIF), `encuestas` (opciones una por línea, publicada, cierra), `encuesta_votos` (solo por RPC), `documentos` (categoria, orden, enlace), `buzon` (solo admin lee), `paginas` (bienvenida, nosotros, privacidad), `papelera`.
 - RLS en todas: lectura pública de lo publicado; escritura solo `is_admin()`. Trigger `solo_admins_registran` en `auth.users`.
 - RPC públicas: `enviar_buzon` (anónimo, rechaza emails/teléfonos, tope 40/día), `votar_encuesta` (tope 3000). Admin: `recuperar_borrado`. Trigger `a_la_papelera` guarda lo borrado 90 días.

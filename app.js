@@ -26,6 +26,8 @@
   // ---------- Navegación entre apartados ----------
   const irA = (hash, { foco = false } = {}) => {
     const h = (hash || "").replace(/^#/, "");
+    // «Ir al contenido» o un enlace a #contenido: solo enfocar, sin cambiar de apartado
+    if (h === "contenido" && VISTAS.some((v) => !$("v-" + v).hidden)) { $("contenido").focus(); return; }
     let vista = VISTAS.includes(h) ? h : "actualidad", destino = null;
     if (h === "documentos") { vista = "actas"; ponSegmento("documentos"); }
     if (h === "avisos-movil") { vista = "avisos"; }
@@ -69,6 +71,7 @@
     if (foco && vista !== "buscar") $("contenido").focus({ preventScroll: true });
   };
   window.addEventListener("hashchange", () => irA(location.hash, { foco: true }));
+  document.querySelector(".saltar").addEventListener("click", (e) => { e.preventDefault(); $("contenido").focus(); });
 
   // ---------- Avisos sin leer (contador en la pestaña) ----------
   const marcaAvisosVistos = () => {
@@ -327,11 +330,24 @@
   });
 
   // ---------- Nosotros y privacidad ----------
+  // Lo que se guarda en el móvil (si en el panel no se ha escrito otro texto). Si se añade una clave «comite-…», ponerla aquí.
+  const COOKIES_POR_DEFECTO = `Esta web no usa cookies. Solo guarda en tu propio móvil lo necesario para funcionar, y nada de esto sale de él:
+
+- **comite-tema** y **comite-letra**: modo claro u oscuro y tamaño de letra.
+- **comite-avisos-vistos** y **comite-ultima-visita**: hasta dónde has visto, para marcar lo nuevo.
+- **comite-votos**: en qué consultas ya has votado.
+- **comite-copia**: una copia de lo publicado, para verlo sin conexión (también las copias de la app, «comite-v…»).
+- **comite-aviso-privacidad** y **comite-no-instalar**: que ya has visto el aviso de privacidad o no quieres instalar la app.
+- **comite-push**: que has activado los avisos al móvil en esta web.
+- **comite-visita-dia** y **comite-vista-…** (esta última solo mientras la pestaña está abierta): para contar visitas una vez al día y por apartado, sin saber quién eres. Solo se guardan números.
+- Solo en el móvil de quien gestiona la web: **comite-admin-email**, **comite-push-panel**, **comite-ia-tapar** y **comite-adm-…** (cosas del panel).
+
+Puedes borrarlo todo con el botón de abajo.`;
   const pintaNosotros = () => {
     $("nosotros-texto").innerHTML = textoHTML(D.paginas.nosotros) || "<p>Información del comité próximamente.</p>";
-    $("privacidad-texto").innerHTML = textoHTML(D.paginas.privacidad) || "<p>Esta web es solo informativa y no pide datos personales.</p>";
+    $("privacidad-texto").innerHTML = textoHTML(D.paginas.privacidad) || "<p>Esta web es informativa. Solo recoge lo que tú decidas enviar: los mensajes del buzón (sin tu nombre) y, si los activas, los avisos al móvil.</p>";
     $("aviso-legal-texto").innerHTML = textoHTML(D.paginas.aviso_legal) || "<p>Web informativa del Comité de Empresa de Calsina Carré.</p>";
-    $("cookies-texto").innerHTML = textoHTML(D.paginas.cookies) || "<p>Esta web no usa cookies. Solo guarda tus preferencias en tu propio móvil.</p>";
+    $("cookies-texto").innerHTML = textoHTML(D.paginas.cookies) || textoHTML(COOKIES_POR_DEFECTO);
     $("lista-miembros").innerHTML = D.miembros.map(R.miembro).join("") || vacio("Pronto pondremos aquí quién forma el comité", "Mientras tanto, puedes escribirnos de forma anónima.", "personas", ["#buzon", "Ir al buzón anónimo"]);
   };
 
@@ -564,8 +580,21 @@
 
   // ---------- Borrar lo que la web guarda en este móvil ----------
   $("b-borrar-datos").addEventListener("click", async () => {
-    if (!confirm("¿Borrar lo que esta web guarda en este móvil? Olvidará tus preferencias, lo que has visto y lo que has votado.")) return;
-    try { Object.keys(localStorage).filter((k) => k.startsWith("comite-")).forEach((k) => localStorage.removeItem(k)); } catch (_) {}
+    if (!confirm("¿Borrar lo que esta web guarda en este móvil? Olvidará tus preferencias, lo que has visto y lo que has votado, y dejarás de recibir los avisos al móvil.")) return;
+    // v22: también se dan de baja los avisos al móvil (si el panel usa la misma dirección, solo se quita de los de la web)
+    try {
+      const reg = "serviceWorker" in navigator ? await navigator.serviceWorker.getRegistration() : null;
+      const sub = reg && reg.pushManager ? await reg.pushManager.getSubscription() : null;
+      if (sub) {
+        const delPanel = TEMA.lee("comite-push-panel") === sub.endpoint;
+        await sb.rpc("desuscribir_push", { p_endpoint: sub.endpoint });
+        if (!delPanel) await sub.unsubscribe();
+      }
+      if (PUSH_OK) { pintaPush(false); $("push-acepto").checked = false; }
+    } catch (_) {}
+    // Lo del panel (quien gestiona la web) se queda: si no, el panel perdería sus avisos y la web contaría sus visitas
+    const DEL_PANEL = ["comite-push-panel", "comite-admin-email"];
+    try { Object.keys(localStorage).filter((k) => k.startsWith("comite-") && !DEL_PANEL.includes(k)).forEach((k) => localStorage.removeItem(k)); } catch (_) {}
     try { Object.keys(sessionStorage).filter((k) => k.startsWith("comite-")).forEach((k) => sessionStorage.removeItem(k)); } catch (_) {}
     try { const ks = await caches.keys(); await Promise.all(ks.filter((k) => k.startsWith("comite-")).map((k) => caches.delete(k))); } catch (_) {}
     TEMA.aplica();

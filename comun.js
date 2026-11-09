@@ -6,8 +6,9 @@
 window.SUPABASE_URL = "https://ytxpubqyhnohhugpukdm.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_tmkeed90aj4Fv00UoTTy7Q_qBPUAaCj";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "20"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
-window.WEB_URL = "https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/";
+window.VERSION_WEB = "22"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+// Dirección de la web: sale de donde esté publicada (no hay que tocarla si cambia el dominio)
+window.WEB_URL = new URL("./", location.href).href;
 
 // ---- Utilidades ----
 window.esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -202,3 +203,15 @@ window.registraSW = () => {
     document.body.appendChild(b);
   });
 };
+
+// ---- Pestañas (role="tablist"): con las flechas izquierda/derecha, Inicio y Fin se pasa de una a otra (v22) ----
+document.addEventListener("keydown", (e) => {
+  const tab = e.target.closest?.('[role="tablist"] [role="tab"]');
+  if (!tab || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
+  const tabs = [...tab.closest('[role="tablist"]').querySelectorAll('[role="tab"]')].filter((t) => !t.hidden && !t.disabled);
+  const i = tabs.indexOf(tab), n = tabs.length;
+  if (n < 2 || i < 0) return;
+  const j = e.key === "Home" ? 0 : e.key === "End" ? n - 1 : (i + (e.key === "ArrowRight" ? 1 : -1) + n) % n;
+  e.preventDefault();
+  tabs[j].focus(); tabs[j].click();
+});

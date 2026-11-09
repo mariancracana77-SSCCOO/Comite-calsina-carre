@@ -6,5 +6,7 @@ const { chromium } = require("playwright"); const { spawn } = require("child_pro
   const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 1200, height: 630 } });
   await p.goto("http://localhost:8797/herramientas/og.html"); await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(300);
   await p.screenshot({ path: path.join(raiz, "img/og.png") });
+  // Después, reducirla (WhatsApp no enseña vistas previas de más de unos 300 KB): con Python y Pillow,
+  // Image.open("img/og.png").convert("RGB").quantize(256, dither=Image.Dither.FLOYDSTEINBERG).save("img/og.png", optimize=True)
   await b.close(); srv.kill();
 })();

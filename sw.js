@@ -1,18 +1,20 @@
 // Permite instalar la web como app y abrirla sin conexión.
 // Cambiar VERSION junto con ?v= en los HTML y VERSION_WEB en comun.js.
-const VERSION = "20";
+const VERSION = "22";
 const CACHE = "comite-v" + VERSION;
 const ARCHIVOS = [
-  "./", "index.html", "admin.html", "guia.html",
+  "./", "index.html", "admin.html", "guia.html", "404.html",
   "styles.css?v=" + VERSION, "admin.css?v=" + VERSION, "fuentes.css?v=" + VERSION,
   "comun.js?v=" + VERSION, "render.js?v=" + VERSION, "app.js?v=" + VERSION, "visor.js?v=" + VERSION, "admin.js?v=" + VERSION, "lib/supabase.js",
-  "manifest.json", "img/icon-192.png", "img/icon-512.png", "img/favicon-32.png", "img/badge-96.png", "img/hero-arte.webp", "img/portada.webp", "img/portada-movil.webp", "img/apple-touch-icon.png",
-  "fuentes/inter-latin-400-normal.woff2", "fuentes/inter-latin-600-normal.woff2", "fuentes/inter-latin-700-normal.woff2",
-  "fuentes/montserrat-latin-700-normal.woff2", "fuentes/montserrat-latin-800-normal.woff2",
+  "manifest.json", "img/icon-192.png", "img/icon-512.png", "img/logo-96.webp", "img/favicon-32.png", "img/badge-96.png", "img/hero-arte.webp", "img/portada.webp", "img/portada-movil.webp", "img/apple-touch-icon.png",
+  "fuentes/inter-latin-400-normal.woff2", "fuentes/inter-latin-500-normal.woff2", "fuentes/inter-latin-600-normal.woff2", "fuentes/inter-latin-700-normal.woff2",
+  "fuentes/montserrat-latin-600-normal.woff2", "fuentes/montserrat-latin-700-normal.woff2", "fuentes/montserrat-latin-800-normal.woff2",
 ];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ARCHIVOS)).then(() => self.skipWaiting()));
+  // cache: "reload" = pedirlos de verdad al servidor, sin la caché del navegador (si no, en una versión nueva
+  // se podían guardar los de la anterior: GitHub Pages deja guardar 10 minutos)
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ARCHIVOS.map((u) => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (e) => {
@@ -22,16 +24,34 @@ self.addEventListener("activate", (e) => {
 });
 
 // Solo los archivos de la propia web (los datos de Supabase siempre van a la red).
-// Primero la red; si no hay conexión, la copia guardada.
+// Primero la red; si no hay conexión, la copia guardada. Las páginas (v22): si la red tarda más de 4 s
+// (cobertura mala en la nave), se enseña la copia guardada y la de la red se guarda para la próxima vez.
+const ESPERA_RED = 4000;
+const guarda = (req, r) => {
+  if (r && r.ok && r.status === 200 && r.type === "basic") {
+    const copia = r.clone();
+    caches.open(CACHE).then((c) => c.put(req, copia)).catch(() => {});
+  }
+  return r;
+};
+const deCache = (req) => caches.match(req).then((r) => r || (req.mode === "navigate" ? caches.match("index.html") : undefined));
+
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== self.location.origin) return;
-  e.respondWith(
-    fetch(e.request).then((r) => {
-      if (r.ok) { const copia = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copia)); }
-      return r;
-    }).catch(() => caches.match(e.request).then((r) => r || (e.request.mode === "navigate" ? caches.match("index.html") : Response.error())))
-  );
+  const red = fetch(e.request).then((r) => guarda(e.request, r));
+  if (e.request.mode !== "navigate") {
+    e.respondWith(red.catch(() => deCache(e.request).then((r) => r || Response.error())));
+    return;
+  }
+  e.waitUntil(red.catch(() => {}));
+  e.respondWith(new Promise((listo) => {
+    let hecho = false;
+    const usa = (r) => { if (!hecho && r) { hecho = true; listo(r); } };
+    const reloj = setTimeout(() => deCache(e.request).then(usa, () => {}), ESPERA_RED);
+    red.then((r) => { clearTimeout(reloj); usa(r); })
+      .catch(() => { clearTimeout(reloj); deCache(e.request).then((r) => usa(r || Response.error()), () => usa(Response.error())); });
+  }));
 });
 
 // ---------- Avisos al móvil ----------

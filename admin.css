@@ -383,7 +383,7 @@ details.pet-item > summary { list-style: none; cursor: pointer; display: grid; g
 details.pet-item > summary::-webkit-details-marker { display: none; }
 details.pet-item > summary::after { content: ""; position: absolute; right: 18px; top: 22px; width: 10px; height: 10px; border-right: 3px solid var(--azul); border-bottom: 3px solid var(--azul); transform: rotate(45deg); transition: transform .2s; }
 details.pet-item[open] > summary::after { transform: rotate(-135deg); top: 26px; }
-details.pet-item > summary:focus-visible { outline: 3px solid var(--celeste); outline-offset: -3px; }
+details.pet-item > summary:focus-visible { outline: 3px solid var(--foco); outline-offset: -3px; }
 details.pet-item.est-lista { border-left: 5px solid var(--verde); }
 details.pet-item.est-no_hecha { border-left: 5px solid var(--rojo); }
 details.pet-item.est-en_curso, details.pet-item.est-nueva { border-left: 5px solid var(--azul); }
@@ -489,10 +489,16 @@ details.pet-mas-info ul { padding-left: 20px; display: grid; gap: 4px; }
 .pet-bloque-tit { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; font-family: "Montserrat", "Inter", sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--azul-osc); }
 .pet-bloque-tit > svg { width: 28px; height: 28px; flex: none; }
 .pet-bloque-tit > span { flex: 1; display: flex; flex-direction: column; line-height: 1.15; }
-.pet-bloque-tit small { font-family: "Inter", sans-serif; font-weight: 600; font-size: .85rem; color: var(--suave, inherit); opacity: .85; }
+.pet-bloque-tit small { font-family: "Inter", sans-serif; font-weight: 600; font-size: .85rem; color: var(--suave, inherit); }
 .pet-bloque-tit > b { min-width: 1.9em; padding: 2px 10px; border-radius: 99px; background: var(--azul); color: var(--tarjeta); text-align: center; font-size: 1.05rem; }
 .b-tuyo .pet-bloque-tit { color: var(--verde); }
 .b-tuyo .pet-bloque-tit > b { background: var(--verde); }
 .pet-bloque .pet-grupo-tit { font-size: 1rem; }
 .pet-bloque-vacio { margin: 0 0 10px; font-weight: 600; }
+/* v22: en claro, el verde del texto sobre el fondo verdoso no llegaba a 4,5:1: uno más oscuro (en oscuro sigue el claro) */
+.b-tuyo .pet-bloque-tit, .pet-grupo-tit.toca { color: #1b5e20; }
+:root[data-theme="dark"] .b-tuyo .pet-bloque-tit, :root[data-theme="dark"] .pet-grupo-tit.toca { color: var(--verde); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .b-tuyo .pet-bloque-tit, :root:not([data-theme="light"]) .pet-grupo-tit.toca { color: var(--verde); }
+}
 .pet-m.de-lorena { border-left-color: var(--verde); }

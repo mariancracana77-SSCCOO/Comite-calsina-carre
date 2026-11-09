@@ -2,6 +2,10 @@
 // menú a la izquierda (PC) o barra abajo + botón «Nuevo» (móvil), portada «Hola»,
 // editor en ventana con vista previa, papelera para recuperar lo borrado.
 (function () {
+  // v22: el panel no se deja meter dentro de otra web (iframe), para que nadie pueda hacer pulsar
+  // «Borrar» o «Publicar» con engaños (GitHub Pages no deja poner la cabecera que lo impide)
+  try { if (window.top !== window.self) { document.documentElement.hidden = true; return; } }
+  catch (_) { document.documentElement.hidden = true; return; }
   const $ = (id) => document.getElementById(id);
   const PANEL_URL = WEB_URL + "admin.html";
   const TIPOS_REUNION = ["Reunión del comité", "Reunión con la empresa", "Asamblea", "Otra"];
@@ -687,13 +691,13 @@
       }
       case "foto": return `<div class="campo" data-campo="${col}"><span>${esc(etq)}</span>
         <div class="foto-campo"><div class="foto-previa" id="foto-previa"></div>
-          <div class="foto-btns"><label class="btn-linea subir">${icono("subir")}<span id="foto-txt">Elegir foto</span><input type="file" id="f-foto" accept="image/*"></label>
+          <div class="foto-btns"><label class="btn-linea subir">${icono("subir")}<span id="foto-txt">Elegir foto</span><input type="file" id="f-foto" accept="image/jpeg,image/png,image/webp"></label>
           <button type="button" class="btn-linea peligro" id="foto-quitar" hidden>${icono("borrar")}Quitar foto</button></div></div>
         <small class="ayuda">Se recorta en cuadrado y se reduce en el propio móvil antes de subirla (también se le quitan los datos ocultos, como el lugar donde se hizo).</small></div>`;
       case "archivos": return `<div class="campo" data-campo="${col}"><span>${esc(etq)} <small>(opcional)</small></span>
         <div id="lista-adj" class="lista-adj"></div>
         <label class="soltar" id="soltar">${icono("subir")}<b>Toca para elegir archivos</b><small>O arrástralos aquí. PDF, fotos, Word o Excel · máx. 20 MB cada uno</small>
-          <input type="file" id="f-subir" multiple accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx,.odt,.ods,.ppt,.pptx"></label></div>`;
+          <input type="file" id="f-subir" multiple accept="${ACEPTA_SUBIDA}"></label></div>`;
       default: {
         const t = { texto: "text", fecha: "date", hora: "time", fechahora: "datetime-local", numero: "number", tel: "tel", email: "email", url: "url" }[tipo];
         const v = tipo === "fechahora" ? aLocal(val) : (val ?? "");
@@ -708,11 +712,16 @@
       <span>${esc(a.nombre)}<small>${tipoTxt(a)}${a.tamano ? " · " + tamanoTxt(a.tamano) : ""}</small></span>
       <button type="button" class="btn-ic peq" data-quitar-adj="${i}" aria-label="Quitar ${esc(a.nombre)}">${icono("cerrar")}</button></div>`).join("");
   };
+  // v22: solo fotos (JPEG, PNG, WebP), PDF y documentos de oficina. Nada de SVG ni HTML, que podrían llevar
+  // código. «accept» solo filtra al elegir; al arrastrar archivos se comprueba también aquí.
+  const ACEPTA_SUBIDA = "image/jpeg,image/png,image/webp,application/pdf,.pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp";
+  const subidaPermitida = (f) => /\.(jpe?g|png|webp|pdf|docx?|xlsx?|pptx?|odt|ods|odp)$/i.test(f.name || "") && !/svg|html|^text\/xml|^application\/xml|javascript/i.test(f.type || "");
   const limpiaNombre = (n) => n.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w.-]+/g, "-").slice(-80);
   const subir = async (files) => {
     const S = SECCIONES[ED.k];
     for (const f of files) {
       if (f.size > 20 * 1048576) { avisa(`«${f.name}» pesa más de 20 MB`, true); continue; }
+      if (!subidaPermitida(f)) { avisa(`«${f.name}» no se puede subir: solo fotos (JPG, PNG, WebP), PDF, Word, Excel o PowerPoint`, true); continue; }
       estado($("ed-msg"), `Subiendo «${f.name}»…`);
       const ruta = `${S.tabla}/${Date.now()}-${limpiaNombre(f.name)}`;
       const { error } = await sb.storage.from("documentos").upload(ruta, f, { contentType: f.type || undefined });
@@ -934,7 +943,7 @@
       <p class="ia-protege">${icono("escudo")}<span><b>Los datos importantes se tapan antes de enviar.</b> En el texto se tapan solos los nombres, DNI, teléfonos, emails y cuentas. En las fotos, los tapas tú con el dedo. Antes de enviar ves exactamente lo que sale.</span></p>
       <div class="ia-botones">
         <label class="ia-boton">${icono("camara")}<b>Hacer foto</b><span>con la cámara</span><input type="file" id="f-ia-cam" accept="image/*" capture="environment"></label>
-        <label class="ia-boton">${icono("subir")}<b>Elegir archivos</b><span>fotos, PDF, Word</span><input type="file" id="f-ia" multiple accept="image/*,application/pdf,.pdf,.docx,.txt,text/plain"></label>
+        <label class="ia-boton">${icono("subir")}<b>Elegir archivos</b><span>fotos, PDF, Word</span><input type="file" id="f-ia" multiple accept="image/jpeg,image/png,image/webp,application/pdf,.pdf,.docx,.txt,text/plain"></label>
       </div>
       <div id="lista-ia" class="lista-adj"></div>
       <details class="nota-ia"><summary>Añadir una nota escrita (opcional)</summary>
@@ -1769,6 +1778,7 @@
       <h2 class="titulo-bloque" id="ajuste-copia">Copia de seguridad</h2>
       <div class="tarjeta seguridad">
         <p class="sub-vista">El plan gratuito no guarda copias. Descarga una al mes y guárdala en el ordenador o en el Drive: lleva todos los avisos, anuncios, reuniones, actas, documentos, consultas, preguntas, miembros, tus secciones y lo publicado en ellas, mensajes del buzón y textos de la web.</p>
+        <p class="sub-vista"><b>Ojo:</b> la copia lleva los mensajes del buzón y los correos con acceso al panel. Guárdala en un sitio seguro, no la compartas y borra las de más de un año.</p>
         <p class="sub-vista" id="ultima-copia">Comprobando la última copia…</p>
         <div class="acciones"><button type="button" class="btn" id="b-copia-todo">${icono("instalar")}Descargar copia con archivos</button>
           <button type="button" class="btn-linea" id="b-copia-datos">${icono("texto")}Solo los textos</button></div>
@@ -1879,7 +1889,7 @@
         await cargarJSZip();
         const zip = new window.JSZip();
         zip.file("datos.json", JSON.stringify(copia, null, 2));
-        zip.file("LEEME.txt", "Copia de seguridad de la web del Comité de Empresa de Calsina Carré.\r\n\r\ndatos.json: todos los textos (avisos, anuncios, reuniones, actas, documentos, consultas, preguntas, miembros, secciones propias y lo publicado en ellas, buzón y textos de la web).\r\narchivos/: los PDF, fotos y documentos subidos.\r\n\r\nGuárdala en un sitio seguro: lleva los mensajes del buzón. Si algún día hace falta recuperar algo, con este archivo se puede restaurar.");
+        zip.file("LEEME.txt", "Copia de seguridad de la web del Comité de Empresa de Calsina Carré.\r\n\r\ndatos.json: todos los textos (avisos, anuncios, reuniones, actas, documentos, consultas, preguntas, miembros, secciones propias y lo publicado en ellas, buzón y textos de la web).\r\narchivos/: los PDF, fotos y documentos subidos.\r\n\r\nGuárdala en un sitio seguro y no la compartas: lleva los mensajes del buzón y los correos con acceso al panel. Borra las copias de más de un año. Si algún día hace falta recuperar algo, con este archivo se puede restaurar.");
         const urls = new Map();
         ["avisos", "actualidad", "actas", "documentos", "publicaciones"].forEach((t) => (copia.tablas[t] || []).forEach((x) => (x.adjuntos || []).forEach((a) => a?.url && urls.set(a.url, a.nombre))));
         (copia.tablas.miembros || []).forEach((x) => x.foto?.url && urls.set(x.foto.url, "foto.webp"));
@@ -1895,7 +1905,7 @@
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nombre + (conArchivos ? ".zip" : ".json");
       document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
       await sb.from("paginas").upsert({ slug: "ultima_copia", contenido: new Date().toISOString(), actualizado: new Date().toISOString() });
-      estado(m, `Copia descargada (${tamanoTxt(blob.size)}). Guárdala en un sitio seguro: lleva los mensajes del buzón.`, "bien");
+      estado(m, `Copia descargada (${tamanoTxt(blob.size)}). Guárdala en un sitio seguro: lleva los mensajes del buzón y los correos del panel.`, "bien");
       $("ultima-copia").innerHTML = "Última copia: <b>ahora mismo</b>.";
     } catch (e) { estado(m, "No se ha podido hacer la copia: " + errTxt(e), "mal"); }
     b1.disabled = b2.disabled = false;

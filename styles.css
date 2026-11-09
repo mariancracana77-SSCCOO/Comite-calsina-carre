@@ -19,6 +19,7 @@
   --sombra: 0 1px 2px rgba(14, 42, 74, .06), 0 4px 14px rgba(14, 42, 74, .06);
   --radio: 14px;
   --letra: 18px;
+  --foco: #0E5FAE;         /* contorno de foco: azul de la marca en claro (más de 3:1 sobre blanco), celeste en oscuro */
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -27,7 +28,7 @@
     --azul: #4fb3ff; --azul-osc: #cfe6ff; --azul-claro: #13263e;
     --rojo: #ff7b7b; --rojo-claro: #3a1a1d; --verde: #7bd182;
     --fondo: #0c131c; --tarjeta: #141e2a; --texto: #e7edf4; --suave: #9fb0c2; --borde: #263445;
-    --sombra: none; color-scheme: dark;
+    --sombra: none; --foco: #00C6FF; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
@@ -35,7 +36,7 @@
   --azul: #4fb3ff; --azul-osc: #cfe6ff; --azul-claro: #13263e;
   --rojo: #ff7b7b; --rojo-claro: #3a1a1d; --verde: #7bd182;
   --fondo: #0c131c; --tarjeta: #141e2a; --texto: #e7edf4; --suave: #9fb0c2; --borde: #263445;
-  --sombra: none; color-scheme: dark;
+  --sombra: none; --foco: #00C6FF; color-scheme: dark;
 }
 :root[data-letra="grande"] { --letra: 20px; }
 :root[data-letra="muy-grande"] { --letra: 23px; }
@@ -53,7 +54,10 @@ img { max-width: 100%; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .saltar { position: absolute; left: -999px; top: 8px; z-index: 50; background: #fff; color: #000; padding: 8px 12px; border-radius: 8px; }
 .saltar:focus { left: 8px; }
-:focus-visible { outline: 3px solid var(--celeste); outline-offset: 2px; }
+:focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
+/* Sobre los fondos azul noche, el celeste es el que se ve */
+.cabecera :focus-visible, .hero :focus-visible, .pie :focus-visible, .banda-version :focus-visible, .aviso-privacidad :focus-visible,
+.contacto-card :focus-visible, .visor-cab :focus-visible, .hola-bloque :focus-visible, .toast :focus-visible { outline-color: var(--celeste); }
 [hidden] { display: none !important; }
 
 /* ---------- Cabecera ---------- */
@@ -238,6 +242,9 @@ main { outline: none; }
 .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; color: var(--suave); font-size: .85rem; }
 .etq { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 99px; background: var(--azul-claro); color: var(--azul-osc); font-weight: 700; font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; }
 .etq.rojo { background: var(--rojo); color: #fff; }
+/* En oscuro el rojo y el azul son claros: letra oscura para que se lea (más de 4,5:1) */
+:root[data-theme="dark"] .etq.rojo { color: #0c131c; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .etq.rojo { color: #0c131c; } }
 .etq.nuevo { background: #e8f5e9; color: #1b5e20; }
 .etq.azul { background: var(--azul-claro); color: var(--azul-osc); }
 /* Avisos: estilo señal de tráfico */
@@ -356,18 +363,21 @@ button.dia-mes { border: 0; font: inherit; cursor: pointer; width: 100%; padding
 .chips:empty { display: none; }
 .chip { min-height: 40px; padding: 6px 14px; border-radius: 99px; border: 1px solid var(--borde); background: var(--tarjeta); color: var(--texto); font: inherit; font-weight: 600; cursor: pointer; }
 .chip.activa { background: var(--azul); border-color: var(--azul); color: #fff; }
+:root[data-theme="dark"] .chip.activa { color: #0c131c; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .chip.activa { color: #0c131c; } }
 .acuerdos { border-left: 4px solid var(--azul); padding-left: 12px; }
 #lista-actas { margin-top: 12px; }
 
 /* ---------- Buzón ---------- */
 .form-buzon { display: grid; gap: 10px; max-width: 680px; }
+.nota-buzon { margin: 0; color: var(--suave); font-size: .88rem; }
 .tipo-buzon { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .tipo-buzon legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
 .tipo-buzon label { flex: 1; min-width: 150px; }
 .tipo-buzon input { position: absolute; opacity: 0; }
 .tipo-buzon span { display: block; text-align: center; padding: 12px; border: 2px solid var(--borde); border-radius: 12px; cursor: pointer; font-weight: 600; }
 .tipo-buzon input:checked + span { border-color: var(--azul); background: var(--azul-claro); color: var(--azul-osc); }
-.tipo-buzon input:focus-visible + span { outline: 3px solid var(--celeste); }
+.tipo-buzon input:focus-visible + span { outline: 3px solid var(--foco); }
 .etq-campo { font-weight: 700; }
 textarea, .campo input, .campo select, .campo textarea {
   width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--borde); background: var(--fondo); color: var(--texto); font: inherit; resize: vertical;
@@ -483,6 +493,22 @@ textarea, .campo input, .campo select, .campo textarea {
 :root[data-theme="dark"] .barra-buzon { border-color: var(--borde); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .barra-buzon { border-color: var(--borde); } }
 @media (min-width: 980px) { .barra-fija { left: 50%; right: auto; width: 640px; transform: translateX(-50%); border: 1px solid var(--borde); border-bottom: 0; border-radius: 16px 16px 0 0; } }
+/* v22: en móvil estrecho (o con letra grande) no cabían los tres botones y el de «Avisos» se salía de la pantalla:
+   Buzón y Avisos pasan a ser solo el dibujo (ya llevan aria-label) y el texto de «Contactar» se recorta si aun así no cabe */
+.barra-fija .btn { min-width: 0; }
+.barra-fija .btn > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 359px) {
+  .barra-fija { gap: 8px; padding-left: 12px; padding-right: 12px; }
+  .barra-buzon { min-width: 54px; flex: none; }
+  .barra-buzon > span:not(.ic) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+@media (max-width: 400px) {
+  :root[data-letra="grande"] .barra-fija, :root[data-letra="muy-grande"] .barra-fija { gap: 8px; padding-left: 12px; padding-right: 12px; }
+  :root[data-letra="grande"] .barra-buzon, :root[data-letra="muy-grande"] .barra-buzon { min-width: 54px; flex: none; }
+  :root[data-letra="grande"] .barra-buzon > span:not(.ic), :root[data-letra="muy-grande"] .barra-buzon > span:not(.ic) {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  :root[data-letra="muy-grande"] .barra-fija .btn { font-size: .95rem; padding-left: 8px; padding-right: 8px; }
+}
 .instalar { margin-bottom: 0; }
 
 /* ---------- Avisos al móvil ---------- */
@@ -581,7 +607,8 @@ html.visor-abierto, html.visor-abierto body { overflow: hidden; }
 .visor-cerrar { display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0 16px; border-radius: 12px; border: 0; background: #fff; color: #0B1E3C; font: inherit; font-weight: 700; cursor: pointer; }
 .visor-cerrar .ico { width: 1.2em; height: 1.2em; }
 .visor-cuerpo { flex: 1; overflow: auto; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 8px 24px; outline: none; -webkit-overflow-scrolling: touch; }
+.visor-cuerpo:focus-visible { outline: 3px solid var(--celeste); outline-offset: -3px; }
 .visor-foto { max-width: 100%; max-height: 100%; margin: auto; object-fit: contain; border-radius: 8px; }
-.visor-pag { max-width: 100%; height: auto; background: #fff; border-radius: 4px; box-shadow: 0 2px 12px rgba(0, 0, 0, .5); }
+.visor-pag { flex: none; max-width: 100%; height: auto; background: #fff; border-radius: 4px; box-shadow: 0 2px 12px rgba(0, 0, 0, .5); }
 .visor-msg { margin: auto; color: #fff; text-align: center; padding: 20px; font-size: 1.05rem; }
 .visor-msg a { color: #00C6FF; }
