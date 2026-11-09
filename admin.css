@@ -25,16 +25,16 @@
 .ayuda { color: var(--suave); font-size: .82rem; }
 .oblig { color: var(--suave); font-weight: 400; }
 .casilla { display: flex; gap: 12px; align-items: center; font-weight: 700; min-height: 48px; padding: 8px 12px; border: 1px solid var(--borde); border-radius: 12px; cursor: pointer; }
-.casilla input { width: 26px; height: 26px; flex: none; accent-color: var(--azul); }
+.casilla input { width: 30px; height: 30px; flex: none; accent-color: var(--azul); }
 .nota-campo { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--azul-claro); color: var(--azul-osc); font-size: .88rem; }
 .nota-campo .ico { margin-top: .15em; }
 .formato { display: flex; gap: 6px; }
-.btn-linea.peq { min-height: 36px; padding: 4px 10px; font-size: .82rem; }
+.btn-linea.peq { min-height: 44px; padding: 4px 12px; font-size: .82rem; }
 .btn-texto { border: 0; background: none; color: var(--azul); font: inherit; font-weight: 600; cursor: pointer; padding: 8px 0; text-align: left; display: inline-flex; align-items: center; gap: 6px; }
 .btn.sec { background: transparent; color: var(--texto); border: 1px solid var(--borde); }
 .btn-linea.peligro { color: var(--rojo); }
 .btn-ic { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border-radius: 12px; border: 1px solid var(--borde); background: var(--tarjeta); color: var(--texto); cursor: pointer; }
-.btn-ic.peq { width: 38px; height: 38px; border-radius: 10px; }
+.btn-ic.peq { width: 44px; height: 44px; border-radius: 10px; }
 
 /* ---------- Estructura del panel ---------- */
 .panel-cuerpo { display: block; }
@@ -186,11 +186,15 @@ button.fila-abre:hover b { color: var(--azul); }
 .ed-pie .estado { flex: 1; min-width: 120px; font-size: .9rem; }
 .ed-pie .btn { min-height: 50px; }
 @media (max-width: 520px) {
-  .ed-pie { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-  .ed-pie .btn-linea, .ed-pie .btn.sec { justify-content: center; padding: 8px 6px; min-height: 46px; font-size: .85rem; }
+  /* v23: minmax(0, 1fr) y texto que puede partirse: con 320 px y letra muy grande, «Cancelar» se salía de la pantalla */
+  .ed-pie { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .ed-pie .btn-linea, .ed-pie .btn.sec { justify-content: center; padding: 8px 6px; min-height: 46px; font-size: .85rem; white-space: normal; text-align: center; line-height: 1.15; min-width: 0; }
   .ed-pie .estado { grid-column: 1 / -1; order: -1; min-height: 0; }
   .ed-pie #ed-guardar { grid-column: 1 / -1; }
   .ed-pie [hidden] { display: none !important; }
+  /* Con letra grande no caben tres: Borrar y Duplicar arriba, Cancelar y Guardar a lo ancho */
+  :root[data-letra] .ed-pie { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  :root[data-letra] .ed-pie #ed-cancelar { grid-column: 1 / -1; }
 }
 
 /* Archivos */
@@ -279,6 +283,13 @@ a.hola-dato:hover, button.hola-dato:hover { border-color: var(--celeste); }
   .hola-bloque h1.hola { font-size: 2rem; }
 }
 @media (max-width: 360px) { .hola-dato { padding: 8px; } .hola-dato b { font-size: 1.05rem; } }
+/* v23: en el móvil con letra grande, las tres cajas del resumen cortaban el texto: una por fila, en horizontal */
+@media (max-width: 560px) {
+  :root[data-letra] .hola-resumen { grid-template-columns: 1fr; }
+  :root[data-letra] .hola-dato { flex-direction: row; align-items: center; gap: 10px; }
+  :root[data-letra] .hola-dato .ico { margin: 0; flex: none; }
+  :root[data-letra] .hola-dato span { display: block; -webkit-line-clamp: unset; overflow: visible; }
+}
 
 /* ---------- Seguridad (Ajustes) ---------- */
 .seguridad { display: grid; gap: 8px; justify-items: start; max-width: 760px; margin-bottom: 12px; }
@@ -364,16 +375,11 @@ a.hola-dato:hover, button.hola-dato:hover { border-color: var(--celeste); }
 .pet-form textarea { min-height: 140px; }
 .pet-adjuntar { justify-self: start; cursor: pointer; min-height: 48px; }
 .pet-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.pet-lista:empty, .pet-form .estado:empty, .pet-anade .estado:empty, .pet-decide .estado:empty, .pet-lorena .estado:empty { display: none; }
+.pet-lista:empty, .pet-form .estado:empty, .pet-anade .estado:empty, .pet-decide .estado:empty { display: none; }
 .pet-lista li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 4px 4px 12px; border: 1px solid var(--borde); border-radius: 10px; overflow-wrap: anywhere; }
 .pet-lista li small { color: var(--suave); }
 .pet-lista .btn-texto { min-height: 44px; padding: 0 10px; flex: none; }
 #pet-enviar { min-height: 54px; font-size: 1.05rem; }
-.pet-filtros { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
-.pet-chip { min-height: 44px; padding: 6px 14px; border-radius: 99px; border: 2px solid var(--borde); background: var(--tarjeta); color: var(--texto); font: inherit; font-weight: 700; cursor: pointer; }
-.pet-chip span { display: inline-block; min-width: 1.6em; padding: 0 6px; margin-left: 4px; border-radius: 99px; background: var(--azul-claro); color: var(--azul-osc); font-size: .85rem; text-align: center; }
-.pet-chip[aria-pressed="true"] { background: var(--azul); border-color: var(--azul); color: var(--tarjeta); }
-.pet-chip[aria-pressed="true"] span { background: var(--tarjeta); color: var(--azul); }
 .pet-busca { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 0 12px; border: 2px solid var(--borde); border-radius: 12px; background: var(--tarjeta); color: var(--suave); }
 .pet-busca input { flex: 1; min-width: 0; min-height: 46px; border: 0; background: transparent; color: var(--texto); font: inherit; outline: none; }
 .pet-busca:focus-within { border-color: var(--azul); }
@@ -390,8 +396,7 @@ details.pet-item.est-en_curso, details.pet-item.est-nueva { border-left: 5px sol
 .pet-tit { font-family: "Montserrat", "Inter", sans-serif; font-weight: 800; font-size: 1.05rem; line-height: 1.3; color: var(--azul-osc); overflow-wrap: anywhere; }
 .pet-cab { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
 .pet-cab small { color: var(--suave); }
-.pet-cab .pet-toca, .pet-cab .pet-nuevo { font-size: .82rem; font-weight: 800; padding: 2px 10px; border-radius: 99px; color: var(--tarjeta); }
-.pet-cab .pet-toca { background: var(--verde); }
+.pet-cab .pet-nuevo { font-size: .82rem; font-weight: 800; padding: 2px 10px; border-radius: 99px; color: var(--tarjeta); }
 .pet-cab .pet-nuevo { background: var(--azul); }
 .pet-cuerpo { display: grid; gap: 10px; padding: 12px 16px 16px; border-top: 1px solid var(--borde); }
 .pet-texto { margin: 0; overflow-wrap: anywhere; }
@@ -418,17 +423,14 @@ details.pet-item.est-en_curso, details.pet-item.est-nueva { border-left: 5px sol
 .pet-ficha > b .ico { color: var(--azul); }
 .pet-ficha p, .pet-ficha ul { margin: 0; }
 .pet-ficha ul { padding-left: 20px; display: grid; gap: 4px; }
-.pet-ficha-etq { font-weight: 700; }
 .pet-pie { color: var(--suave); font-size: .88rem; }
 .pet-decide { display: grid; gap: 8px; padding: 12px; border: 2px solid var(--verde); border-radius: 12px; background: var(--fondo); }
 .pet-decide-tit { margin: 0; font-weight: 800; display: flex; align-items: center; gap: 8px; }
 .pet-decide .btn { min-height: 52px; }
 .pet-decide .pet-publica { background: var(--verde); color: var(--tarjeta); font-size: 1.05rem; }
 .pet-decide .pet-descarta { color: var(--rojo); }
-.pet-descarta-si, .btn.pet-rojo { background: var(--rojo); color: var(--tarjeta); }
-.pet-lorena { display: grid; gap: 8px; }
-.pet-lorena .ayuda { margin: 0; }
-.pet-lorena .btn, .pet-anade-abre { justify-self: start; min-height: 50px; }
+.pet-descarta-si { background: var(--rojo); color: var(--tarjeta); }
+.pet-anade-abre { justify-self: start; min-height: 50px; }
 .pet-anade { display: grid; gap: 10px; padding-top: 10px; border-top: 1px solid var(--borde); }
 .pet-anade button[type=submit] { min-height: 52px; }
 .pet-mas { width: 100%; min-height: 48px; }
@@ -437,9 +439,9 @@ details.pet-item.est-en_curso, details.pet-item.est-nueva { border-left: 5px sol
 .pet-modal h2 { margin: 0 0 8px; font-family: "Montserrat", "Inter", sans-serif; font-size: 1.15rem; color: var(--azul-osc); }
 .pet-modal-botones { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; margin-top: 14px; }
 .pet-modal-botones .btn { min-height: 50px; }
-@media (max-width: 420px) { .pet-decide .btn, .pet-lorena .btn, .pet-anade-abre, .pet-adjuntar, .pet-avisos .btn, .pet-modal-botones .btn { justify-self: stretch; width: 100%; } }
+@media (max-width: 420px) { .pet-decide .btn, .pet-anade-abre, .pet-adjuntar, .pet-avisos .btn, .pet-modal-botones .btn { justify-self: stretch; width: 100%; } }
 @media (prefers-reduced-motion: reduce) { details.pet-item > summary::after { transition: none; } }
-.pet-form .ayuda, .pet-avisos .ayuda, .pet-lorena .ayuda { font-size: .9rem; margin: 0; }
+.pet-form .ayuda, .pet-avisos .ayuda { font-size: .9rem; margin: 0; }
 .pet-cab .etq { border-radius: 10px; }
 .pet-avisos .estado:empty { display: none; }
 /* En oscuro, .btn lleva letra oscura (para el azul de fondo) y ganaba a .btn.sec: los botones secundarios salían casi invisibles */
@@ -502,3 +504,18 @@ details.pet-mas-info ul { padding-left: 20px; display: grid; gap: 4px; }
   :root:not([data-theme="light"]) .b-tuyo .pet-bloque-tit, :root:not([data-theme="light"]) .pet-grupo-tit.toca { color: var(--verde); }
 }
 .pet-m.de-lorena { border-left-color: var(--verde); }
+
+/* ---------- v23 ---------- */
+/* Inicio sin conexión: aviso arriba */
+.aviso-red { margin: 12px 0 0; border: 2px solid #8A5A00; background: #FFF1D6; color: #4A3000; }
+.aviso-red .ico { flex: none; }
+:root[data-theme="dark"] .aviso-red { background: #33270F; color: #FFE2A8; border-color: #FFC766; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .aviso-red { background: #33270F; color: #FFE2A8; border-color: #FFC766; } }
+/* Papelera: «Recuperar» y «Borrar para siempre» */
+.papelera-fila { flex-wrap: wrap; }
+.papelera-btns { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 12px 16px; }
+@media (min-width: 640px) { .papelera-btns { padding: 8px 12px 8px 0; flex-direction: column; align-items: stretch; } }
+/* Asistente: aviso de temas delicados */
+.ia-delicado { margin: 4px 0 8px; padding: 10px 12px; border-radius: 10px; border-left: 4px solid #b45309; background: color-mix(in srgb, #b45309 8%, transparent); color: var(--texto); font-size: .9rem; }
+/* Vista previa: una palabra larga sin espacios (una dirección web) no se sale de la tarjeta (en la web, pendiente en styles.css) */
+.ed-previa .tarjeta h3, .ed-previa .cargo, .ed-previa .cons-op, .ed-previa .tarjeta p { overflow-wrap: anywhere; }

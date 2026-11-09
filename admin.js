@@ -10,6 +10,8 @@
   const PANEL_URL = WEB_URL + "admin.html";
   const TIPOS_REUNION = ["Reunión del comité", "Reunión con la empresa", "Asamblea", "Otra"];
   const ahoraISO = () => new Date().toISOString();
+  // Día de hoy (o dentro de n días) en la hora del móvil, como hoyISO; toISOString() da el día en UTC
+  const diaLocal = (n = 0) => { const d = new Date(Date.now() + n * 86400000); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
 
   // ================== QUÉ SE PUEDE PUBLICAR ==================
   // Campo: [columna, etiqueta, tipo, opciones]
@@ -32,10 +34,14 @@
         ["publicar_en", "Programar para más tarde (opcional)", "fechahora", { ayuda: "Déjalo vacío para publicarlo ya. Si pones día y hora, no se verá hasta entonces." }],
       ],
       chips: (x) => [x.urgente && "Urgente", destacaTxt(x), x.publicar_en && x.publicar_en > ahoraISO() && "Programado"],
+      // Programar en el pasado no tiene sentido (saldría ya, con una fecha vieja): se avisa
+      validar: (v) => v.publicar_en && v.publicar_en !== ED?.orig?.publicar_en && v.publicar_en < new Date(Date.now() - 5 * 60000).toISOString() ? "El día y la hora de «Programar para más tarde» ya han pasado. Déjalo vacío para publicarlo ya, o pon una fecha que esté por llegar." : "",
       sub: (x) => resumen(x.contenido),
       previa: (x) => R.aviso(x),
       alGuardar: (v, orig) => {
         if (v.publicar_en && (!orig || orig.publicar_en !== v.publicar_en)) v.fecha = v.publicar_en; else if (!orig) v.fecha = ahoraISO();
+        // v23: si se quita la programación de un aviso que aún no había salido, se publica ahora (con la fecha de ahora)
+        else if (orig?.publicar_en && !v.publicar_en && orig.publicar_en > ahoraISO()) v.fecha = ahoraISO();
         // Día destacado: ese día la tarea manda «DESTACADO HOY» una vez. Si cambia el día, se vuelve a avisar.
         // Si es un aviso nuevo destacado hoy y ya avisa al publicar, no se manda dos veces.
         if (!orig || orig.destacar_dia !== v.destacar_dia)
@@ -79,6 +85,7 @@
       sub: (x) => fechaSemana(x.fecha) + " de " + x.fecha.slice(0, 4) + (x.hora ? " · " + horario(x) : "") + (x.lugar ? " · " + x.lugar : ""),
       previa: (x) => R.reunion(x),
       alDuplicar: (v) => { v.fecha = ""; },
+      validar: (v) => v.hora && v.hora_fin && v.hora_fin <= v.hora ? "La hora de fin tiene que ser después de la hora de inicio." : "",
     },
     actas: {
       nombre: "Actas", uno: "acta", nuevo: "Nueva acta", ic: "acta", tabla: "actas", ancla: "acta",
@@ -116,7 +123,8 @@
       chips: (x) => [!R.abierta(x) ? "Cerrada" : "Abierta", !x.publicada && "Oculta", VOTOS[x.id] && totalVotos(x.id) + (totalVotos(x.id) === 1 ? " voto" : " votos")],
       sub: (x) => x.cierra ? "Se cierra el " + fechaLarga(x.cierra) : "Sin fecha de cierre",
       previa: (x, orig) => R.consulta({ id: 0, ...x }, orig ? VOTOS[orig.id] || {} : {}, 0, !!orig),
-      validar: (v) => { const n = R.opciones(v).length; return n < 2 ? "Pon al menos 2 opciones, una por línea." : n > 8 ? "Máximo 8 opciones." : ""; },
+      validar: (v) => { const n = R.opciones(v).length; return n < 2 ? "Pon al menos 2 opciones, una por línea." : n > 8 ? "Máximo 8 opciones."
+        : v.cierra && v.cierra < hoyISO() && v.cierra !== ED?.orig?.cierra ? "El «Último día para votar» ya ha pasado: así la consulta saldría ya cerrada. Pon un día de hoy en adelante." : ""; },
       avisoEditar: "Si cambias el orden de las opciones de una consulta con votos, los votos se quedan con el número de opción (no con el texto).",
     },
     preguntas: {
@@ -136,16 +144,16 @@
     miembros: {
       nombre: "Miembros del comité", uno: "miembro", nuevo: "Nuevo miembro", ic: "personas", tabla: "miembros",
       orden: [["orden", true], ["id", true]], ordenable: true,
-      ayuda: "Quién forma el comité (sale en «Nosotros»). Pon teléfono o email solo si esa persona está de acuerdo.",
+      ayuda: "Quién forma el comité (sale en «Nosotros», que es público en internet). Antes de poner sindicato, foto, teléfono o email, esa persona tiene que haber firmado la hoja de permiso con esa casilla marcada. Si retira el permiso, quítalo ese mismo día; si borras la ficha entera, bórrala también de la Papelera («Borrar para siempre»).",
       campos: [
         ["nombre", "Nombre", "texto", { req: true }],
         ["cargo", "Cargo", "texto", { lista: ["Presidente/a", "Secretario/a", "Miembro del comité", "Delegado/a de prevención"], def: "Miembro del comité" }],
-        ["sindicato", "Sindicato (opcional)", "texto"],
+        ["sindicato", "Sindicato (solo si lo ha autorizado por escrito)", "texto"],
         ["detalle", "Detalle (centro, turno, de qué se ocupa…)", "texto"],
-        ["nota1", "Teléfono y email: solo si esa persona ha dado su permiso para que salgan en la web.", "nota"],
+        ["nota1", "Sindicato, teléfono, email y foto: solo si esa persona ha firmado la hoja de permiso con esa casilla. Puede retirar el permiso cuando quiera: entonces se quita ese mismo día.", "nota"],
         ["telefono", "Teléfono", "tel"],
         ["email", "Email", "email"],
-        ["foto", "Foto (opcional, solo si da su permiso)", "foto"],
+        ["foto", "Foto (solo si lo ha autorizado por escrito)", "foto"],
       ],
       titulo: (x) => x.nombre,
       chips: (x) => [x.sindicato],
@@ -238,15 +246,20 @@
   // ================== UTILIDADES ==================
   const resumen = (t, n = 110) => { t = String(t || "").replace(/\*\*/g, "").replace(/\s+/g, " ").trim(); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
   let toastT;
+  // Los avisos en rojo (algo ha fallado) se quedan más tiempo, para que dé tiempo a leerlos
   const avisa = (txt, mal = false) => {
     const a = $("toast");
     a.textContent = txt; a.className = "toast" + (mal ? " mal" : ""); a.hidden = false;
-    clearTimeout(toastT); toastT = setTimeout(() => { a.hidden = true; }, 3800);
+    clearTimeout(toastT); toastT = setTimeout(() => { a.hidden = true; }, mal ? 8000 : 3800);
   };
+  const CADUCADA = "Tu sesión ha caducado. Vuelve a entrar: lo que has escrito no se pierde si no cierras esta ventana.";
   const errTxt = (e) => {
-    const m = String(e?.message || e || "");
-    if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return "No hay conexión. Prueba de nuevo.";
-    if (/row-level security|permission denied|No tienes permiso/i.test(m)) return "No tienes permiso para hacer esto.";
+    const m = String(e?.message || e || ""), cod = String(e?.code || e?.status || "");
+    if (/Failed to fetch|NetworkError|Load failed|Failed to send a request|FunctionsFetchError|network/i.test(m)) return "No hay conexión. Prueba de nuevo.";
+    if (/Edge Function returned|FunctionsHttpError|FunctionsRelayError/i.test(m)) return "Ha fallado el servidor. Prueba de nuevo en unos minutos.";
+    // Con la sesión caducada, el servidor contesta como si fuera un visitante: «sin permiso». Al padre se le dice lo que pasa de verdad.
+    if (/row-level security|permission denied|No tienes permiso|JWT|not authenticated|401/i.test(m) || /^(42501|401|PGRST301|PGRST303)$/.test(cod)) return CADUCADA;
+    if (/central directory|is this a zip|Corrupted zip|End of data/i.test(m)) return "El archivo está dañado o no es un Word (.docx). Guárdalo como PDF y súbelo otra vez.";
     if (/Invalid login credentials/i.test(m)) return "Email o contraseña incorrectos. Si no la recuerdas, abre «¿Problemas para entrar?».";
     if (/Email not confirmed/i.test(m)) return "Todavía no has confirmado el email: abre el enlace que te enviamos.";
     if (/User already registered/i.test(m)) return "Esta cuenta ya existe. Entra con tu contraseña o pulsa «He olvidado la contraseña».";
@@ -256,6 +269,8 @@
     if (/rate limit|security purposes/i.test(m)) return "Demasiados intentos seguidos. Espera unos minutos.";
     return m || "Ha fallado algo. Prueba de nuevo.";
   };
+  // Un botón que envía algo se bloquea mientras envía (un doble toque mandaba dos veces)
+  const conBoton = async (b, fn) => { if (!b || b.disabled) return; b.disabled = true; try { return await fn(); } finally { b.disabled = false; } };
   const estado = (el, txt, tipo = "") => { el.textContent = txt; el.className = "estado" + (tipo ? " " + tipo : ""); };
   const ponIconos = (raiz = document) => raiz.querySelectorAll("[data-ic]").forEach((s) => { if (!s.firstChild) s.innerHTML = icono(s.dataset.ic); });
   const tituloDe = (S, x) => (S.titulo ? S.titulo(x) : x.titulo) || "Sin título";
@@ -284,12 +299,41 @@
     const { data: nivel } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
     if (nivel && nivel.nextLevel === "aal2" && nivel.currentLevel !== "aal2") { muestra("s-dos-pasos"); $("d-codigo").value = ""; $("d-codigo").focus(); return; }
     const { data: esAdmin, error } = await sb.rpc("is_admin");
+    // Sin conexión no es «sin permiso»: se dice lo que pasa y se puede volver a probar
+    if (error && /fetch|network|Load failed/i.test(error.message || "")) { muestra("s-entrar"); estado($("e-estado"), "No hay conexión. Prueba de nuevo dentro de un momento.", "mal"); return; }
     if (error || !esAdmin) { muestra("s-sinpermiso"); return; }
     muestra("s-panel");
     pintaMenu();
     irA(location.hash.slice(1) || "inicio");
+    // Si la sesión caducó con el editor abierto, al volver a entrar sale otra vez con lo escrito
+    if (ED?.pausado) {
+      ED.pausado = false;
+      $("editor").hidden = false; $("velo-ed").hidden = false; document.body.classList.add("sin-scroll");
+      estado($("ed-msg"), "Ya has vuelto a entrar. Revisa lo escrito y pulsa otra vez el botón de guardar.", "bien");
+      $("ed-guardar").focus();
+    }
   };
-  sb.auth.onAuthStateChange((ev) => { if (ev === "PASSWORD_RECOVERY") { recuperando = true; muestra("s-nueva"); } });
+  // v23: la sesión puede caducar (el móvil dormido muchos días, o «Cerrar en todos» desde otro aparato).
+  // Entonces el servidor contesta como a un visitante: no guarda nada y a veces no da error. Se lleva a la
+  // pantalla de entrar sin perder lo que se estaba escribiendo (el editor se esconde y vuelve al entrar).
+  let SALIENDO = false;
+  const sesionCaducada = () => {
+    if (SALIENDO || $("s-panel").hidden) return;
+    if (ED) { ED.pausado = true; $("editor").hidden = true; $("velo-ed").hidden = true; document.body.classList.remove("sin-scroll"); }
+    cierraHoja();
+    muestra("s-entrar");
+    estado($("e-estado"), "Tu sesión ha caducado. Vuelve a entrar con tu email y tu contraseña." + (ED ? " Lo que estabas escribiendo no se ha perdido: saldrá otra vez al entrar." : ""), "mal");
+    $("e-clave").value = ""; $(TEMA.lee("comite-admin-email") ? "e-clave" : "e-email").focus();
+  };
+  // Antes de guardar: ¿sigue la sesión? Si no, a la pantalla de entrar (y devuelve false)
+  const haySesion = async () => {
+    try { const { data } = await sb.auth.getSession(); if (data?.session) return true; } catch (_) { return true; /* sin red: que lo diga el guardado */ }
+    sesionCaducada(); return false;
+  };
+  sb.auth.onAuthStateChange((ev) => {
+    if (ev === "PASSWORD_RECOVERY") { recuperando = true; muestra("s-nueva"); }
+    else if (ev === "SIGNED_OUT") sesionCaducada();
+  });
 
   $("f-entrar").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -373,7 +417,7 @@
   });
   // Contraseña segura: 10 o más caracteres, con letras y números
   const claveFlojaTxt = (c) => c.length < 10 ? "La contraseña necesita 10 caracteres o más." : !/[a-zñ]/i.test(c) || !/\d/.test(c) ? "La contraseña tiene que llevar letras y números." : "";
-  const salir = async () => { await sb.auth.signOut(); history.replaceState(null, "", "admin.html"); location.reload(); };
+  const salir = async () => { SALIENDO = true; await sb.auth.signOut(); history.replaceState(null, "", "admin.html"); location.reload(); };
   $("b-salir-sp").addEventListener("click", salir);
   $("b-dos-salir").addEventListener("click", salir);
   $("f-dos-pasos").addEventListener("submit", async (e) => {
@@ -427,9 +471,50 @@
     cierraHoja();
     window.scrollTo(0, 0);
     $("zona").innerHTML = '<div class="esq"></div><div class="esq"></div>';
-    (PAGINAS[k] || (() => pintaLista(k)))();
+    const pinta = PAGINAS[k] || (() => pintaLista(k));
+    Promise.resolve().then(pinta).catch((e) => { if (actual === k) $("zona").innerHTML = `<p class="vacio">${esc(errTxt(e))}</p>`; });
   };
-  window.addEventListener("hashchange", () => { if (!$("s-panel").hidden) irA(location.hash.slice(1)); });
+  // ---- v23: no perder lo escrito ----
+  // Hay algo sin guardar en el editor, en «Textos de la web» o en «Pedir un cambio a Claude»
+  let TEXTOS_SUCIO = false;
+  const petSucio = () => actual === "peticiones" && [...document.querySelectorAll("#pet-texto, form.pet-anade:not([hidden]) textarea")].some((t) => t.value.trim()) || (actual === "peticiones" && PET_ARCH.length > 0);
+  const haySinGuardar = () => !!(ED && ED.sucio) || (actual === "textos" && TEXTOS_SUCIO) || petSucio();
+  // Pregunta antes de dejar la página; si se acepta, lo de la página se da por perdido
+  const puedeSalir = () => {
+    if ((actual !== "textos" || !TEXTOS_SUCIO) && !petSucio()) return true;
+    if (!confirm("¿Salir sin guardar? Se perderá lo que has escrito en esta página.")) return false;
+    TEXTOS_SUCIO = false; PET_ARCH = [];
+    document.querySelectorAll("#pet-texto, form.pet-anade textarea").forEach((t) => { t.value = ""; });
+    return true;
+  };
+  // Recargar o cerrar la pestaña con algo a medias: el navegador pregunta
+  window.addEventListener("beforeunload", (e) => { if (!SALIENDO && !$("s-panel").hidden && haySinGuardar()) { e.preventDefault(); e.returnValue = ""; } });
+  // Enlaces del menú y de la página: preguntan antes de irse
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest('a[href^="#"]');
+    if (a && !$("s-panel").hidden && a.getAttribute("href").slice(1) !== actual && !puedeSalir()) { e.preventDefault(); e.stopImmediatePropagation(); }
+  }, true);
+  window.addEventListener("hashchange", () => {
+    if ($("s-panel").hidden) return;
+    const k = location.hash.slice(1);
+    if (k === actual) return;
+    // Con el botón Atrás no se pasa por el clic: si no quiere salir, se vuelve a poner la página donde estaba
+    if (!puedeSalir()) { history.pushState(null, "", "#" + actual); return; }
+    irA(k);
+  });
+  // El botón Atrás del móvil con el editor abierto cierra el editor (preguntando si hay cambios), en vez de salir.
+  // Al abrir el editor se mete una entrada en el historial; al cerrarlo con sus botones, se quita.
+  let ED_HIST = false, IGNORA_POP = 0;
+  const historiaAbre = () => { if (!ED_HIST) { history.pushState({ editor: 1 }, "", location.href); ED_HIST = true; } };
+  const historiaCierra = () => { if (ED_HIST) { ED_HIST = false; IGNORA_POP++; history.back(); } };
+  window.addEventListener("popstate", () => {
+    if (IGNORA_POP) { IGNORA_POP--; return; }
+    if (!ED_HIST) return;
+    ED_HIST = false;
+    if (!ED || ED.pausado) return;
+    if (ED.guardando || (ED.sucio && !confirm("¿Salir sin guardar? Se perderá lo que has escrito."))) { historiaAbre(); return; }
+    cerrarEditor(true, { borrarSubidos: true });
+  });
   document.addEventListener("click", (e) => {
     if (e.target.closest("[data-salir]")) { salir(); return; }
     if (e.target.closest("[data-mas]")) { abreHojaMas(); return; }
@@ -449,12 +534,20 @@
   });
 
   // ---- Hoja de abajo (móvil) ----
+  let HOJA_VUELVE = null;
   const abreHoja = (titulo, html) => {
+    HOJA_VUELVE = document.activeElement;
     $("hoja").innerHTML = `<div class="hoja-cab"><h2 id="hoja-titulo">${esc(titulo)}</h2><button type="button" class="btn-ic" data-cerrar-hoja aria-label="Cerrar">${icono("cerrar")}</button></div>${html}`;
     $("hoja").hidden = false; $("velo-hoja").hidden = false;
     $("hoja").querySelector("a, button:not([data-cerrar-hoja])")?.focus();
   };
-  const cierraHoja = () => { $("hoja").hidden = true; $("velo-hoja").hidden = true; };
+  const cierraHoja = () => {
+    if ($("hoja").hidden) return;
+    $("hoja").hidden = true; $("velo-hoja").hidden = true;
+    // El foco vuelve al botón que la abrió («Nuevo» o «Más»), salvo si se ha ido a otro sitio
+    const v = HOJA_VUELVE; HOJA_VUELVE = null;
+    setTimeout(() => { if ((!document.activeElement || document.activeElement === document.body) && v?.isConnected && $("editor").hidden) v.focus(); }, 30);
+  };
   $("velo-hoja").addEventListener("click", cierraHoja);
   $("hoja").addEventListener("click", (e) => { if (e.target.closest("[data-cerrar-hoja], [data-ir]")) cierraHoja(); });
   const abreHojaMas = () => abreHoja("Más secciones", `<div class="hoja-lista">${MENU.map(([g, items]) =>
@@ -474,6 +567,16 @@
   const abreHojaNuevo = () => abreHoja("¿Qué quieres publicar?", `<div class="hoja-lista">${ACCIONES.map(([k, t, s]) =>
     `<button type="button" class="accion-fila" data-nuevo="${k}">${icono(SECCIONES[k].ic)}<span><b>${esc(t)}</b><small>${esc(s)}</small></span></button>`).join("")}</div>`);
   document.addEventListener("keydown", (e) => {
+    // v23: con el editor o la hoja abiertos, Tab no se sale de ellos (antes se iba al menú de detrás)
+    if (e.key === "Tab") {
+      const caja = !$("editor").hidden ? $("editor") : !$("hoja").hidden ? $("hoja") : null;
+      if (!caja || document.querySelector(".pet-velo, .tapador")) return;
+      const fs = [...caja.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]):not([type=hidden]), select, textarea, summary, [tabindex="0"]')].filter((x) => x.offsetParent !== null || x === document.activeElement);
+      if (!fs.length) return;
+      const i = fs.indexOf(document.activeElement), sig = e.shiftKey ? (i <= 0 ? fs.length - 1 : i - 1) : (i === -1 || i === fs.length - 1 ? 0 : i + 1);
+      if (i === -1 || (e.shiftKey && i === 0) || (!e.shiftKey && i === fs.length - 1)) { e.preventDefault(); fs[sig].focus(); }
+      return;
+    }
     if (e.key !== "Escape") return;
     if (!$("editor").hidden) { cerrarEditor(); return; }
     if (!$("hoja").hidden) cierraHoja();
@@ -481,21 +584,25 @@
 
   // ================== INICIO ==================
   const pintaInicio = async () => {
-    const hoy = hoyISO(), en14 = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10);
+    const hoy = hoyISO(), en14 = diaLocal(14);
     const [reu, prog, ult, buz] = await Promise.all([
       sb.from("reuniones").select("*").gte("fecha", hoy).lte("fecha", en14).order("fecha"),
       sb.from("avisos").select("*").gt("publicar_en", ahoraISO()).order("publicar_en"),
       Promise.all(["avisos", "actualidad", "reuniones", "actas", "encuestas", "documentos", "publicaciones"].map((t) =>
-        sb.from(t).select("*").order(t === "avisos" ? "fecha" : "creado", { ascending: false }).limit(4).then((r) => (r.data || []).map((x) => ({ ...x, _t: t }))))),
+        sb.from(t).select("*").order(t === "avisos" ? "fecha" : "creado", { ascending: false }).limit(4).then((r) => ({ error: r.error, filas: (r.data || []).map((x) => ({ ...x, _t: t })) })))),
       sb.from("buzon").select("id", { count: "exact", head: true }).eq("leido", false).eq("archivado", false),
       cargaAps().catch(() => {}),
     ]);
     if (actual !== "inicio") return;
-    PEND_BUZON = buz.count || 0; marcaCuentaBuzon();
+    // v23: sin conexión no se dan datos falsos («0 mensajes», «no has publicado nada»): se dice arriba
+    const falloUlt = ult.some((u) => u.error), sinRed = !!(reu.error || prog.error || buz.error || falloUlt);
+    if (!buz.error) { PEND_BUZON = buz.count || 0; marcaCuentaBuzon(); }
     const fechaDe = (x) => x._t === "avisos" ? x.fecha : x.creado;
-    const ultimos = ult.flat().sort((a, b) => String(fechaDe(b)).localeCompare(String(fechaDe(a)))).slice(0, 8);
+    const ultimos = ult.flatMap((u) => u.filas).sort((a, b) => String(fechaDe(b)).localeCompare(String(fechaDe(a)))).slice(0, 8);
     const hora = new Date().getHours();
+    const NO_CARGA = '<p class="vacio">No se ha podido cargar. Prueba de nuevo dentro de un momento.</p>';
     $("zona").innerHTML = `
+      ${sinRed ? `<p class="nota-campo aviso-red" role="alert">${icono("alerta")}<span><b>No hay conexión:</b> estos datos pueden no estar al día. Prueba de nuevo dentro de un momento.</span></p>` : ""}
       <section class="hola-bloque">
         <div class="hola-txt">
           <p class="hola-fecha">${esc((() => { const t = new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }); return t.charAt(0).toUpperCase() + t.slice(1); })())}</p>
@@ -503,8 +610,8 @@
           <p>¿Qué quieres publicar hoy?</p>
         </div>
         <div class="hola-resumen">
-          <a href="#buzon" class="hola-dato${PEND_BUZON ? " aviso" : ""}">${icono("mensaje")}<b>${PEND_BUZON}</b><span>${PEND_BUZON === 1 ? "mensaje sin leer" : "mensajes sin leer"}</span></a>
-          ${(() => { const r = (reu.data || [])[0]; if (!r) return `<a href="#reuniones" class="hola-dato">${icono("calendario")}<b>–</b><span>sin reuniones en 14 días</span></a>`;
+          <a href="#buzon" class="hola-dato${PEND_BUZON ? " aviso" : ""}">${icono("mensaje")}<b>${buz.error ? "–" : PEND_BUZON}</b><span>${PEND_BUZON === 1 ? "mensaje sin leer" : "mensajes sin leer"}</span></a>
+          ${(() => { const r = (reu.data || [])[0]; if (reu.error) return `<a href="#reuniones" class="hola-dato">${icono("calendario")}<b>–</b><span>reuniones</span></a>`; if (!r) return `<a href="#reuniones" class="hola-dato">${icono("calendario")}<b>–</b><span>sin reuniones en 14 días</span></a>`;
             const dias = Math.round((fechaDia(r.fecha) - fechaDia(hoyISO())) / 86400000);
             return `<button type="button" class="hola-dato" data-editar-en="reuniones:${r.id}">${icono("calendario")}<b>${dias === 0 ? "Hoy" : dias === 1 ? "Mañana" : dias + " días"}</b><span>${esc(r.titulo)}</span></button>`; })()}
           <span class="hola-dato">${icono("campana")}<b id="hola-moviles">…</b><span>móviles con avisos</span></span>
@@ -513,7 +620,7 @@
       <div id="recordatorio-copia"></div>
       <div class="acciones-inicio">
         ${ACCIONES.map(([k, t, s]) => `<button type="button" class="accion-tarjeta" data-nuevo="${k}">${icono(SECCIONES[k].ic)}<span><b>${esc(t)}</b><small>${esc(s)}</small></span></button>`).join("")}
-        <a class="accion-tarjeta${PEND_BUZON ? " destaca" : ""}" href="#buzon">${icono("mensaje")}<span><b>Leer el buzón</b><small>${PEND_BUZON ? PEND_BUZON + (PEND_BUZON === 1 ? " mensaje sin leer" : " mensajes sin leer") : "No hay mensajes nuevos"}</small></span></a>
+        <a class="accion-tarjeta${PEND_BUZON ? " destaca" : ""}" href="#buzon">${icono("mensaje")}<span><b>Leer el buzón</b><small>${buz.error ? "Mira si hay mensajes nuevos" : PEND_BUZON ? PEND_BUZON + (PEND_BUZON === 1 ? " mensaje sin leer" : " mensajes sin leer") : "No hay mensajes nuevos"}</small></span></a>
         <a class="accion-tarjeta" href="#peticiones">${icono("magia")}<span><b>Pedir un cambio a Claude</b><small>Escrito, con fotos o vídeos</small></span></a>
         <a class="accion-tarjeta" href="#cartel">${icono("qr")}<span><b>Cartel con QR</b><small>Para el tablón de anuncios</small></span></a>
         <a class="accion-tarjeta" href="guia.html" target="_blank" rel="noopener">${icono("ayuda")}<span><b>Guía del panel</b><small>Cómo se hace cada cosa, con fotos</small></span></a>
@@ -529,13 +636,13 @@
             const d = fechaDia(r.fecha);
             return `<button type="button" class="fila-corta" data-editar-en="reuniones:${r.id}"><span class="dia mini"><b>${d.getDate()}</b><span>${d.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}</span></span>
               <span><b>${esc(r.titulo)}</b><small>${esc(fechaSemana(r.fecha))}${r.hora ? " · " + esc(horario(r)) : ""}${r.lugar ? " · " + esc(r.lugar) : ""}</small></span>${icono("flecha")}</button>`;
-          }).join("")}</div>` : `<p class="vacio">No hay reuniones en los próximos 14 días. <button type="button" class="btn-texto" data-nuevo="reuniones">Añadir una</button></p>`}
+          }).join("")}</div>` : reu.error ? NO_CARGA : `<p class="vacio">No hay reuniones en los próximos 14 días. <button type="button" class="btn-texto" data-nuevo="reuniones">Añadir una</button></p>`}
         </section>
         <section>
           <div class="bloque-cab"><h2 class="titulo-bloque">Avisos programados</h2></div>
           ${(prog.data || []).length ? `<div class="tarjeta lista-corta">${prog.data.map((a) =>
             `<button type="button" class="fila-corta" data-editar-en="avisos:${a.id}">${icono("reloj")}<span><b>${esc(a.titulo)}</b><small>Se publica el ${esc(new Date(a.publicar_en).toLocaleString("es-ES", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }))}</small></span>${icono("flecha")}</button>`).join("")}</div>`
-            : '<p class="vacio">No hay avisos programados. Al crear un aviso puedes elegir día y hora para que se publique solo.</p>'}
+            : prog.error ? NO_CARGA : '<p class="vacio">No hay avisos programados. Al crear un aviso puedes elegir día y hora para que se publique solo.</p>'}
         </section>
       </div>
       <div class="tarjeta push-panel">
@@ -543,15 +650,15 @@
         <button type="button" class="btn-linea" id="b-push-prueba">${icono("campana")}Mandar un aviso de prueba</button>
       </div>
       <h2 class="titulo-bloque">Lo último que has publicado</h2>
-      <div class="lista">${ultimos.map((x) => filaHTML(x._t, x, true)).join("") || '<p class="vacio">Todavía no has publicado nada. Empieza con uno de los botones de arriba.</p>'}</div>
+      <div class="lista">${ultimos.map((x) => filaHTML(x._t, x, true)).join("") || (falloUlt ? NO_CARGA : '<p class="vacio">Todavía no has publicado nada. Empieza con uno de los botones de arriba.</p>')}</div>
       <details class="estadisticas" id="det-est">
         <summary>${icono("grafica")}Visitas y estadísticas <small>Toca para ver</small></summary>
         <div id="est-cuerpo"><div class="esq"></div></div>
       </details>`;
     // Recordatorio de la copia de seguridad (si nunca se ha hecho o hace más de un mes)
-    sb.from("paginas").select("contenido").eq("slug", "ultima_copia").maybeSingle().then(({ data }) => {
+    sb.from("paginas").select("contenido").eq("slug", "ultima_copia").maybeSingle().then(({ data, error }) => {
       const f = data?.contenido, r = $("recordatorio-copia");
-      if (!r || (f && Date.now() - new Date(f) < 31 * 86400000)) return;
+      if (!r || error || (f && Date.now() - new Date(f) < 31 * 86400000)) return;
       r.innerHTML = `<a class="tarjeta instalar-panel aviso-copia" href="#accesos-copia">${icono("archivo")}<span><b>${f ? "Hace más de un mes de la última copia de seguridad" : "Todavía no has hecho ninguna copia de seguridad"}</b><small>Toca aquí y pulsa «Descargar copia con archivos». Tarda un momento.</small></span>${icono("flecha")}</a>`;
     }, () => {});
     if (pideInstalar) document.querySelectorAll("[data-instalar-tarjeta]").forEach((b) => { b.hidden = false; });
@@ -560,14 +667,14 @@
       if (!$("push-cuenta")) return;
       $("push-cuenta").textContent = error ? "No se ha podido contar." : data === 1 ? "1 móvil tiene los avisos activados." : `${data || 0} móviles tienen los avisos activados.`;
     });
-    $("b-push-prueba").addEventListener("click", async () => {
+    $("b-push-prueba").addEventListener("click", (e) => conBoton(e.currentTarget, async () => {
       if (!confirm("Se mandará «Prueba de avisos» a TODOS los móviles apuntados. ¿Seguro?")) return;
       try {
         const { data, error } = await sb.functions.invoke("notificar", { body: { modo: "prueba" } });
         if (error) throw error;
         avisa(`Prueba enviada a ${data.push.ok} de ${data.push.total} móviles`);
-      } catch (_) { avisa("No se ha podido mandar la prueba.", true); }
-    });
+      } catch (er) { avisa("No se ha podido mandar la prueba: " + errTxt(er), true); }
+    }));
     $("det-est").addEventListener("toggle", (e) => { if (e.target.open) pintaEstadisticas(); TEMA.guarda("comite-adm-est", e.target.open ? "1" : ""); });
     if (TEMA.lee("comite-adm-est") === "1") $("det-est").open = true;
   };
@@ -575,13 +682,13 @@
   // ---- Estadísticas: visitas de los últimos 30 días ----
   const NOMBRE_SECCION = { actualidad: "Info general", secciones: "Tus secciones", avisos: "Avisos", reuniones: "Reuniones", actas: "Actas", documentos: "Documentos", buzon: "Sugerencias y preguntas", nosotros: "Nosotros", buscar: "Buscador" };
   const pintaEstadisticas = async () => {
-    const desde = new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10);
+    const desde = diaLocal(-29);
     const [{ data, error }, sus] = await Promise.all([sb.from("visitas").select("*").gte("dia", desde), sb.rpc("contar_suscritos")]);
     if (!$("est-cuerpo")) return;
     if (error) { $("est-cuerpo").innerHTML = `<p class="vacio">${esc(errTxt(error))}</p>`; return; }
     const suma = (f) => data.filter(f).reduce((a, x) => a + x.n, 0);
     const total = suma((x) => x.seccion === "total"), app = suma((x) => x.seccion === "app");
-    const hace7 = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
+    const hace7 = diaLocal(-6);
     const dias = [...Array(14)].map((_, i) => { const d = new Date(Date.now() - (13 - i) * 86400000); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); });
     const porDia = dias.map((d) => suma((x) => x.seccion === "total" && x.dia === d)), max = Math.max(1, ...porDia);
     const secciones = Object.keys(NOMBRE_SECCION).map((k) => [NOMBRE_SECCION[k], suma((x) => x.seccion === k)]).sort((a, b) => b[1] - a[1]);
@@ -601,7 +708,7 @@
   };
 
   // ================== LISTAS ==================
-  let FILAS = [], VOTOS = {};
+  let FILAS = [], VOTOS = {}, MOVIENDO = false;
   const totalVotos = (id) => Object.values(VOTOS[id] || {}).reduce((a, b) => a + b, 0);
   const filaHTML = (k, x, conSeccion = false) => {
     const S = SECCIONES[k];
@@ -649,11 +756,11 @@
       let x = FILAS.find((y) => String(y.id) === id && actual === k);
       if (!x) { const r = await sb.from(SECCIONES[k].tabla).select("*").eq("id", id).maybeSingle(); x = r.data; }
       if (k === "encuestas" && x) { const v = await sb.from("encuesta_votos").select("*").eq("encuesta_id", x.id); VOTOS[x.id] = {}; (v.data || []).forEach((r) => { VOTOS[x.id][r.opcion] = r.n; }); }
-      if (x) abrirEditor(k, x); else avisa("Ya no existe: puede que lo hayan borrado.", true);
+      if (x) abrirEditor(k, x, { vuelve: ed }); else avisa("Ya no existe: puede que lo hayan borrado.", true);
       return;
     }
     const mv = e.target.closest("[data-mover]");
-    if (mv) {
+    if (mv && !MOVIENDO) {
       const [id, dir] = mv.dataset.mover.split(":").map(Number), S = SECCIONES[actual];
       // Solo se mueve dentro de su grupo (en documentos, la misma categoría)
       const yo = FILAS.find((y) => y.id === id);
@@ -661,10 +768,16 @@
       const i = grupo.findIndex((x) => x.id === id), j = i + dir;
       if (j < 0 || j >= grupo.length) return;
       [grupo[i], grupo[j]] = [grupo[j], grupo[i]];
-      const res = await Promise.all(grupo.map((x, n) => sb.from(S.tabla).update({ orden: (n + 1) * 10 }).eq("id", x.id)));
-      const err = res.find((r) => r.error);
-      if (err) return avisa(errTxt(err.error), true);
-      avisa("Orden cambiado"); pintaLista(actual);
+      // Un toque cada vez: mientras se guarda el orden, las flechas no hacen nada
+      MOVIENDO = true;
+      try {
+        if (!(await haySesion())) return;
+        const res = await Promise.all(grupo.map((x, n) => sb.from(S.tabla).update({ orden: (n + 1) * 10 }).eq("id", x.id).select("id").then((r) => r, (e) => ({ error: e }))));
+        const err = res.find((r) => r.error);
+        if (err) { avisa(errTxt(err.error), true); pintaLista(actual); return; }
+        if (res.some(noCambio)) { avisa(NO_CAMBIO_TXT, true); pintaLista(actual); return; }
+        avisa("Orden cambiado"); pintaLista(actual);
+      } finally { MOVIENDO = false; }
     }
   });
 
@@ -696,42 +809,81 @@
         <small class="ayuda">Se recorta en cuadrado y se reduce en el propio móvil antes de subirla (también se le quitan los datos ocultos, como el lugar donde se hizo).</small></div>`;
       case "archivos": return `<div class="campo" data-campo="${col}"><span>${esc(etq)} <small>(opcional)</small></span>
         <div id="lista-adj" class="lista-adj"></div>
-        <label class="soltar" id="soltar">${icono("subir")}<b>Toca para elegir archivos</b><small>O arrástralos aquí. PDF, fotos, Word o Excel · máx. 20 MB cada uno</small>
+        <label class="soltar" id="soltar">${icono("subir")}<b>Toca para elegir archivos</b><small>O arrástralos aquí. PDF, fotos, Word o Excel · máx. 20 MB cada uno. A las fotos se les quita el lugar donde se hicieron.</small>
           <input type="file" id="f-subir" multiple accept="${ACEPTA_SUBIDA}"></label></div>`;
       default: {
         const t = { texto: "text", fecha: "date", hora: "time", fechahora: "datetime-local", numero: "number", tel: "tel", email: "email", url: "url" }[tipo];
         const v = tipo === "fechahora" ? aLocal(val) : (val ?? "");
-        return `<label class="campo" data-campo="${col}"><span>${esc(etq)}${marca}</span><input type="${t}" id="${id}" value="${esc(v)}"${req}${ph}${o.lista ? ` list="dl-${col}"` : ""}>${dl}${ay}</label>`
+        const lim = tipo === "fecha" ? ' min="2000-01-01" max="2099-12-31"' : tipo === "fechahora" ? ' min="2000-01-01T00:00" max="2099-12-31T23:59"' : "";
+        return `<label class="campo" data-campo="${col}"><span>${esc(etq)}${marca}</span><input type="${t}" id="${id}" value="${esc(v)}"${req}${ph}${lim}${o.lista ? ` list="dl-${col}"` : ""}>${dl}${ay}</label>`
           + (o.quitar ? `<button type="button" class="btn-linea quitar-campo" data-vaciar="${col}"${v ? "" : " hidden"}>${icono("borrar")}${esc(o.quitar)}</button>` : "");
       }
     }
   };
   const pintaAdj = () => {
     const l = $("lista-adj"); if (!l) return;
-    l.innerHTML = ED.adj.map((a, i) => `<div class="adj-fila">${esImagen(a) ? `<img src="${esc(a.url)}" alt="">` : icono("documento")}
+    l.innerHTML = ED.adj.map((a, i) => `<div class="adj-fila">${esImagen(a) ? `<img src="${esc(urlSegura(a.url))}" alt="">` : icono("documento")}
       <span>${esc(a.nombre)}<small>${tipoTxt(a)}${a.tamano ? " · " + tamanoTxt(a.tamano) : ""}</small></span>
       <button type="button" class="btn-ic peq" data-quitar-adj="${i}" aria-label="Quitar ${esc(a.nombre)}">${icono("cerrar")}</button></div>`).join("");
   };
   // v22: solo fotos (JPEG, PNG, WebP), PDF y documentos de oficina. Nada de SVG ni HTML, que podrían llevar
   // código. «accept» solo filtra al elegir; al arrastrar archivos se comprueba también aquí.
-  const ACEPTA_SUBIDA = "image/jpeg,image/png,image/webp,application/pdf,.pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp";
-  const subidaPermitida = (f) => /\.(jpe?g|png|webp|pdf|docx?|xlsx?|pptx?|odt|ods|odp)$/i.test(f.name || "") && !/svg|html|^text\/xml|^application\/xml|javascript/i.test(f.type || "");
-  const limpiaNombre = (n) => n.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w.-]+/g, "-").slice(-80);
+  // v23: el tipo se pone según la extensión (algunos Android no dan tipo a los .docx y el almacén los rechazaría).
+  // Son los mismos tipos que admite el almacén «documentos» (cierre 3 de la revisión de seguridad).
+  const TIPO_EXT = {
+    jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", pdf: "application/pdf",
+    doc: "application/msword", docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    xls: "application/vnd.ms-excel", xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ppt: "application/vnd.ms-powerpoint", pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    odt: "application/vnd.oasis.opendocument.text", ods: "application/vnd.oasis.opendocument.spreadsheet", odp: "application/vnd.oasis.opendocument.presentation",
+  };
+  const ACEPTA_SUBIDA = "image/jpeg,image/png,image/webp,application/pdf," + Object.keys(TIPO_EXT).map((e) => "." + e).join(",");
+  const subidaPermitida = (f) => !!TIPO_EXT[extDe(f.name)] && !/svg|html|^text\/xml|^application\/xml|javascript/i.test(f.type || "");
+  const limpiaNombre = (n) => n.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w.-]+/g, "-").slice(-80);
+  // v23: las fotos se vuelven a hacer en el propio móvil antes de subirlas. Así se les quitan los datos ocultos
+  // (EXIF: el lugar donde se hizo con el GPS, el modelo del móvil, la hora). Se respeta cómo se ve (girada si hace
+  // falta), no se agrandan (como mucho 2000 px de lado) y se guardan con buena calidad.
+  const FOTO_MAX = 2000;
+  const limpiaFoto = async (f, tipo) => {
+    let img;
+    try { img = await createImageBitmap(f, { imageOrientation: "from-image" }); } catch (_) { img = await cargaImagen(f); }
+    const w0 = img.width || img.naturalWidth, h0 = img.height || img.naturalHeight, r = Math.min(1, FOTO_MAX / Math.max(w0, h0));
+    const c = document.createElement("canvas"); c.width = Math.round(w0 * r); c.height = Math.round(h0 * r);
+    const x = c.getContext("2d");
+    if (tipo === "image/jpeg") { x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); }
+    x.drawImage(img, 0, 0, c.width, c.height);
+    img.close?.();
+    const b = await new Promise((ok) => c.toBlob(ok, tipo, tipo === "image/png" ? undefined : 0.9));
+    if (!b || b.type !== tipo) throw new Error(`No se ha podido preparar la foto «${f.name}». Prueba con otra foto o hazle una captura de pantalla.`);
+    return b;
+  };
   const subir = async (files) => {
-    const S = SECCIONES[ED.k];
+    const S = SECCIONES[ED.k], E = ED, malos = [], grandes = [], fallos = [];
     for (const f of files) {
-      if (f.size > 20 * 1048576) { avisa(`«${f.name}» pesa más de 20 MB`, true); continue; }
-      if (!subidaPermitida(f)) { avisa(`«${f.name}» no se puede subir: solo fotos (JPG, PNG, WebP), PDF, Word, Excel o PowerPoint`, true); continue; }
+      if (f.size > 20 * 1048576) { grandes.push(f.name); continue; }
+      if (!subidaPermitida(f)) { malos.push(f.name); continue; }
+      const tipo = TIPO_EXT[extDe(f.name)];
       estado($("ed-msg"), `Subiendo «${f.name}»…`);
+      let cuerpo = f;
+      try { if (/^image\//.test(tipo)) cuerpo = await limpiaFoto(f, tipo); } catch (e) { fallos.push(errTxt(e)); continue; }
       const ruta = `${S.tabla}/${Date.now()}-${limpiaNombre(f.name)}`;
-      const { error } = await sb.storage.from("documentos").upload(ruta, f, { contentType: f.type || undefined });
-      if (error) { avisa(errTxt(error), true); continue; }
+      const { error } = await sb.storage.from("documentos").upload(ruta, cuerpo, { contentType: tipo }).then((r) => r, (e) => ({ error: e }));
+      if (error) { fallos.push(`«${f.name}»: ${errTxt(error)}`); continue; }
+      if (ED !== E) { borraArchivos([{ ruta }]); return; } // se cerró el editor mientras subía
       const { data } = sb.storage.from("documentos").getPublicUrl(ruta);
-      const a = { url: data.publicUrl, nombre: f.name, tipo: f.type, tamano: f.size, ruta };
+      const a = { url: data.publicUrl, nombre: f.name, tipo, tamano: cuerpo.size, ruta };
       ED.adj.push(a); ED.subidos.push(a); ED.sucio = true;
       pintaAdj(); previa();
     }
     estado($("ed-msg"), "");
+    // Lo que no se ha podido subir, todo junto en un solo aviso (antes solo se leía el último)
+    const heic = malos.some((n) => /\.(heic|heif)$/i.test(n));
+    const partes = [
+      malos.length && `No se ${malos.length === 1 ? "puede" : "pueden"} subir: ${malos.map((n) => "«" + n + "»").join(", ")}. Solo fotos (JPG, PNG, WebP), PDF, Word, Excel o PowerPoint.${heic ? " Si es una foto del iPhone (HEIC), hazle una captura de pantalla o compártela como JPG." : ""}`,
+      grandes.length && `${grandes.map((n) => "«" + n + "»").join(", ")} ${grandes.length === 1 ? "pesa" : "pesan"} más de 20 MB.`,
+      ...fallos,
+    ].filter(Boolean);
+    if (partes.length) avisa(partes.join(" "), true);
   };
   const borraArchivos = (lista) => {
     const rutas = (lista || []).map((a) => a.ruta).filter(Boolean);
@@ -748,7 +900,12 @@
       if (tipo === "foto") { v[col] = ED.foto || null; continue; }
       if (tipo === "si") { v[col] = el.checked; continue; }
       let val = el.value.trim();
-      if (comprobar && o.req && !val) { el.closest("[data-campo]").classList.add("falta"); el.focus(); return [v, `Falta rellenar «${etq}».`]; }
+      const marcaMal = (t) => { el.closest("[data-campo]").classList.add("falta"); el.focus(); return [v, t]; };
+      if (comprobar && o.req && !val) return marcaMal(`Falta rellenar «${etq}».`);
+      // v23: comprobaciones sencillas para no publicar enlaces rotos ni fechas imposibles
+      if (comprobar && val && ["fecha", "fechahora"].includes(tipo) && !/^(20\d\d)-/.test(val)) return marcaMal(`Revisa el año de «${etq}».`);
+      if (comprobar && val && tipo === "email" && !/^[^@\s]+@[^@\s]+\.[^@\s.]{2,}$/.test(val)) return marcaMal(`El email de «${etq}» no parece correcto (tiene que ser como nombre@ejemplo.com).`);
+      if (comprobar && val && tipo === "tel" && (!/^[\d\s+().-]+$/.test(val) || val.replace(/\D/g, "").length < 9 || val.replace(/\D/g, "").length > 15)) return marcaMal(`El teléfono de «${etq}» no parece correcto (pon solo números, por ejemplo 600 123 456).`);
       if (tipo === "numero") val = Number(val) || 0;
       else if (tipo === "opcion" && o.num) val = val ? Number(val) : null;
       else if (tipo === "fechahora") val = val ? new Date(val).toISOString() : null;
@@ -773,9 +930,12 @@
   };
   // Campos que se enseñan: unos solo al crear (avisar al publicar) y otros solo al editar (avisar del cambio)
   const camposDe = (S) => S.campos.filter(([, , , o = {}]) => ED.orig ? !o.soloNuevo : !o.soloEditar);
-  const abrirEditor = (k, x, { duplicando = false } = {}) => {
+  const abrirEditor = (k, x, { duplicando = false, foco = "", despues = null, vuelve = null } = {}) => {
     const S = SECCIONES[k];
-    ED = { k, orig: duplicando ? null : x, adj: x?.adjuntos ? [...x.adjuntos] : [], foto: duplicando ? null : (x?.foto || null), subidos: [], quitados: [], sucio: duplicando };
+    // vuelve: a dónde va el foco al cerrar (la fila que se abrió); despues: algo que hacer solo si se guarda bien
+    ED = { k, orig: duplicando ? null : x, adj: x?.adjuntos ? [...x.adjuntos] : [], foto: duplicando ? null : (x?.foto || null), subidos: [], quitados: [], sucio: duplicando,
+      guardando: false, despues, vuelve: vuelve || document.activeElement };
+    ["ed-guardar", "ed-borrar", "ed-duplicar", "ed-cancelar"].forEach((b) => { $(b).disabled = false; });
     $("ed-modo").textContent = duplicando ? "Copia de " + S.uno : x ? "Editar " + S.uno : S.nuevo;
     $("ed-form").innerHTML = (x && S.avisoEditar ? `<p class="nota-campo">${icono("alerta")}${esc(S.avisoEditar)}</p>` : "")
       + camposDe(S).map((c) => campoHTML(c, x && !c[0].startsWith("_") && c[0] in x ? x[c[0]] : (typeof c[3]?.def === "function" ? c[3].def() : c[3]?.def))).join("");
@@ -789,9 +949,10 @@
     verPestana("form");
     $("editor").hidden = false; $("velo-ed").hidden = false;
     document.body.classList.add("sin-scroll");
+    historiaAbre();
     pintaFoto();
     previa();
-    setTimeout(() => $("ed-form").querySelector("input:not([type=checkbox]), textarea")?.focus(), 30);
+    setTimeout(() => (foco && $(foco) || $("ed-form").querySelector("input:not([type=checkbox]), textarea"))?.focus(), 30);
   };
   // ---- Foto de un miembro: recorte cuadrado y reducción en el navegador antes de subirla ----
   const pintaFoto = () => {
@@ -826,13 +987,22 @@
       pintaFoto(); previa(); estado($("ed-msg"), "Foto lista. Recuerda pulsar «Guardar».");
     } catch (e) { estado($("ed-msg"), errTxt(e), "mal"); }
   };
-  const cerrarEditor = (forzar = false) => {
+  // forzar: sin preguntar (ya se ha guardado). borrarSubidos: lo subido y no guardado no se queda suelto.
+  // seguir: se abre otro editor justo después (Duplicar): la entrada del historial se queda.
+  const cerrarEditor = (forzar = false, { borrarSubidos = !forzar, seguir = false } = {}) => {
     if (!ED) return;
+    if (!forzar && ED.guardando) return; // mientras guarda no se cierra (si no, se quedaría a medias)
     if (!forzar && ED.sucio && !confirm("¿Salir sin guardar? Se perderá lo que has escrito.")) return;
-    if (!forzar) borraArchivos(ED.subidos); // lo subido y no guardado no se queda suelto
+    if (borrarSubidos) borraArchivos(ED.subidos);
+    const vuelve = ED.vuelve;
     ED = null;
     $("editor").hidden = true; $("velo-ed").hidden = true;
     document.body.classList.remove("sin-scroll");
+    if (!seguir) {
+      historiaCierra();
+      // El foco vuelve a la fila que se abrió (o, si ya no está, a la página)
+      setTimeout(() => { if (ED) return; (vuelve && vuelve.isConnected && vuelve.offsetParent !== null ? vuelve : $("zona")).focus?.({ preventScroll: false }); }, 60);
+    }
   };
   const verPestana = (p) => {
     document.querySelectorAll(".ed-pestanas [data-p]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.p === p)));
@@ -842,8 +1012,16 @@
   $("ed-cerrar").addEventListener("click", () => cerrarEditor());
   $("ed-cancelar").addEventListener("click", () => cerrarEditor());
   $("velo-ed").addEventListener("click", () => cerrarEditor());
-  $("ed-form").addEventListener("input", (e) => { ED.sucio = true; previa(); const q = document.querySelector(`[data-vaciar="${e.target.id.slice(2)}"]`); if (q) q.hidden = !e.target.value; });
-  $("ed-form").addEventListener("change", () => { ED.sucio = true; previa(); });
+  $("ed-form").addEventListener("input", (e) => { if (!ED) return; ED.sucio = true; previa(); const q = document.querySelector(`[data-vaciar="${e.target.id.slice(2)}"]`); if (q) q.hidden = !e.target.value; });
+  $("ed-form").addEventListener("change", (e) => {
+    if (!ED) return;
+    ED.sucio = true;
+    // v23: algo que estaba oculto y se pone a la vista nunca había avisado a los móviles: se marca «Volver a avisar»
+    if (/^f-publicada?$/.test(e.target.id) && e.target.checked && ED.orig && ED.orig[e.target.id.slice(2)] === false && $("f-_cambio") && !$("f-_cambio").checked) {
+      $("f-_cambio").checked = true; avisa("Como antes no se veía, se avisará a los móviles al guardar. Si no quieres, quita «Volver a avisar».");
+    }
+    previa();
+  });
   $("ed-form").addEventListener("submit", (e) => e.preventDefault());
   $("ed-form").addEventListener("click", (e) => {
     const f = e.target.closest("[data-formato]");
@@ -878,47 +1056,85 @@
   ["dragleave", "drop"].forEach((t) => $("editor").addEventListener(t, () => $("soltar")?.classList.remove("encima")));
   $("editor").addEventListener("drop", (e) => { if ($("soltar") && e.dataTransfer?.files.length) { e.preventDefault(); subir([...e.dataTransfer.files]); } });
 
+  // v23: mientras se guarda (y se avisa a los móviles), los botones del pie se quedan bloqueados hasta que se
+  // cierra el editor: un doble toque publicaba dos veces y avisaba dos veces a todos los móviles. Solo se
+  // desbloquean si algo falla, para poder volver a intentarlo.
+  const BOTONES_PIE = ["ed-guardar", "ed-borrar", "ed-duplicar", "ed-cancelar"];
+  const bloqueaPie = (si) => { BOTONES_PIE.forEach((b) => { $(b).disabled = si; }); if (ED) ED.guardando = si; };
+  // El servidor no da error si la sesión ha caducado: simplemente no cambia ninguna fila. Con .select("id") se sabe.
+  const noCambio = (r) => !r.error && Array.isArray(r.data) && r.data.length === 0;
+  const NO_CAMBIO_TXT = "No se ha guardado: puede que tu sesión haya caducado o que alguien lo haya borrado. Sal del panel, vuelve a entrar y prueba otra vez.";
+  // Si no ha cambiado nada, se pregunta al servidor si aún nos reconoce como admin: así se dice la causa de verdad
+  const motivoNoCambio = async (txt) => {
+    try { const { data, error } = await sb.rpc("is_admin"); if (!error && data === false) return CADUCADA; } catch (_) { /* sin red: el texto general */ }
+    return txt;
+  };
   $("ed-guardar").addEventListener("click", async () => {
-    const S = SECCIONES[ED.k], [v, error] = leeForm(true), msg = $("ed-msg");
+    if (!ED || ED.guardando) return;
+    const E = ED, S = SECCIONES[E.k], [v, error] = leeForm(true), msg = $("ed-msg");
     if (error) return estado(msg, error, "mal");
-    S.alGuardar?.(v, ED.orig);
+    S.alGuardar?.(v, E.orig);
     const cambio = !!v._cambio;
     Object.keys(v).forEach((c) => { if (c.startsWith("_")) delete v[c]; });
-    const b = $("ed-guardar"); b.disabled = true; estado(msg, "Guardando…");
-    const r = ED.orig ? await sb.from(S.tabla).update(v).eq("id", ED.orig.id) : await sb.from(S.tabla).insert(v).select("id").single();
-    b.disabled = false;
-    if (r.error) return estado(msg, errTxt(r.error), "mal");
-    borraArchivos(ED.quitados.filter((a) => !ED.adj.some((x) => x.url === a.url) && !(ED.foto && ED.foto.url === a.url)));
-    const programado = ED.k === "avisos" && v.publicar_en && v.publicar_en > ahoraISO();
+    bloqueaPie(true); estado(msg, "Guardando…");
+    const falla = (t) => { bloqueaPie(false); estado(msg, t, "mal"); };
+    if (!(await haySesion())) { bloqueaPie(false); return; }
+    let r;
+    try { r = E.orig ? await sb.from(S.tabla).update(v).eq("id", E.orig.id).select("id") : await sb.from(S.tabla).insert(v).select("id").single(); }
+    catch (e) { return falla(errTxt(e)); }
+    if (r.error) return falla(errTxt(r.error));
+    if (noCambio(r)) return falla(await motivoNoCambio(NO_CAMBIO_TXT));
+    borraArchivos(E.quitados.filter((a) => !E.adj.some((x) => x.url === a.url) && !(E.foto && E.foto.url === a.url)));
+    const programado = E.k === "avisos" && v.publicar_en && v.publicar_en > ahoraISO();
+    // Un aviso programado al que se le quita la programación se publica ahora (y avisa a los móviles, si lo tenía marcado)
+    const yaNoProgramado = E.k === "avisos" && E.orig?.publicar_en && E.orig.publicar_en > ahoraISO() && !programado;
     const oculto = v.publicado === false || v.publicada === false;
-    let txt = programado ? "Aviso programado" : ED.orig ? "Cambios guardados" : oculto ? "Guardado (no se ve en la web)" : "Publicado";
-    // Avisar al móvil: al publicar algo nuevo (si la casilla está marcada) o al pedir «volver a avisar»
-    const id = ED.orig ? ED.orig.id : r.data?.id;
-    if (AVISABLE.includes(ED.k) && id && !programado && !oculto && ((!ED.orig && v.notificar) || cambio)) {
+    let txt = programado ? "Aviso programado" : yaNoProgramado ? "Publicado ahora" : E.orig ? "Cambios guardados" : oculto ? "Guardado (no se ve en la web)" : "Publicado", mal = false;
+    // Avisar al móvil: al publicar algo nuevo (si la casilla está marcada), al pedir «volver a avisar» o al quitar la programación
+    const id = E.orig ? E.orig.id : r.data?.id;
+    if (AVISABLE.includes(E.k) && id && !programado && !oculto && ((!E.orig && v.notificar) || cambio || (yaNoProgramado && E.orig.notificar !== false))) {
       estado(msg, "Avisando a los móviles…");
-      const n = await avisarMoviles(ED.k, id, cambio);
-      if (n != null) txt += n ? ` y avisado a ${n} ${n === 1 ? "móvil" : "móviles"}` : " (todavía no hay móviles apuntados a los avisos)";
+      const n = await avisarMoviles(E.k, id, cambio);
+      if (n == null) { txt += ", pero no se ha podido avisar a los móviles. Se intentará solo en unos minutos"; mal = true; }
+      else txt += n ? ` y avisado a ${n} ${n === 1 ? "móvil" : "móviles"}` : " (todavía no hay móviles apuntados a los avisos)";
     }
     if (programado && v.notificar !== false) txt += ": avisará a los móviles cuando se publique";
-    if (ED.k === "apartados") await cargaAps().catch(() => {});
-    avisa(txt);
+    if (E.k === "apartados") await cargaAps().catch(() => {});
+    if (E.despues) await E.despues(id).catch(() => {});
+    avisa(txt + (mal ? "." : ""), mal);
     cerrarEditor(true);
     irA(actual);
   });
   $("ed-borrar").addEventListener("click", async () => {
-    const S = SECCIONES[ED.k];
-    if (!confirm(`¿Borrar «${tituloDe(S, ED.orig)}»?\n\nSe quitará de la web. Si te equivocas, lo puedes recuperar desde «Papelera» durante 90 días.`)) return;
-    const { error } = await sb.from(S.tabla).delete().eq("id", ED.orig.id);
-    if (error) return estado($("ed-msg"), errTxt(error), "mal");
+    if (!ED || ED.guardando || !ED.orig) return;
+    const E = ED, S = SECCIONES[E.k];
+    bloqueaPie(true); // también mientras pregunta: un segundo toque no vuelve a preguntar
+    let extra = "";
+    if (E.k === "apartados") {
+      // Una sección se borra con todo lo que tiene dentro: se dice antes
+      const hijas = APS.filter((a) => a.padre_id === E.orig.id), ids = [E.orig.id, ...hijas.map((a) => a.id)];
+      const { data: pubs } = await sb.from("publicaciones").select("id, apartado_id").then((r) => r, () => ({ data: null }));
+      const n = (pubs || []).filter((p) => ids.includes(p.apartado_id)).length;
+      const partes = [hijas.length && (hijas.length === 1 ? "1 subsección" : hijas.length + " subsecciones"), n && (n === 1 ? "1 publicación" : n + " publicaciones")].filter(Boolean);
+      if (partes.length) extra = `\n\nOJO: también se borran ${partes.join(" y ")} de dentro. Para recuperarlas, en la Papelera recupera primero la sección.`;
+    }
+    const si = confirm(`¿Borrar «${tituloDe(S, E.orig)}»?${extra}\n\nSe quitará de la web. Si te equivocas, lo puedes recuperar desde «Papelera» durante 90 días.`);
+    if (!si) { bloqueaPie(false); return; }
+    estado($("ed-msg"), "Borrando…");
+    if (!(await haySesion())) { bloqueaPie(false); return; }
+    const r = await sb.from(S.tabla).delete().eq("id", E.orig.id).select("id").then((x) => x, (e) => ({ error: e }));
+    if (r.error) { bloqueaPie(false); return estado($("ed-msg"), errTxt(r.error), "mal"); }
+    if (noCambio(r)) { bloqueaPie(false); return estado($("ed-msg"), await motivoNoCambio(NO_CAMBIO_TXT.replace("No se ha guardado", "No se ha borrado")), "mal"); }
     avisa("Borrado. Está en la Papelera por si lo necesitas.");
     cerrarEditor(true); irA(actual);
   });
   $("ed-duplicar").addEventListener("click", () => {
-    const S = SECCIONES[ED.k], [v] = leeForm(false);
+    if (!ED || ED.guardando) return;
+    const S = SECCIONES[ED.k], [v] = leeForm(false), vuelve = ED.vuelve;
     const copia = { ...v, adjuntos: [] };
     S.alDuplicar?.(copia);
-    const k = ED.k; cerrarEditor(true);
-    abrirEditor(k, copia, { duplicando: true });
+    const k = ED.k; cerrarEditor(true, { seguir: true });
+    abrirEditor(k, copia, { duplicando: true, vuelve });
     avisa(k === "reuniones" ? "Copia lista: elige el día nuevo y guarda" : "Copia lista: cambia lo que haga falta y guarda");
   });
 
@@ -933,7 +1149,7 @@
   //  - Fotos y PDF escaneados (páginas convertidas en foto con pdf.js, lib/pdfjs, Apache 2.0): `abreTapador`, se tapa con
   //    el dedo y lo tapado se pinta encima de la imagen (se envía la imagen ya pintada, sin datos ocultos de la foto).
   //  - Antes de enviar, «Esto es lo que se enviará» (`#ia-revision`) con lo tapado marcado.
-  let IA = [], IA_ENVIO = null;
+  let IA = [], IA_ENVIO = null, IA_SIN_MIEMBROS = false;
   const IA_MAX = 6;
   const extDe = (n) => String(n || "").split(".").pop().toLowerCase();
   const CLAVE_TAPAR = "comite-ia-tapar";
@@ -941,6 +1157,7 @@
       <h3>${icono("magia")}Hacer el acta con el asistente</h3>
       <p class="ayuda">Haz una <b>foto de tus notas</b> (aunque sean a mano) o sube el <b>PDF o Word</b> de la reunión. El asistente rellena el acta de abajo y tú la revisas antes de publicar.</p>
       <p class="ia-protege">${icono("escudo")}<span><b>Los datos importantes se tapan antes de enviar.</b> En el texto se tapan solos los nombres, DNI, teléfonos, emails y cuentas. En las fotos, los tapas tú con el dedo. Antes de enviar ves exactamente lo que sale.</span></p>
+      <p class="ayuda ia-delicado"><b>No envíes notas con temas de salud, bajas, sanciones o el sindicato de alguien</b>, aunque los nombres salgan tapados. Lo que se envía va a Google. Lo que escribe la IA es un borrador: revísalo entero antes de publicar.</p>
       <div class="ia-botones">
         <label class="ia-boton">${icono("camara")}<b>Hacer foto</b><span>con la cámara</span><input type="file" id="f-ia-cam" accept="image/*" capture="environment"></label>
         <label class="ia-boton">${icono("subir")}<b>Elegir archivos</b><span>fotos, PDF, Word</span><input type="file" id="f-ia" multiple accept="image/jpeg,image/png,image/webp,application/pdf,.pdf,.docx,.txt,text/plain"></label>
@@ -968,11 +1185,14 @@
     "enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre lunes martes miércoles miercoles jueves viernes sábado sabado domingo " +
     "españa espana cataluña cataluna girona barcelona francia italia alemania europa ccoo ugt cgt usoc csif el la los las del de y en por para con se que no si " +
     "nave almacén almacen oficina dirección direccion gerencia prevención prevencion riesgos laborales salud laboral ett mutua inspección inspeccion trabajo " +
-    "turno turnos tráfico trafico taller gasolinera muelle punto puntos acuerdos acuerdo resumen asistentes asisten presidente presidenta secretario secretaria delegado delegada").split(/\s+/));
+    "turno turnos tráfico trafico taller gasolinera muelle punto puntos acuerdos acuerdo resumen asistentes asisten presidente presidenta secretario secretaria delegado delegada " +
+    "hacienda gobierno generalitat ministerio ayuntamiento sindicato sindicatos ley estatuto trabajadores plantilla artículo articulo boe dogc tribunal juzgado sepe inss").split(/\s+/));
+  const LETRA_DNI = "TRWAGMYFPDXBNJZSQVHLCKE";
   const nombresATapar = async () => {
     const propios = String(TEMA.lee(CLAVE_TAPAR) || "").split(/\n+/).map((x) => x.trim()).filter((x) => x.length >= 2);
     let miembros = [];
-    try { const { data } = await sb.from("miembros").select("nombre"); miembros = (data || []).map((m) => m.nombre).filter(Boolean); } catch (_) {}
+    try { const { data, error } = await sb.from("miembros").select("nombre"); if (error) throw error; miembros = (data || []).map((m) => m.nombre).filter(Boolean); }
+    catch (_) { IA_SIN_MIEMBROS = true; } // se avisa en «Esto es lo que se enviará»
     const todos = new Set();
     [...propios, ...miembros].forEach((n) => { todos.add(n); n.split(/\s+/).filter((p) => p.length >= 3 && !NO_NOMBRES.has(p.toLowerCase())).forEach((p) => todos.add(p)); });
     return [...todos].sort((x, y) => y.length - x.length); // primero los largos («Juan Pérez» antes que «Juan»)
@@ -987,16 +1207,22 @@
     t = t.replace(/\b[A-Z]{2}\d{2}(?:[ -]?[A-Z0-9]{4}){4,7}\b/gi, fijo("cuenta", "CUENTA TAPADA"));
     t = t.replace(/\b(?:\d[ -]?){15,18}\d\b/g, fijo("cuenta", "NÚMERO TAPADO"));
     t = t.replace(/\b\d{2}[ /-]?\d{8}[ /-]?\d{2}\b/g, fijo("ss", "N.º SEG. SOCIAL TAPADO"));
-    t = t.replace(/\b[XYZxyz][ -]?\d{7}[ -]?[A-Za-z]\b/g, fijo("dni", "DNI TAPADO"));
-    t = t.replace(/\b\d{8}[ -]?[A-Za-z]\b/g, fijo("dni", "DNI TAPADO"));
+    t = t.replace(/\b[XYZxyz][ .-]?\d{7}[ .-]?[A-Za-z]\b/g, fijo("dni", "DNI TAPADO"));
+    // v23: DNI también con puntos («12.345.678-Z»). Si la letra va separada por un espacio, solo se tapa si es
+    // la letra que toca a ese número o va en mayúscula (para no tapar «1.500.000 y 2.000»).
+    t = t.replace(/\b(\d{1,2})\.?(\d{3})\.?(\d{3})([ -]?)([A-Za-z])\b/g, (m, a, b, c, sep, l) =>
+      sep === " " && l === l.toLowerCase() && LETRA_DNI[Number(a + b + c) % 23] !== l.toUpperCase() ? m : fijo("dni", "DNI TAPADO")(m));
     t = t.replace(/(?:\+|00)\d{2}[ .-]?\d{3}[ .-]?\d{2,3}[ .-]?\d{2,3}[ .-]?\d{0,3}\b/g, fijo("tel", "TELÉFONO TAPADO"));
     t = t.replace(/\b[6789]\d{2}(?:[ .-]?\d{2,3}){2,3}\b/g, (m) => m.replace(/\D/g, "").length === 9 ? fijo("tel", "TELÉFONO TAPADO")(m) : m);
-    t = t.replace(/\b\d{4}[ -]?[BCDFGHJKLMNPRSTVWXYZ]{3}\b/g, fijo("matricula", "MATRÍCULA TAPADA"));
+    // Matrícula (1234 BCD). En minúscula solo junta o con guion («1234-bcd»), para no tapar «1500 kms»
+    t = t.replace(/\b\d{4}(?:[ -]?[BCDFGHJKLMNPRSTVWXYZ]{3}|-?[bcdfghjklmnprstvwxyz]{3})\b/g, fijo("matricula", "MATRÍCULA TAPADA"));
     // Nombres de las listas (se devuelven al recibir el borrador)
     nombres.forEach((nom) => { t = t.replace(new RegExp(BORDE_I + patronNombre(nom) + BORDE_D, "giu"), persona); });
     // Detrás de tratamientos y palabras como «compañero»: hasta 3 palabras con mayúscula
     const MAY = "\\p{Lu}[\\p{L}'-]+";
-    t = t.replace(new RegExp("(" + BORDE_I + "(?:Sr\\.?|Sra\\.?|Srta\\.?|D\\.|Dña\\.?|Don|Doña|señor|señora|compañer[oa]s?|trabajador(?:a|es|as)?|conductor(?:a|es|as)?|jef[ea]|encargad[oa]|mecánic[oa])\\s+)(" + MAY + "(?:\\s+" + MAY + "){0,2})", "gu"),
+    // v23: también un apellido suelto detrás de «dijo», «según», «firma», «propone»… («Lo dijo López»)
+    t = t.replace(new RegExp("(" + BORDE_I + "(?:Sr\\.?|Sra\\.?|Srta\\.?|D\\.|Dña\\.?|Don|Doña|señor|señora|compañer[oa]s?|trabajador(?:a|es|as)?|conductor(?:a|es|as)?|jef[ea]|encargad[oa]|mecánic[oa]|"
+      + "dijo|dice|[Ss]eg[uú]n|[Ff]irma(?:do por|da por)?|[Ff]irmó|habló|intervino|interviene|propone|propuso|pregunta|preguntó|explica|explicó|comenta|comentó|añade|añadió|responde|respondió)(?::\\s*|\\s+))(" + MAY + "(?:\\s+" + MAY + "){0,2})", "gu"),
       (m, pre, nom) => NO_NOMBRES.has(nom.split(/\s+/)[0].toLowerCase()) ? m : pre + persona(nom));
     // Dos o tres palabras seguidas con mayúscula que no son de la lista de palabras normales (Nombre Apellido)
     t = t.replace(new RegExp(BORDE_I + "(" + MAY + "(?:\\s+" + MAY + "){1,2})" + BORDE_D, "gu"), (m) =>
@@ -1056,22 +1282,26 @@
   const leePdf = async (f) => {
     const pj = await cargaPdfjs();
     const doc = await pj.getDocument({ data: new Uint8Array(await f.arrayBuffer()), isEvalSupported: false }).promise;
-    const n = Math.min(doc.numPages, 20); let texto = "";
-    for (let i = 1; i <= n; i++) { const c = await (await doc.getPage(i)).getTextContent(); texto += c.items.map((x) => x.str + (x.hasEOL ? "\n" : " ")).join("") + "\n\n"; }
-    if (texto.replace(/\s/g, "").length >= 40 * n) return { texto: texto.trim(), paginas: doc.numPages };
-    const imgs = [];
-    for (let i = 1; i <= Math.min(doc.numPages, IA_MAX); i++) {
-      const p = await doc.getPage(i), v1 = p.getViewport({ scale: 1 }), vp = p.getViewport({ scale: 1600 / Math.max(v1.width, v1.height) });
-      const cv = document.createElement("canvas"); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
-      const cx = cv.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height);
-      await p.render({ canvasContext: cx, viewport: vp }).promise; imgs.push(cv);
-    }
-    return { imgs, paginas: doc.numPages };
+    try {
+      const n = Math.min(doc.numPages, 20); let texto = "";
+      for (let i = 1; i <= n; i++) { const c = await (await doc.getPage(i)).getTextContent(); texto += c.items.map((x) => x.str + (x.hasEOL ? "\n" : " ")).join("") + "\n\n"; }
+      if (texto.replace(/\s/g, "").length >= 40 * n) return { texto: texto.trim(), paginas: doc.numPages, leidas: n };
+      const imgs = [];
+      for (let i = 1; i <= Math.min(doc.numPages, IA_MAX); i++) {
+        const p = await doc.getPage(i), v1 = p.getViewport({ scale: 1 }), vp = p.getViewport({ scale: 1600 / Math.max(v1.width, v1.height) });
+        const cv = document.createElement("canvas"); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+        const cx = cv.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height);
+        await p.render({ canvasContext: cx, viewport: vp }).promise; imgs.push(cv);
+      }
+      return { imgs, paginas: doc.numPages };
+    } finally { doc.destroy().catch?.(() => {}); } // libera la memoria del PDF
   };
   // El texto de un Word (.docx) se saca en el propio navegador
   const textoDeWord = async (f) => {
     if (!window.JSZip) await cargarJSZip();
-    const zip = await window.JSZip.loadAsync(f), xml = await zip.file("word/document.xml")?.async("string");
+    let zip;
+    try { zip = await window.JSZip.loadAsync(f); } catch (_) { throw new Error(`«${f.name}» no se puede leer: puede estar dañado. Guárdalo como PDF y súbelo otra vez.`); }
+    const xml = await zip.file("word/document.xml")?.async("string");
     if (!xml) throw new Error(`«${f.name}» no parece un Word válido. Guárdalo como PDF y súbelo otra vez.`);
     return xml.replace(/<\/w:p>/g, "\n").replace(/<w:tab\/>/g, "\t").replace(/<[^>]+>/g, "")
       .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/\n{3,}/g, "\n\n").trim();
@@ -1102,14 +1332,14 @@
           else if (tipo === "application/pdf" || ext === "pdf") {
             estado($("m-ia"), "Leyendo el PDF…");
             const p = await leePdf(f);
-            if (p.texto) IA.push({ nombre: f.name, texto: p.texto });
+            if (p.texto) IA.push({ nombre: f.name, texto: p.texto, aviso: p.paginas > p.leidas ? `De «${f.name}» solo se leen las ${p.leidas} primeras páginas (tiene ${p.paginas}).` : "" });
             else { estado($("m-ia"), "Es un PDF escaneado: tapa lo que no quieras enviar en cada página."); for (const [i, c] of p.imgs.entries()) await anadeFoto(c, `${f.name} · página ${i + 1}${p.paginas > p.imgs.length ? " de " + p.paginas : ""}`); }
           } else if (ext === "docx") IA.push({ nombre: f.name, texto: (await textoDeWord(f)).slice(0, 25000) });
           else if (ext === "txt" || tipo === "text/plain") IA.push({ nombre: f.name, texto: (await f.text()).slice(0, 25000) });
           else malos.push(f.name);
-        } catch (e) { malos.push(f.name + " (" + errTxt(e) + ")"); }
+        } catch (e) { malos.push(/«/.test(e?.message || "") ? e.message.replace(/\.$/, "") : f.name + " (" + errTxt(e) + ")"); }
       }
-      estado($("m-ia"), malos.length ? "No se pueden usar: " + malos.join(", ") + ". Usa fotos, PDF o Word (.docx)." : "", malos.length ? "mal" : "");
+      estado($("m-ia"), malos.length ? "No se pueden usar: " + malos.join("; ") + ". Usa fotos, PDF o Word (.docx)." : "", malos.length ? "mal" : "");
       $("f-ia").value = ""; $("f-ia-cam").value = ""; pinta();
     };
     $("f-ia").addEventListener("change", (e) => { e.stopPropagation(); anade([...e.target.files]); });
@@ -1137,18 +1367,21 @@
     if (notas.length < 20 && !IA.length) return estado(m, "Añade una foto o un archivo con las notas de la reunión.", "mal");
     let texto = notas;
     IA.filter((x) => x.texto).forEach((x) => { texto += `\n\nContenido de «${x.nombre}»:\n` + x.texto; });
+    IA_SIN_MIEMBROS = false;
     const { texto: tapado, mapa, cuenta } = tapaTexto(texto.trim(), await nombresATapar());
     const imgs = IA.filter((x) => x.blob);
     IA_ENVIO = { texto: tapado, mapa, imgs };
     const partes = [cuenta.nombre && Object.keys(mapa).length + (Object.keys(mapa).length === 1 ? " nombre" : " nombres"), cuenta.dni && cuenta.dni + " DNI/NIE", cuenta.tel && cuenta.tel + (cuenta.tel === 1 ? " teléfono" : " teléfonos"),
       cuenta.email && cuenta.email + " email", cuenta.cuenta && cuenta.cuenta + " n.º de cuenta", cuenta.ss && cuenta.ss + " n.º Seg. Social", cuenta.matricula && cuenta.matricula + " matrícula"].filter(Boolean);
-    const sinTapar = imgs.filter((x) => !x.tapado).length;
+    const sinTapar = imgs.filter((x) => !x.tapado).length, avisosIA = IA.map((x) => x.aviso).filter(Boolean);
+    if (IA_SIN_MIEMBROS) avisosIA.push("No se han podido cargar los nombres del comité: revisa que no salgan sin tapar.");
     const marca = (t) => esc(t).replace(/\[(PERSONA \d+|[^\]]*TAPAD[OA])\]/g, '<mark>[$1]</mark>');
     $("ia-revision").innerHTML = `<div class="ia-rev">
       <b>Esto es lo que se enviará a la IA de Google</b>
       <p class="ayuda">${partes.length ? "Se han tapado: " + esc(partes.join(", ")) + ". Los nombres vuelven a su sitio al recibir el borrador; lo demás se queda tapado." : "En el texto no se ha encontrado nada que tapar."} Si ves algo que no quieres enviar, pulsa «Volver», añádelo a «Nombres que se tapan siempre» o táchalo en la nota.</p>
       ${tapado ? `<pre class="ia-texto">${marca(tapado)}</pre>` : ""}
       ${imgs.length ? `<div class="ia-fotos">${imgs.map((x) => `<img src="${URL.createObjectURL(x.blob)}" alt="${esc(x.nombre)}">`).join("")}</div>` : ""}
+      ${avisosIA.map((t) => `<p class="ia-ojo">${icono("alerta")}<span>${esc(t)}</span></p>`).join("")}
       ${sinTapar ? `<p class="ia-ojo">${icono("alerta")}<span>${sinTapar === 1 ? "Hay 1 foto en la que no has tapado nada" : "Hay " + sinTapar + " fotos en las que no has tapado nada"}. Si sale algún nombre o dato, pulsa «Volver» y luego «Tapar».</span></p>` : ""}
       <div class="acciones"><button type="button" class="btn-linea" data-ia-volver>Volver</button><button type="button" class="btn" data-ia-enviar>${icono("magia")}Enviar y hacer el acta</button></div>
     </div>`;
@@ -1190,7 +1423,7 @@
       const { data, error } = await sb.functions.invoke("notificar", { body: { modo: "publicado", tabla, id, cambio } });
       if (error) throw error;
       return data?.push ? data.push.ok : 0;
-    } catch (e) { avisa("Se ha publicado, pero no se ha podido avisar a los móviles. Se intentará solo en unos minutos.", true); return null; }
+    } catch (e) { return null; } // quien llama lo dice en su aviso (si no, «Publicado» lo tapaba al momento)
   };
 
   // ================== BUZÓN ==================
@@ -1200,6 +1433,8 @@
     PEND_BUZON = count || 0; marcaCuentaBuzon();
   };
   let verArchivados = false, MENSAJES = [];
+  // El buzón es anónimo: sus enlaces no se pueden tocar (podrían llevar a una web falsa). Se ven como texto.
+  const sinEnlaces = (h) => h.replace(/<a [^>]*>([^<]*)<\/a>/g, "$1");
   const pintaBuzon = async () => {
     $("zona").innerHTML = `<div class="cab-seccion"><h1 class="titulo-vista">Buzón anónimo</h1>
       <button type="button" class="btn-linea" id="b-archivados">${icono("archivo")}${verArchivados ? "Ver los pendientes" : "Ver archivados"}</button></div>
@@ -1213,7 +1448,7 @@
     $("filas").innerHTML = data.map((m) => `
       <div class="tarjeta mensaje${m.leido ? "" : " sin-leer"}">
         <div class="meta"><span class="etq ${m.tipo === "Pregunta" ? "azul" : ""}">${esc(m.tipo)}</span><span>${esc(fechaLarga(m.dia))}</span>${m.leido ? "" : '<span class="etq rojo">Sin leer</span>'}</div>
-        <div class="texto">${textoHTML(m.texto)}</div>
+        <div class="texto">${sinEnlaces(textoHTML(m.texto))}</div>
         <div class="acciones">
           ${m.leido ? "" : `<button type="button" class="btn-linea" data-leido="${m.id}">${icono("check")}Marcar leído</button>`}
           ${m.tipo === "Pregunta" ? `<button type="button" class="btn-linea" data-responder="${m.id}">${icono("mensaje")}Responder en la web</button>` : ""}
@@ -1227,20 +1462,21 @@
     const b = e.target.closest("[data-leido],[data-archivar],[data-borrar-msg],[data-responder]");
     if (!b || actual !== "buzon") return;
     const id = Number(b.dataset.leido || b.dataset.archivar || b.dataset.borrarMsg || b.dataset.responder);
-    const m = MENSAJES.find((x) => x.id === id); if (!m) return;
-    let r;
-    if (b.dataset.leido) r = await sb.from("buzon").update({ leido: true }).eq("id", id);
-    else if (b.dataset.archivar) r = await sb.from("buzon").update({ archivado: !m.archivado, leido: true }).eq("id", id);
-    else if (b.dataset.borrarMsg) { if (!confirm("¿Borrar este mensaje? No se puede deshacer.")) return; r = await sb.from("buzon").delete().eq("id", id); }
-    else {
-      await sb.from("buzon").update({ leido: true }).eq("id", id);
-      abrirEditor("preguntas", null);
+    const m = MENSAJES.find((x) => x.id === id); if (!m || b.disabled) return;
+    if (b.dataset.responder) {
+      // Se marca como leído solo cuando la pregunta frecuente se guarda (si se cancela, sigue sin leer)
+      abrirEditor("preguntas", null, { foco: "f-respuesta", despues: async () => { const r = await sb.from("buzon").update({ leido: true }).eq("id", id); if (r.error) throw r.error; cuentaBuzon(); } });
       $("f-pregunta").value = m.texto; ED.sucio = true; previa();
-      $("f-respuesta").focus();
-      cuentaBuzon();
       return;
     }
+    if (b.dataset.borrarMsg && !confirm("¿Borrar este mensaje? No se puede deshacer.")) return;
+    b.disabled = true;
+    if (!(await haySesion())) { b.disabled = false; return; }
+    const q = b.dataset.leido ? sb.from("buzon").update({ leido: true }) : b.dataset.archivar ? sb.from("buzon").update({ archivado: !m.archivado, leido: true }) : sb.from("buzon").delete();
+    const r = await q.eq("id", id).select("id").then((x) => x, (e) => ({ error: e }));
+    b.disabled = false;
     if (r.error) return avisa(errTxt(r.error), true);
+    if (noCambio(r)) return avisa(NO_CAMBIO_TXT, true);
     pintaBuzon();
   });
 
@@ -1263,12 +1499,20 @@
         <button type="submit" class="btn grande">${icono("check")}Guardar textos</button>
         <p id="t-estado" class="estado" role="status"></p>
       </form>`;
+    TEXTOS_SUCIO = false;
+    $("f-textos").addEventListener("input", () => { TEXTOS_SUCIO = true; });
     $("f-textos").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const filas = TEXTOS.map(([s]) => ({ slug: s, contenido: $("t-" + s).value.trim() }));
-      const { error: er } = await sb.from("paginas").upsert(filas);
-      if (er) return estado($("t-estado"), errTxt(er), "mal");
-      avisa("Textos guardados");
+      const bt = $("f-textos").querySelector("button[type=submit]"); if (bt.disabled) return;
+      bt.disabled = true; estado($("t-estado"), "Guardando…");
+      try {
+        if (!(await haySesion())) return;
+        const filas = TEXTOS.map(([s]) => ({ slug: s, contenido: $("t-" + s).value.trim() }));
+        const { error: er } = await sb.from("paginas").upsert(filas);
+        if (er) return estado($("t-estado"), errTxt(er), "mal");
+        TEXTOS_SUCIO = false; estado($("t-estado"), "");
+        avisa("Textos guardados");
+      } finally { bt.disabled = false; }
     });
   };
 
@@ -1278,18 +1522,29 @@
     if (actual !== "papelera") return;
     const nombreTabla = (t) => SECCIONES[t]?.nombre || t;
     $("zona").innerHTML = `<h1 class="titulo-vista">Papelera</h1>
-      <p class="sub-vista">Lo que se borra se guarda aquí 90 días. Pulsa «Recuperar» y vuelve a la web tal como estaba.</p>
+      <p class="sub-vista">Lo que se borra se guarda aquí 90 días. Pulsa «Recuperar» y vuelve a la web tal como estaba. Si alguien retira su permiso (por ejemplo, un miembro del comité), pulsa «Borrar para siempre» en su ficha.</p>
       <div class="lista">${error ? `<p class="vacio">${esc(errTxt(error))}</p>` : data.map((p) => `
-        <div class="tarjeta fila">
+        <div class="tarjeta fila papelera-fila">
           <div class="fila-abre"><b>${esc((SECCIONES[p.tabla] ? tituloDe(SECCIONES[p.tabla], p.datos) : p.datos.titulo) || "Sin título")}</b>
             <span class="fila-sub">Borrado ${esc(new Date(p.borrado).toLocaleString("es-ES", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }))}${p.por ? " por " + esc(p.por) : ""}</span>
             <span class="chips-fila"><span class="chip-p">${esc(nombreTabla(p.tabla))}</span></span></div>
-          <button type="button" class="btn-linea" data-recuperar="${p.id}">${icono("recuperar")}Recuperar</button>
+          <span class="papelera-btns"><button type="button" class="btn-linea" data-recuperar="${p.id}">${icono("recuperar")}Recuperar</button>
+          <button type="button" class="btn-linea peligro" data-para-siempre="${p.id}">${icono("borrar")}Borrar para siempre</button></span>
         </div>`).join("") || '<p class="vacio">La papelera está vacía.</p>'}</div>`;
     $("zona").querySelectorAll("[data-recuperar]").forEach((b) => b.addEventListener("click", async () => {
-      const { data: t, error: er } = await sb.rpc("recuperar_borrado", { p_id: Number(b.dataset.recuperar) });
-      if (er) return avisa(errTxt(er), true);
+      if (b.disabled) return; b.disabled = true;
+      const { data: t, error: er } = await sb.rpc("recuperar_borrado", { p_id: Number(b.dataset.recuperar) }).then((r) => r, (e) => ({ error: e }));
+      if (er) { b.disabled = false; return avisa(errTxt(er), true); }
       avisa("Recuperado en «" + (SECCIONES[t]?.nombre || t) + "»"); pintaPapelera();
+    }));
+    // v23: borrar ya de la papelera (cuando alguien retira su permiso, no puede esperar 90 días)
+    $("zona").querySelectorAll("[data-para-siempre]").forEach((b) => b.addEventListener("click", async () => {
+      if (b.disabled || !confirm("¿Borrarlo para siempre? Ya no se podrá recuperar.")) return;
+      b.disabled = true;
+      const r = await sb.from("papelera").delete().eq("id", Number(b.dataset.paraSiempre)).select("id").then((x) => x, (e) => ({ error: e }));
+      if (r.error) { b.disabled = false; return avisa(errTxt(r.error), true); }
+      if (noCambio(r)) { b.disabled = false; return avisa("No se ha podido borrar. Pide a Lorena que lo borre.", true); }
+      avisa("Borrado para siempre"); pintaPapelera();
     }));
   };
 
@@ -1311,7 +1566,7 @@
   const msgP = (id, txt, tipo = "") => { const el = $(id); if (el) estado(el, txt, tipo); };
   const petLee = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (_) { return d; } };
   const petGuarda = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
-  const sinTildes = (t) => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const sinTildes = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const horaPet = (t) => new Date(t).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   const creceTexto = (t) => { t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight + 2, 600) + "px"; };
   // Fotos grandes (JPEG/PNG/WebP de más de 600 KB): a 2000 px en JPEG, solo si así pesa menos
@@ -1331,7 +1586,7 @@
     for (let i = 0; i < archivos.length; i++) {
       msgP(idMsg, `Subiendo ${i + 1} de ${archivos.length}…`);
       const f = await reducePet(archivos[i]);
-      const limpio = f.name.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w.-]+/g, "_").slice(-60);
+      const limpio = f.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w.-]+/g, "_").slice(-60);
       const ruta = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}-${limpio}`;
       const { error } = await sb.storage.from("peticiones").upload(ruta, f, { contentType: tipoPet(f) });
       if (error) throw new Error(`No se ha podido subir «${f.name}»: ${errTxt(error)}`);
@@ -1375,8 +1630,10 @@
     return t.length <= 60 ? t : t.slice(0, 60).replace(/\s+\S*$/, "") + "…";
   };
   // Pregunta de Claude con botones: su último mensaje lleva opciones y el padre aún no ha contestado
+  // v23: los mensajes automáticos («Has pedido que lo mire Lorena», con aviso: true) no cuentan como respuesta:
+  // si no, «Avisar a Lorena» quitaba los botones de la pregunta de Claude
   const petPregunta = (x) => {
-    const ms = Array.isArray(x.mensajes) ? x.mensajes : [], ult = ms[ms.length - 1];
+    const ms = (Array.isArray(x.mensajes) ? x.mensajes : []).filter((m) => !m?.aviso), ult = ms[ms.length - 1];
     return ult && ult.quien === "claude" && Array.isArray(ult.opciones) && ult.opciones.length && !x.pasada_lorena ? ult.opciones.filter((o) => typeof o === "string" && o.trim()).slice(0, 6) : null;
   };
   // Visto bueno de Lorena (su app lo apunta en ficha.visto_bueno_lorena al pulsar «Bien, publícalo»; igual que en CCOO v136)
@@ -1408,7 +1665,7 @@
     PET_ARCH = [];
     // Pantalla sencilla (lo pidió Lorena: su padre se lía con tanto texto): frases cortas, botones grandes y lo largo plegado
     $("zona").innerHTML = `<h1 class="titulo-vista">Pedir un cambio a Claude</h1>
-      <p class="sub-vista">Dile qué quieres cambiar. <b>Claude lo prepara y te enseña fotos.</b> No se publica nada sin Lorena.</p>
+      <p class="sub-vista">Dile qué quieres cambiar. <b>Claude lo prepara y te enseña fotos.</b> Nada se publica sin que tú digas «Me gusta, adelante».</p>
       <p class="pet-pausa" id="pet-pausa" role="status" hidden>${icono("reloj")}<span><b>Claude está en pausa.</b> Puedes enviar igual.</span></p>
       <form class="tarjeta pet-form" id="pet-form" novalidate>
         <label for="pet-texto">¿Qué quieres?</label>
@@ -1516,6 +1773,9 @@
 
   // ---- Lo que has pedido: plegado, con filtros, buscador, chat y lo que ha hecho Claude ----
   const PET_ANADE = {}; // archivos elegidos para añadir a cada petición (por id)
+  // El timbre despierta a Claude. Si falla, no pasa nada grave (Claude mira las peticiones cada poco), pero se dice.
+  const timbre = (body) => sb.functions.invoke("timbre", { body }).then((r) => !r.error && r.data?.ok !== false, () => false);
+  const avisoTimbre = (id, ok) => { if (!ok) msgP(`pet-lorena-msg-${id}`, "Guardado. Claude lo verá en menos de una hora.", "bien"); };
   const pintaHechas = async () => {
     const z = $("pet-hechas"); if (!z) return;
     const { data, error } = await sb.from("peticiones_claude").select("id,creado,texto,adjuntos,estado,respuesta,mensajes,deshacer,version,propuesta,decision,decision_el,ficha,pasada_lorena,oculta_padre").order("id", { ascending: false }).limit(PET_LIMITE);
@@ -1627,8 +1887,8 @@
         const { data: r, error } = await sb.rpc("anadir_a_peticion", { p_id: id, p_texto: txt, p_adjuntos: [] });
         if (error) throw error;
         if (r !== "ok") throw new Error("No se ha podido enviar. Prueba otra vez.");
-        await sb.functions.invoke("timbre", { body: { id, anadido: true } }).catch(() => null);
-        await pintaHechas();
+        const t = await timbre({ id, anadido: true });
+        await pintaHechas(); avisoTimbre(id, t);
       } catch (er) { msgP(mid, errTxt(er), "mal"); z.querySelectorAll(`[data-opcion="${id}"]`).forEach((o) => { o.disabled = false; }); }
     }; });
     z.querySelectorAll("[data-otra]").forEach((b) => { b.onclick = () => z.querySelector(`[data-anade-abre="${b.dataset.otra}"]`)?.click() || (() => { const f = z.querySelector(`[data-anade="${b.dataset.otra}"]`); if (f) { f.hidden = false; f.querySelector("textarea").focus(); } })(); });
@@ -1643,8 +1903,8 @@
         const { data: r, error } = await sb.rpc("pasar_a_lorena", { p_id: id });
         if (error) throw error;
         if (r !== "ok" && r !== "ya") throw new Error("No se ha podido pasar. Prueba otra vez.");
-        await sb.functions.invoke("timbre", { body: { id, pasar: true } }).catch(() => null);
-        await pintaHechas();
+        const t = await timbre({ id, pasar: true });
+        await pintaHechas(); avisoTimbre(id, t);
       } catch (er) { msgP(mid, errTxt(er), "mal"); b.disabled = false; }
     }; });
     // «Quitar de mi lista» / «Volver a ponerla»: solo la esconde (el chat se guarda)
@@ -1685,8 +1945,8 @@
         const { data: r, error } = await sb.rpc("deshacer_peticion", { p_id: id });
         if (error) throw error;
         if (r !== "ok" && r !== "ya") throw new Error(r === "no_publicada" ? "Esta petición no está publicada: no hay nada que quitar." : "No se ha podido pedir. Prueba otra vez.");
-        await sb.functions.invoke("timbre", { body: { id, deshacer: true } }).catch(() => null);
-        await pintaHechas();
+        const t = await timbre({ id, deshacer: true });
+        await pintaHechas(); avisoTimbre(id, t);
       } catch (er) { msgP(mid, errTxt(er), "mal"); b.disabled = false; }
     }; });
     // El padre ve las capturas y decide; «Descartar» pide confirmación para no pulsarlo sin querer
@@ -1700,8 +1960,8 @@
         const { data: r, error } = await sb.rpc("decidir_peticion", { p_id: id, p_decision: que });
         if (error) throw error;
         if (r !== "ok" && r !== "ya") throw new Error(r === "no_propuesta" ? "Esta petición ya no está esperando tu respuesta." : "No se ha podido guardar. Prueba otra vez.");
-        await sb.functions.invoke("timbre", { body: { id, decision: true } }).catch(() => null);
-        await pintaHechas();
+        const t = await timbre({ id, decision: true });
+        await pintaHechas(); avisoTimbre(id, t);
       } catch (er) { msgP(mid, errTxt(er), "mal"); z.querySelectorAll(`[data-decide="${id}"]`).forEach((x) => { x.disabled = false; }); }
     }; });
     z.querySelectorAll("[data-anade-abre]").forEach((b) => { b.onclick = () => {
@@ -1780,8 +2040,8 @@
       </form>
       <h2 class="titulo-bloque" id="ajuste-copia">Copia de seguridad</h2>
       <div class="tarjeta seguridad">
-        <p class="sub-vista">El plan gratuito no guarda copias. Descarga una al mes y guárdala en el ordenador o en el Drive: lleva todos los avisos, anuncios, reuniones, actas, documentos, consultas, preguntas, miembros, tus secciones y lo publicado en ellas, mensajes del buzón y textos de la web.</p>
-        <p class="sub-vista"><b>Ojo:</b> la copia lleva los mensajes del buzón y los correos con acceso al panel. Guárdala en un sitio seguro, no la compartas y borra las de más de un año.</p>
+        <p class="sub-vista">El plan gratuito no guarda copias. Descarga una al mes y guárdala en el ordenador o en el Drive: lleva todos los avisos, anuncios, reuniones, actas, documentos, consultas (con sus votos), preguntas, miembros, tus secciones y lo publicado en ellas, mensajes del buzón, lo que has pedido a Claude y textos de la web.</p>
+        <p class="sub-vista"><b>Ojo:</b> la copia lleva los mensajes del buzón, los datos de los miembros y los correos con acceso al panel. Guárdala en un sitio seguro (no en un ordenador compartido), no la compartas y borra las de más de 12 meses.</p>
         <p class="sub-vista" id="ultima-copia">Comprobando la última copia…</p>
         <div class="acciones"><button type="button" class="btn" id="b-copia-todo">${icono("instalar")}Descargar copia con archivos</button>
           <button type="button" class="btn-linea" id="b-copia-datos">${icono("texto")}Solo los textos</button></div>
@@ -1800,10 +2060,9 @@
     if (IR_COPIA) setTimeout(() => $("ajuste-copia")?.scrollIntoView({ block: "start" }), 50);
     $("b-salir-todo").addEventListener("click", async () => {
       if (!confirm("¿Cerrar la sesión del panel en todos los móviles y ordenadores?")) return;
-      await sb.auth.signOut({ scope: "global" }); history.replaceState(null, "", "admin.html"); location.reload();
+      SALIENDO = true; await sb.auth.signOut({ scope: "global" }); history.replaceState(null, "", "admin.html"); location.reload();
     });
-    $("f-admin").addEventListener("submit", async (e) => {
-      e.preventDefault();
+    $("f-admin").addEventListener("submit", (e) => { e.preventDefault(); conBoton($("f-admin").querySelector("button[type=submit]"), async () => {
       const email = $("a-email").value.trim().toLowerCase(), clave = $("a-clave").value, est = $("a-estado");
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return estado(est, "Ese email no parece correcto.", "mal");
       if (clave && claveFlojaTxt(clave)) return estado(est, claveFlojaTxt(clave), "mal");
@@ -1816,7 +2075,7 @@
         avisa("Acceso dado. Ya puede entrar con esa contraseña.");
       } else avisa(er ? "Ese email ya tenía acceso" : "Acceso dado");
       pintaAccesos();
-    });
+    }); });
     // Poner contraseña a una cuenta de la lista
     $("lista-admins")?.addEventListener("click", (e) => {
       const b = e.target.closest("[data-poner-clave]");
@@ -1830,28 +2089,31 @@
       const est = f.querySelector(".estado"), c1 = f.querySelector("[data-clave1]").value, c2 = f.querySelector("[data-clave2]").value;
       if (claveFlojaTxt(c1)) return estado(est, claveFlojaTxt(c1), "mal");
       if (c1 !== c2) return estado(est, "Las dos contraseñas no son iguales.", "mal");
-      estado(est, "Guardando…");
-      const r = await ponClave(f.dataset.formClave, c1);
-      if (r) return estado(est, r, "mal");
-      f.reset(); f.hidden = true;
-      avisa("Contraseña guardada. Ya puede entrar con ella.");
-      pintaEstadoCuentas();
+      await conBoton(f.querySelector("button[type=submit]"), async () => {
+        estado(est, "Guardando…");
+        const r = await ponClave(f.dataset.formClave, c1);
+        if (r) return estado(est, r, "mal");
+        f.reset(); f.hidden = true; estado(est, "");
+        avisa("Contraseña guardada. Ya puede entrar con ella.");
+        pintaEstadoCuentas();
+      });
     });
     pintaEstadoCuentas();
     pintaRescate();
-    $("zona").querySelectorAll("[data-quitar-admin]").forEach((b) => b.addEventListener("click", async () => {
+    $("zona").querySelectorAll("[data-quitar-admin]").forEach((b) => b.addEventListener("click", () => conBoton(b, async () => {
       if (!confirm(`¿Quitar el acceso a ${b.dataset.quitarAdmin}?`)) return;
-      const { error: er } = await sb.from("admins").delete().eq("email", b.dataset.quitarAdmin);
-      if (er) return avisa(errTxt(er), true);
+      const r = await sb.from("admins").delete().eq("email", b.dataset.quitarAdmin).select("email").then((x) => x, (e) => ({ error: e }));
+      if (r.error) return avisa(errTxt(r.error), true);
+      if (noCambio(r)) return avisa(NO_CAMBIO_TXT.replace("No se ha guardado", "No se ha quitado"), true);
       avisa("Acceso quitado"); pintaAccesos();
-    }));
+    })));
   };
 
   // ---- Contraseñas sin email (función «cuenta», como en la web de CCOO) ----
   const llamaCuenta = async (body) => {
     try {
       const { data, error } = await sb.functions.invoke("cuenta", { body });
-      if (error) { const j = await error.context?.json?.().catch(() => null); return { error: j?.error || errTxt(error) }; }
+      if (error) { const j = typeof error.context?.json === "function" ? await error.context.json().catch(() => null) : null; return { error: j?.error || errTxt(error) }; }
       return data || {};
     } catch (e) { return { error: errTxt(e) }; }
   };
@@ -1866,7 +2128,8 @@
     const q = $("rescate-quedan"); if (q && !r.error) q.textContent = r.quedan;
   };
   // ---- Copia de seguridad (como en CCOO) ----
-  const TABLAS_COPIA = ["avisos", "actualidad", "reuniones", "actas", "documentos", "encuestas", "preguntas", "miembros", "apartados", "publicaciones", "buzon", "paginas", "admins"];
+  // v23: también los votos de las consultas (si no, los resultados se perderían) y las peticiones a Claude
+  const TABLAS_COPIA = ["avisos", "actualidad", "reuniones", "actas", "documentos", "encuestas", "encuesta_votos", "preguntas", "miembros", "apartados", "publicaciones", "buzon", "paginas", "admins", "peticiones_claude"];
   const haceTxt = (iso) => { const d = Math.floor((Date.now() - new Date(iso)) / 86400000); return d <= 0 ? "hoy" : d === 1 ? "ayer" : "hace " + d + " días"; };
   const prepararCopia = async () => {
     const { data } = await sb.from("paginas").select("contenido").eq("slug", "ultima_copia").maybeSingle();
@@ -1892,7 +2155,7 @@
         await cargarJSZip();
         const zip = new window.JSZip();
         zip.file("datos.json", JSON.stringify(copia, null, 2));
-        zip.file("LEEME.txt", "Copia de seguridad de la web del Comité de Empresa de Calsina Carré.\r\n\r\ndatos.json: todos los textos (avisos, anuncios, reuniones, actas, documentos, consultas, preguntas, miembros, secciones propias y lo publicado en ellas, buzón y textos de la web).\r\narchivos/: los PDF, fotos y documentos subidos.\r\n\r\nGuárdala en un sitio seguro y no la compartas: lleva los mensajes del buzón y los correos con acceso al panel. Borra las copias de más de un año. Si algún día hace falta recuperar algo, con este archivo se puede restaurar.");
+        zip.file("LEEME.txt", "Copia de seguridad de la web del Comité de Empresa de Calsina Carré.\r\n\r\ndatos.json: todos los textos (avisos, anuncios, reuniones, actas, documentos, consultas con sus votos, preguntas, miembros, secciones propias y lo publicado en ellas, buzón, peticiones a Claude y textos de la web).\r\narchivos/: los PDF, fotos y documentos subidos.\r\n\r\nGuárdala en un sitio seguro y no la compartas: lleva los mensajes del buzón, los datos de los miembros y los correos con acceso al panel. Borra las copias de más de 12 meses. Si algún día hace falta recuperar algo, con este archivo se puede restaurar.");
         const urls = new Map();
         ["avisos", "actualidad", "actas", "documentos", "publicaciones"].forEach((t) => (copia.tablas[t] || []).forEach((x) => (x.adjuntos || []).forEach((a) => a?.url && urls.set(a.url, a.nombre))));
         (copia.tablas.miembros || []).forEach((x) => x.foto?.url && urls.set(x.foto.url, "foto.webp"));
@@ -1907,9 +2170,10 @@
       }
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nombre + (conArchivos ? ".zip" : ".json");
       document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
-      await sb.from("paginas").upsert({ slug: "ultima_copia", contenido: new Date().toISOString(), actualizado: new Date().toISOString() });
-      estado(m, `Copia descargada (${tamanoTxt(blob.size)}). Guárdala en un sitio seguro: lleva los mensajes del buzón y los correos del panel.`, "bien");
-      $("ultima-copia").innerHTML = "Última copia: <b>ahora mismo</b>.";
+      const { error: eu } = await sb.from("paginas").upsert({ slug: "ultima_copia", contenido: new Date().toISOString(), actualizado: new Date().toISOString() }).then((r) => r, (e) => ({ error: e }));
+      estado(m, `Copia descargada (${tamanoTxt(blob.size)}). Guárdala en un sitio seguro: lleva los mensajes del buzón y los correos del panel.`
+        + (eu ? " Ojo: no se ha podido apuntar la fecha de la copia, así que Inicio te la seguirá recordando." : ""), "bien");
+      if (!eu) $("ultima-copia").innerHTML = "Última copia: <b>ahora mismo</b>.";
     } catch (e) { estado(m, "No se ha podido hacer la copia: " + errTxt(e), "mal"); }
     b1.disabled = b2.disabled = false;
   };
@@ -1920,7 +2184,7 @@
       <p class="sub-vista">Son 8 códigos de un solo uso. Si un día no recuerdas la contraseña y nadie te la puede poner, en la pantalla de entrar pulsa «¿Problemas para entrar?» → «Tengo un código de rescate» y pon una contraseña nueva. Guárdalos en papel, en casa. Te quedan: <b id="rescate-quedan">…</b></p>
       <button type="button" class="btn-linea" id="b-codigos">${icono("candado")}Crear códigos nuevos</button>
       <div id="codigos-lista"></div>`;
-    $("b-codigos").addEventListener("click", async () => {
+    $("b-codigos").addEventListener("click", (e) => conBoton(e.currentTarget, async () => {
       if (!confirm("Se crean 8 códigos nuevos y los que tuvieras antes dejan de valer. ¿Seguir?")) return;
       const r = await llamaCuenta({ accion: "codigos" });
       if (r.error) return avisa(r.error, true);
@@ -1929,7 +2193,7 @@
         <button type="button" class="btn" id="b-imprimir-codigos">${icono("documento")}Imprimir</button>`;
       $("rescate-quedan").textContent = r.codigos.length;
       $("b-imprimir-codigos").addEventListener("click", () => print());
-    });
+    }));
     pintaEstadoCuentas();
   };
 
