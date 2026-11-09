@@ -1566,7 +1566,7 @@
         </form>
         <div class="pet-mini">
           ${x.oculta_padre ? `<button type="button" class="btn-texto" data-quitar="${id}" data-poner="1">${icono("recuperar")}Volver a ponerla en mi lista</button>`
-            : `${!x.pasada_lorena && !petVistoBueno(x) ? `<button type="button" class="btn-texto" data-avisa-lorena="${id}">${icono("campana")}Avisar a Lorena</button>` : ""}<button type="button" class="btn-texto" data-quitar="${id}">${icono("cerrar")}Quitar de mi lista</button>`}
+            : `${!x.pasada_lorena && !petVistoBueno(x) ? `<button type="button" class="btn-texto" data-avisa-lorena="${id}">${icono("campana")}<span>Avisar a Lorena (solo emergencias)</span></button>` : ""}<button type="button" class="btn-texto" data-quitar="${id}">${icono("cerrar")}Quitar de mi lista</button>`}
           <button type="button" class="btn-texto" data-otra-nueva>${icono("mas")}Pedir otra cosa nueva</button>
           <p class="estado" role="status" aria-live="polite" id="pet-lorena-msg-${id}"></p>
         </div>
@@ -1661,7 +1661,10 @@
     }; });
     // «Avisar a Lorena»: le llega un aviso al móvil (la petición sigue en su lista)
     z.querySelectorAll("[data-avisa-lorena]").forEach((b) => { b.onclick = async () => {
-      const id = Number(b.dataset.avisaLorena), mid = `pet-lorena-msg-${id}`; b.disabled = true;
+      const id = Number(b.dataset.avisaLorena), mid = `pet-lorena-msg-${id}`;
+      // v23 (lo pidió Lorena, 9/11/2026): solo para emergencias
+      if (!(await confirmaPet({ tit: "¿Avisar a Lorena al móvil?", txt: "<b>Solo para emergencias:</b> un fallo en la web o un cambio que haga falta ya. Si no corre prisa, no hace falta: Claude la sigue igual.", si: "Sí, es urgente" }))) return;
+      b.disabled = true;
       msgP(mid, "Avisando a Lorena…");
       try {
         const { data: r, error } = await sb.rpc("pedir_lorena", { p_id: id });

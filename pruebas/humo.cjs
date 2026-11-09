@@ -226,7 +226,7 @@ fs.mkdirSync(OUT, { recursive: true });
       if (await pa.evaluate(() => __DB.peticiones_claude.find((x) => x.id === 4).decision)) fallos.push(`${c.nombre}: «No, volver» descarta igual`);
       await pa.click('[data-decide="4"][data-que="publicar"]'); await pa.waitForTimeout(500);
       if (!(await pa.evaluate(() => __DB.peticiones_claude.find((x) => x.id === 4).decision === "publicar" && __TIMBRE.some((t) => t.id === 4 && t.decision)))) fallos.push(`${c.nombre}: «Publicar» no se guarda`);
-      await pa.click('[data-avisa-lorena="3"]'); await pa.waitForTimeout(500);
+      await pa.click('[data-avisa-lorena="3"]'); await pa.waitForTimeout(200); if (!(await pa.$(".pet-modal"))) fallos.push(`${c.nombre}: «Avisar a Lorena» no pregunta antes (solo emergencias)`); await pa.click(".pet-modal [data-si]"); await pa.waitForTimeout(500);
       if (!(await pa.evaluate(() => __DB.peticiones_claude.find((x) => x.id === 3).avisar_lorena && __TIMBRE.some((t) => t.id === 3 && t.avisar)))) fallos.push(`${c.nombre}: «Avisar a Lorena» no funciona`);
       await pa.click('details[data-pet="2"] > summary'); await pa.waitForTimeout(100);
       await pa.click('[data-deshacer="2"]'); await pa.waitForTimeout(200); await pa.click(".pet-modal [data-si]"); await pa.waitForTimeout(500);
