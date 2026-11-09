@@ -24,9 +24,15 @@ self.addEventListener("activate", (e) => {
 });
 
 // Solo los archivos de la propia web (los datos de Supabase siempre van a la red).
-// Primero la red; si no hay conexión, la copia guardada. Las páginas (v22): si la red tarda más de 4 s
-// (cobertura mala en la nave), se enseña la copia guardada y la de la red se guarda para la próxima vez.
+// - Lo que no cambia dentro de una versión (lleva ?v=, o está en fuentes/, img/ o lib/, o es el manifest) sale primero
+//   de la copia guardada (v23): si no, con red lenta la página salía de la copia a los 4 s pero se quedaba sin estilos
+//   ni código esperando a la red. Si no está guardado, se pide a la red como mucho ESPERA_RED y, si tarda, se espera igual.
+//   OJO: lib/supabase.js no lleva ?v=: al cambiar la librería, cambiarle el nombre o ponerle ?v= (y en ARCHIVOS).
+// - Las páginas (v22): primero la red; si tarda más de 4 s (cobertura mala en la nave) o no hay conexión, la copia guardada,
+//   y la de la red se guarda para la próxima vez. Se guardan sin «?…» (p. ej. ?utm=…) para que la caché no crezca sin fin.
+// - Lo demás de la web: primero la red y, si falla o tarda más de 4 s, la copia.
 const ESPERA_RED = 4000;
+const FIJO = (u) => u.searchParams.has("v") || /\/(fuentes|img|lib)\//.test(u.pathname) || u.pathname.endsWith("/manifest.json");
 const guarda = (req, r) => {
   if (r && r.ok && r.status === 200 && r.type === "basic") {
     const copia = r.clone();
@@ -34,24 +40,35 @@ const guarda = (req, r) => {
   }
   return r;
 };
-const deCache = (req) => caches.match(req).then((r) => r || (req.mode === "navigate" ? caches.match("index.html") : undefined));
+const sinBusqueda = (u) => { const x = new URL(u); x.search = ""; x.hash = ""; return x.href; };
+const deCache = (req) => caches.match(req, req.mode === "navigate" ? { ignoreSearch: true } : undefined)
+  .then((r) => r || (req.mode === "navigate" ? caches.match("index.html") : undefined));
+// La red con tiempo máximo: si tarda, se usa la copia (y, si no hay copia, se sigue esperando a la red)
+const redOCopia = (e, red) => new Promise((listo) => {
+  let hecho = false;
+  const usa = (r) => { if (!hecho && r) { hecho = true; listo(r); } };
+  const reloj = setTimeout(() => deCache(e.request).then(usa, () => {}), ESPERA_RED);
+  red.then((r) => { clearTimeout(reloj); usa(r); })
+    .catch(() => { clearTimeout(reloj); deCache(e.request).then((r) => usa(r || Response.error()), () => usa(Response.error())); });
+});
 
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== self.location.origin) return;
-  const red = fetch(e.request).then((r) => guarda(e.request, r));
-  if (e.request.mode !== "navigate") {
-    e.respondWith(red.catch(() => deCache(e.request).then((r) => r || Response.error())));
+  if (e.request.mode === "navigate") {
+    const clave = sinBusqueda(e.request.url);
+    const red = fetch(e.request).then((r) => guarda(clave, r));
+    e.waitUntil(red.catch(() => {}));
+    e.respondWith(redOCopia(e, red));
     return;
   }
+  if (FIJO(url)) {
+    e.respondWith(caches.match(e.request).then((r) => r || redOCopia(e, fetch(e.request).then((x) => guarda(e.request, x)))));
+    return;
+  }
+  const red = fetch(e.request).then((r) => guarda(e.request, r));
   e.waitUntil(red.catch(() => {}));
-  e.respondWith(new Promise((listo) => {
-    let hecho = false;
-    const usa = (r) => { if (!hecho && r) { hecho = true; listo(r); } };
-    const reloj = setTimeout(() => deCache(e.request).then(usa, () => {}), ESPERA_RED);
-    red.then((r) => { clearTimeout(reloj); usa(r); })
-      .catch(() => { clearTimeout(reloj); deCache(e.request).then((r) => usa(r || Response.error()), () => usa(Response.error())); });
-  }));
+  e.respondWith(redOCopia(e, red));
 });
 
 // ---------- Avisos al móvil ----------

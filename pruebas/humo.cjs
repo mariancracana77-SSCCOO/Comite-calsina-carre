@@ -1,11 +1,11 @@
 // Prueba rápida: abre la web y el panel con datos de prueba en varios tamaños,
 // claro/oscuro y letra muy grande. Busca errores de consola/CSP y scroll lateral, y hace capturas.
-// Uso: NODE_PATH=$(npm root -g) node pruebas/humo.cjs [carpeta-capturas]
+// Uso: NODE_PATH=$(npm root -g) node pruebas/humo.cjs [carpeta-capturas]  (puerto: PUERTO=8793, por defecto 8790)
 const { chromium } = require("playwright");
 const fs = require("fs"), path = require("path"), { spawn } = require("child_process");
 const RAIZ = path.join(__dirname, ".."), MOCK = fs.readFileSync(path.join(__dirname, "mock-supabase.js"), "utf8");
 const OUT = process.argv[2] || path.join(RAIZ, "pruebas", "capturas");
-const PUERTO = 8790, BASE = `http://localhost:${PUERTO}/`;
+const PUERTO = +(process.env.PUERTO || 8790), BASE = `http://localhost:${PUERTO}/`;
 fs.mkdirSync(OUT, { recursive: true });
 
 (async () => {
@@ -65,6 +65,141 @@ fs.mkdirSync(OUT, { recursive: true });
       await p.click("[data-voto]"); await p.waitForTimeout(300);
       if (!(await p.$(".cons-res.mio"))) fallos.push(`${c.nombre}: el voto no se ve`);
       await ctx.close();
+
+      // ---- v23: pruebas de los fallos de la revisión (solo en 390, y algunas también en 320 y en el PC) ----
+      const nuevoCtx = async (init, o = {}) => {
+        const x = await b.newContext({ viewport: { width: o.w || 390, height: o.h || 844 }, colorScheme: o.oscuro ? "dark" : "light", serviceWorkers: "block", locale: "es-ES", timezoneId: "Europe/Madrid" });
+        await x.route("**/lib/supabase.js*", (r) => r.fulfill({ contentType: "application/javascript", body: MOCK }));
+        await x.route("https://ytxpubqyhnohhugpukdm.supabase.co/**", (r) => r.fulfill({ path: path.join(RAIZ, "img/icon-192.png") }));
+        await x.addInitScript(`localStorage.setItem("comite-aviso-privacidad","1");${o.letra ? `localStorage.setItem("comite-letra","${o.letra}");` : ""}${init || ""}`);
+        const pg = await x.newPage();
+        pg.on("pageerror", (e) => errores.push(`${c.nombre} extra: ${e.message}`));
+        pg.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource/.test(m.text())) errores.push(`${c.nombre} extra: ${m.text()}`); });
+        return [x, pg];
+      };
+      if (c.nombre === "320" || c.nombre === "390-letra") {
+        // Cabecera: el nombre no se mete debajo de los botones; accesos de la portada dentro de la pantalla
+        for (const letra of [null, "muy-grande"]) for (const w of [320, 360]) {
+          const [cx, px] = await nuevoCtx("", { w, h: 760, letra });
+          await px.goto(BASE + "#actualidad"); await px.waitForTimeout(500);
+          const r = await px.evaluate(() => ({ marca: document.querySelector(".marca-txt").getBoundingClientRect().right, botones: document.querySelector(".cab-botones").getBoundingClientRect().left,
+            fuera: [...document.querySelectorAll(".accesos a")].filter((a) => a.getBoundingClientRect().right > innerWidth + 0.5 || a.scrollWidth > a.clientWidth + 1).map((a) => a.textContent.trim()) }));
+          if (r.marca > r.botones + 0.5) fallos.push(`${w} ${letra || "normal"}: el nombre de la cabecera se mete debajo de los botones`);
+          if (r.fuera.length) fallos.push(`${w} ${letra || "normal"}: accesos de la portada cortados (${r.fuera.join(", ")})`);
+          await cx.close();
+        }
+      }
+      if (c.nombre === "pc") {
+        // Pestañas: en el PC se ven todas (antes «Nosotros» quedaba escondida sin poder moverla con el ratón)
+        for (const letra of [null, "muy-grande"]) for (const w of [1024, 1280]) {
+          const [cx, px] = await nuevoCtx("", { w, h: 800, letra });
+          await px.goto(BASE + "#actualidad"); await px.waitForTimeout(500);
+          const ocultas = await px.evaluate(() => { const f = document.getElementById("pestanas").getBoundingClientRect();
+            return [...document.querySelectorAll("#pestanas a")].filter((a) => { const r = a.getBoundingClientRect(); return r.right > f.right + 1 || r.left < f.left - 1; }).map((a) => a.textContent.trim()); });
+          if (ocultas.length) fallos.push(`${w} ${letra || "normal"}: pestañas que no se ven: ${ocultas.join(", ")}`);
+          await cx.close();
+        }
+      }
+      if (c.nombre === "390") {
+        // a) Escapes: <script>, onerror y javascript: en todos los campos, en la web y en el panel
+        const X = `<img src=x onerror="window.__XSS=1"><script>window.__XSS=2<\/script>"'><svg onload="window.__XSS=3">`;
+        const [cx, px] = await nuevoCtx(`window.__PRE=[(DB)=>{const X=${JSON.stringify(X)};for(const t in DB)for(const r of DB[t])if(r&&typeof r==="object")for(const k in r){
+          if(typeof r[k]==="string"&&!/^(fecha|creado|actualizado|publicar_en|cierra|dia|hora|hora_fin|destacar_dia|slug|estado|quien|tipo|cuando)$/.test(k))r[k]+=X;
+          if(k==="adjuntos"&&Array.isArray(r[k]))r[k].forEach((a)=>{a.nombre=X;a.url="javascript:window.__XSS=9";});
+          if(k==="enlace")r[k]="javascript:window.__XSS=8"; if(k==="icono")r[k]='"><img src=x onerror="window.__XSS=7">';}}];`);
+        for (const v of ["actualidad", "avisos", "reuniones", "actas", "documentos", "buzon", "nosotros", "seccion-1", "seccion-2", "publicacion-1", "cookies"]) { await px.goto(BASE + "#" + v); await px.waitForTimeout(300); }
+        await px.goto(BASE + "#buscar"); await px.fill("#buscar-todo", "img"); await px.waitForTimeout(200);
+        if (await px.evaluate(() => window.__XSS)) fallos.push("390: se ejecuta código metido en un texto (web)");
+        if (await px.evaluate(() => [...document.querySelectorAll("a[href],img[src]")].some((e) => /^\s*javascript:/i.test(e.getAttribute("href") || e.getAttribute("src"))))) fallos.push("390: hay un enlace javascript: en la web");
+        await cx.addInitScript(() => localStorage.setItem("prueba-sesion", "1")); const pp = await cx.newPage(); pp.on("dialog", (d) => d.accept());
+        for (const v of ["inicio", "avisos", "actualidad", "reuniones", "actas", "buzon", "encuestas", "preguntas", "miembros", "documentos", "apartados", "publicaciones", "textos", "papelera", "peticiones"]) {
+          await pp.goto(BASE + "admin.html#" + v); await pp.waitForTimeout(300);
+          if (await pp.$("[data-editar-en]")) { await pp.click("[data-editar-en]").catch(() => {}); await pp.waitForTimeout(200); await pp.keyboard.press("Escape"); } }
+        if (await pp.evaluate(() => window.__XSS)) fallos.push("390: se ejecuta código metido en un texto (panel)");
+        await cx.close();
+        // b) Enlaces #…-N que no existen (se dice) y publicación borrada (no abre la sección N)
+        const [cr, pr] = await nuevoCtx(`window.__PRE=[(DB)=>{DB.publicaciones=DB.publicaciones.filter((x)=>x.id!==2);}];`);
+        for (const h of ["aviso-999", "noticia-999", "reunion-999", "acta-999", "consulta-999", "documento-999", "pregunta-999", "seccion-999", "publicacion-999", "inventada", "contenido"]) {
+          await pr.goto(BASE + "#" + h); await pr.waitForTimeout(300);
+          if ((await pr.evaluate(() => [...document.querySelectorAll(".vista")].filter((v) => !v.hidden).length)) !== 1) fallos.push(`390: #${h} no enseña una sola vista`);
+          if (/^(aviso|noticia|reunion|acta|documento)-/.test(h) && !(await pr.$(".vista:not([hidden]) .aviso-falta"))) fallos.push(`390: #${h} no dice que ya no está`);
+        }
+        await pr.goto(BASE + "#publicacion-2"); await pr.waitForTimeout(300);
+        if (/Revisiones/.test(await pr.textContent("#seccion-titulo"))) fallos.push("390: #publicacion-N borrada abre la sección N");
+        await pr.goto(BASE + "#pregunta-1"); await pr.waitForTimeout(300);
+        if (!(await pr.evaluate(() => document.getElementById("pregunta-1")?.open))) fallos.push("390: #pregunta-N no abre la pregunta");
+        await cr.close();
+        // c) Sin conexión: con copia (banda + datos) y sin copia (explicación y «Reintentar», sin esqueleto ni «Todavía no hay…»)
+        const [co, po] = await nuevoCtx("");
+        await po.goto(BASE + "#avisos"); await po.waitForTimeout(600);
+        await po.addInitScript(() => { window.__FALLA = true; }); await po.goto(BASE + "?r=1#avisos"); await po.waitForTimeout(600);
+        if (await po.evaluate(() => document.getElementById("sin-red").hidden || !document.querySelector("#lista-avisos .aviso"))) fallos.push("390: sin red no enseña la copia guardada");
+        await co.close();
+        const [cs, ps] = await nuevoCtx("window.__FALLA = true;");
+        await ps.goto(BASE); await ps.waitForTimeout(600);
+        if (await ps.evaluate(() => document.getElementById("sin-red").hidden || document.querySelector("#lista-actualidad .esq") || /Todavía no hay/.test(document.getElementById("lista-actualidad").textContent) || !document.querySelector("#lista-actualidad [data-reintentar]"))) fallos.push("390: sin red y sin copia no lo explica");
+        await ps.screenshot({ path: path.join(OUT, "web-390-sin-red-sin-copia.png") });
+        await cs.close();
+        // d) Red lenta: con copia guardada, a los 3 s ya se ve (antes, nada hasta que llegaba la red)
+        const [cl, pl] = await nuevoCtx("");
+        await pl.goto(BASE + "#avisos"); await pl.waitForTimeout(600);
+        await pl.addInitScript(() => { window.__TARDA = 20000; }); await pl.goto(BASE + "?r=2#avisos"); await pl.waitForTimeout(3000);
+        if (!(await pl.$("#v-avisos:not([hidden]) #lista-avisos .aviso"))) fallos.push("390: con red lenta no enseña la copia guardada");
+        await cl.close();
+        // e) «Leer más» con enlace directo y datos lentos
+        const largo = Array(40).fill("Línea de texto largo para plegar.").join("\n");
+        const [cm, pm] = await nuevoCtx(`window.__TARDA = 1500; window.__PRE=[(DB)=>{DB.avisos[1].contenido=${JSON.stringify(largo)};}];`);
+        await pm.goto(BASE + "#aviso-2"); await pm.waitForTimeout(2600);
+        if (!(await pm.evaluate(() => document.querySelector("#aviso-2 .texto.plegable")?.classList.contains("abierto")))) fallos.push("390: el enlace directo a un aviso largo sale plegado");
+        await cm.close();
+        // f) Visor: PDF que falla → «Abrirlo aparte» con Tab; Esc cierra y devuelve el foco
+        const [cv, pv] = await nuevoCtx("");
+        await pv.goto(BASE + "#documentos"); await pv.waitForTimeout(500);
+        await pv.focus('#bloque-documentos a[data-visor="pdf"]'); await pv.keyboard.press("Enter"); await pv.waitForTimeout(2500);
+        let alc = false; for (let i = 0; i < 4; i++) { await pv.keyboard.press("Tab"); if (await pv.evaluate(() => document.activeElement?.matches(".visor-msg a"))) alc = true; }
+        if ((await pv.$(".visor-msg a")) && !alc) fallos.push("390: en el visor, «Abrirlo aparte» no se alcanza con el teclado");
+        await pv.keyboard.press("Escape"); await pv.waitForTimeout(300);
+        if ((await pv.$(".visor")) || !(await pv.evaluate(() => document.activeElement?.matches('a[data-visor="pdf"]')))) fallos.push("390: Esc no cierra el visor o no devuelve el foco");
+        await cv.close();
+        // g) Calendario: hoy con aria-current; en «Año entero» los días no son botones (15×14 px) y tocar el mes lo abre
+        const [cc, pc2] = await nuevoCtx("");
+        await pc2.goto(BASE + "#reuniones"); await pc2.waitForTimeout(500);
+        if ((await pc2.evaluate(() => document.querySelector("#mes-rejilla .hoy")?.getAttribute("aria-current"))) !== "date") fallos.push("390: el día de hoy del calendario no lleva aria-current");
+        await pc2.click("#ver-ano"); await pc2.waitForTimeout(200);
+        if (await pc2.$("#ano-rejilla .mes-rejilla a, #ano-rejilla .mes-rejilla button")) fallos.push("390: en «Año entero» los días siguen siendo botones diminutos");
+        await pc2.click("#ano-rejilla .ano-mes:nth-child(3) .mes-rejilla"); await pc2.waitForTimeout(200);
+        if (!(await pc2.evaluate(() => !document.getElementById("mes-cuerpo").hidden && /^Marzo/.test(document.getElementById("mes-nombre").textContent)))) fallos.push("390: en «Año entero» tocar un mes no lo abre");
+        await cc.close();
+        // h) Teclado: el primer Tab va a «Ir al contenido»; tras votar, el foco va a la consulta y se anuncia
+        const [ct, pt] = await nuevoCtx("");
+        await pt.goto(BASE + "#avisos"); await pt.waitForTimeout(500);
+        await pt.keyboard.press("Tab");
+        if (!(await pt.evaluate(() => document.activeElement?.classList.contains("saltar")))) fallos.push("390: el primer Tab no va a «Ir al contenido»");
+        await pt.goto(BASE + "#actualidad"); await pt.waitForTimeout(500);
+        await pt.focus("[data-voto]"); await pt.keyboard.press("Enter"); await pt.waitForTimeout(400);
+        if (!(await pt.evaluate(() => document.activeElement?.id === "consulta-1" && /Voto registrado/.test(document.getElementById("consultas-estado").textContent)))) fallos.push("390: después de votar se pierde el foco o no se anuncia");
+        // i) Nombres para el lector de pantalla: logo, contador de avisos y botón del tema
+        const nom = await pt.evaluate(() => ({ logo: document.querySelector(".marca").getAttribute("aria-label"), tema: document.getElementById("b-tema").getAttribute("aria-label") }));
+        if (!/Calsina Carré/.test(nom.logo)) fallos.push("390: el nombre del logo no coincide con lo que se ve");
+        if (!/^Poner modo (oscuro|claro)$/.test(nom.tema)) fallos.push("390: el botón del tema no dice qué hace");
+        // j) .ics: con fin (1 h si no hay hora de fin), zona horaria y líneas de 75 bytes como mucho
+        const ics = await pt.evaluate(async () => { let t = null; const o = URL.createObjectURL; URL.createObjectURL = (bl) => { bl.text().then((x) => { t = x; }); return o(bl); };
+          descargaICS({ id: 9, fecha: "2026-11-12", hora: "10:00", titulo: "Reunión ".repeat(20), lugar: "Sala" }); URL.createObjectURL = o; await new Promise((r) => setTimeout(r, 100)); return t; });
+        if (!/DTEND;TZID=Europe\/Madrid:20261112T110000/.test(ics || "") || !/BEGIN:VTIMEZONE/.test(ics || "") || (ics || "").split("\r\n").some((l) => new TextEncoder().encode(l).length > 75)) fallos.push("390: el archivo .ics no sigue la norma (fin, zona horaria o líneas largas)");
+        await ct.close();
+        // k) Contraste: contador de avisos y botones de degradado (blanco sobre la parte más clara)
+        const [ck, pk] = await nuevoCtx(`localStorage.setItem("comite-avisos-vistos","2000-01-01");`);
+        await pk.goto(BASE + "#actualidad"); await pk.waitForTimeout(500);
+        const col = await pk.evaluate(() => ({ cuenta: getComputedStyle(document.querySelector('[data-cuenta="avisos"]')).backgroundColor, hero: getComputedStyle(document.querySelector(".hero-btn")).backgroundImage }));
+        if (col.cuenta !== "rgb(198, 40, 40)") fallos.push(`390: el contador rojo de avisos tiene poco contraste (${col.cuenta})`);
+        if (/rgb\(0, 198, 255\)/.test(col.hero)) fallos.push("390: «Ver los avisos» sigue con el degradado cian (blanco a 2:1)");
+        await ck.close();
+        // l) Pantalla muy baja (zoom al 400 %): la cabecera y la barra de abajo no van fijas
+        const [cz, pz] = await nuevoCtx("", { w: 320, h: 256 });
+        await pz.goto(BASE + "#avisos"); await pz.waitForTimeout(500);
+        if (await pz.evaluate(() => getComputedStyle(document.querySelector(".cabecera")).position !== "static" || getComputedStyle(document.querySelector(".barra-fija")).position !== "static")) fallos.push("320×256: la cabecera o la barra de abajo siguen fijas y tapan la pantalla");
+        await cz.close();
+      }
 
       // Panel: pantalla de entrar y con sesión de prueba
       const ctx2 = await b.newContext({ viewport: { width: c.w, height: c.h }, colorScheme: c.oscuro ? "dark" : "light", serviceWorkers: "block", locale: "es-ES", timezoneId: "Europe/Madrid" });

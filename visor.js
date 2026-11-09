@@ -14,25 +14,34 @@
     docAbierto = null;
     document.documentElement.classList.remove("visor-abierto");
     document.removeEventListener("keydown", tecla, true);
-    if (!desdeAtras && history.state && history.state.visor) history.back();
-    antes?.focus?.();
+    const vuelve = antes; antes = null;
+    if (!desdeAtras && history.state && history.state.visor) {
+      // v23: al volver atrás el navegador quitaba el foco (con Esc acababa en la página entera): se devuelve cuando termina
+      window.addEventListener("popstate", () => setTimeout(() => vuelve?.focus?.(), 0), { once: true });
+      history.back();
+    }
+    vuelve?.focus?.();
   };
   const tecla = (e) => {
     if (e.key === "Escape") { e.preventDefault(); cierra(false); }
     else if (e.key === "Tab" && velo) {
-      // El foco se queda dentro del visor: alterna entre «Cerrar» y el contenido (que se mueve con las flechas)
+      // El foco se queda dentro del visor: va de «Abrir aparte» a «Cerrar» y al contenido (que se mueve con las flechas)
+      // v23: también llega al enlace «Abrirlo aparte» que sale si el PDF no se puede abrir
       e.preventDefault();
-      const cerrar = velo.querySelector(".visor-cerrar"), cuerpo = velo.querySelector(".visor-cuerpo");
-      (document.activeElement === cerrar ? cuerpo : cerrar).focus();
+      const fs = [...velo.querySelectorAll(".visor-cab a[href], .visor-cerrar, .visor-cuerpo, .visor-cuerpo a[href]")];
+      const i = fs.indexOf(document.activeElement);
+      fs[(i + (e.shiftKey ? fs.length - 1 : 1) + fs.length) % fs.length].focus();
     }
   };
   window.addEventListener("popstate", () => { if (velo) cierra(true); });
 
-  const abre = (titulo) => {
+  // aparte: dirección para «Abrir aparte» (en los PDF: así se puede guardar el convenio o abrirlo con otra aplicación)
+  const abre = (titulo, aparte = "") => {
     antes = document.activeElement;
     velo = document.createElement("div");
     velo.className = "visor"; velo.setAttribute("role", "dialog"); velo.setAttribute("aria-modal", "true"); velo.setAttribute("aria-label", titulo);
     velo.innerHTML = `<div class="visor-cab"><b class="visor-tit">${esc(titulo)}</b>
+      ${aparte ? `<a class="visor-aparte" href="${esc(urlSegura(aparte))}" target="_blank" rel="noopener">${icono("instalar")}<span>Abrir aparte</span></a>` : ""}
       <button type="button" class="visor-cerrar">${icono("cerrar")}Cerrar</button></div>
       <div class="visor-cuerpo" tabindex="0"></div>`;
     document.body.appendChild(velo);
@@ -55,7 +64,7 @@
   // v22: las páginas se dibujan solo cuando se acercan a la pantalla (IntersectionObserver) y se borran
   // cuando quedan lejos: así un convenio de 100 páginas no se come la memoria del móvil.
   const pdf = async (url, titulo) => {
-    const c = abre(titulo || "PDF"), mia = ++tarea;
+    const c = abre(titulo || "PDF", url), mia = ++tarea;
     c.innerHTML = '<p class="visor-msg" role="status">Abriendo el PDF…</p>';
     try {
       if (!PDFJS) {
@@ -110,7 +119,8 @@
       if (velo && document.activeElement === velo.querySelector(".visor-cerrar")) c.focus({ preventScroll: true });
     } catch (e) {
       if (mia !== tarea) return;
-      c.innerHTML = `<p class="visor-msg">No se ha podido abrir el PDF aquí. <a href="${esc(urlSegura(url))}" target="_blank" rel="noopener">Abrirlo aparte</a></p>`;
+      c.innerHTML = `<p class="visor-msg" role="status">No se ha podido abrir el PDF aquí. <a href="${esc(urlSegura(url))}" target="_blank" rel="noopener">Abrirlo aparte</a></p>`;
+      if (velo && document.activeElement === velo.querySelector(".visor-cerrar")) c.querySelector("a")?.focus();
     }
   };
 

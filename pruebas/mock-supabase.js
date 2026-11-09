@@ -93,7 +93,8 @@
       update(v) { modo = "update"; datos = v; return q; },
       upsert(v) { modo = "upsert"; datos = v; return q; },
       delete() { modo = "delete"; return q; },
-      then(ok, ko) { return Promise.resolve(ejecuta()).then(ok, ko); },
+      // Ganchos de las pruebas: window.__TARDA (ms de espera: red lenta) y window.__FALLA (sin red)
+      then(ok, ko) { const t = window.__TARDA || 0; return new Promise((r) => setTimeout(r, t)).then(() => window.__FALLA ? { data: null, error: { message: "TypeError: Failed to fetch" } } : ejecuta()).then(ok, ko); },
     };
     const ejecuta = () => {
       const T = (DB[tabla] ||= []);
@@ -160,4 +161,6 @@
   };
   window.supabase = { createClient: () => cliente };
   window.__DB = DB;
+  // window.__PRE = [(DB) => …]: cambia los datos antes de que la página los pida
+  try { (window.__PRE || []).forEach((f) => f(DB)); } catch (e) { console.log("PRE", e); }
 })();
