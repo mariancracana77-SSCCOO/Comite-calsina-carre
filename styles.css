@@ -653,3 +653,30 @@ html.visor-abierto, html.visor-abierto body { overflow: hidden; }
   :target, .tarjeta[id] { scroll-margin-top: 12px; }
   .col-lateral { position: static; }
 }
+
+/* ---------- v23: comodidad (zonas táctiles de 44 px, sin cambiar el diseño) ---------- */
+.btn-linea { min-height: 44px; }
+.chip { min-height: 44px; }
+.cab-btn { position: relative; }
+.cab-btn::after { content: ""; position: absolute; inset: -3px; } /* el botón se ve igual, pero se acierta mejor con el dedo */
+.pie-col a, .pie-legal a { display: inline-flex; align-items: center; min-height: 44px; padding: 0; }
+.pie-legal { row-gap: 0; }
+.pie-col { gap: 0; }
+.acepto { cursor: pointer; }
+.acepto input { width: 24px; height: 24px; margin-top: 0; }
+.btn, .btn-linea, .chip, .cab-btn { transition: background-color .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease; }
+@media (prefers-reduced-motion: no-preference) {
+  .vista:not([hidden]) { animation: vista-entra .2s ease-out; }
+  @keyframes vista-entra { from { opacity: .4; } to { opacity: 1; } }
+}
+.meta .actualizado { color: var(--texto); font-weight: 600; } /* v23: «Actualizado el …» bien visible */
+/* v23 (auditoría visual): a 360 px con letra normal ponía «Contac…»; con menos relleno se lee entero */
+@media (max-width: 400px) { .barra-fija { gap: 6px; } .barra-fija .btn { padding-left: 10px; padding-right: 10px; } }
+/* v23 (auditoría visual): al cambiar de vista el foco va a <main> (para el lector de pantalla) y su borde de foco
+   salía como una segunda línea azul antes del pie. <main> no se puede tocar ni se enfoca con Tab: sin borde. */
+main:focus, main:focus-visible { outline: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .btn:active, .btn-linea:active, .chip:active { transform: scale(.98); transition: transform 80ms ease; }
+}
+.legal-nav a { display: inline-flex; align-items: center; min-height: 44px; }
+.legal-nav { row-gap: 0; }

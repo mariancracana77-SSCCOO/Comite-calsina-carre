@@ -215,6 +215,18 @@ fs.mkdirSync(OUT, { recursive: true });
           if (!activado && (r.on || r.subs || r.push.length)) fallos.push("petición n.º 10: sin haberlos activado (o tras desactivarlos), se apuntan solos " + JSON.stringify(r));
           await cp.close();
         }
+        // n) Auditoría visual: «Contactar» entero a 360 px; sin la segunda línea azul antes del pie (borde de foco de <main>);
+        //    «Actualizado el …» en las actas; zonas táctiles de 44 px en los botones de línea y el pie
+        const [cn, pn] = await nuevoCtx("", { w: 360, h: 780 });
+        await pn.goto(BASE + "#actualidad"); await pn.waitForTimeout(500); await pn.goto(BASE + "#actas"); await pn.waitForTimeout(500);
+        const vn = await pn.evaluate(() => { const s = document.querySelector(".barra-fija .btn > span:last-child"), m = document.querySelector("main");
+          return { corta: s.scrollWidth > s.clientWidth, foco: document.activeElement === m ? getComputedStyle(m).outlineStyle : "no", act: !!document.querySelector("#lista-actas .actualizado"),
+            peq: [...document.querySelectorAll(".btn-linea, .pie-col a, .pie-legal a")].filter((e) => e.offsetParent && e.getBoundingClientRect().height < 44).length }; });
+        if (vn.corta) fallos.push("360: la barra de abajo corta «Contactar»");
+        if (vn.foco !== "no" && vn.foco !== "none") fallos.push("360: <main> enseña el borde de foco (segunda línea azul antes del pie)");
+        if (!vn.act) fallos.push("360: las actas no dicen «Actualizado el …»");
+        if (vn.peq) fallos.push(`360: ${vn.peq} botones o enlaces del pie miden menos de 44 px de alto`);
+        await cn.close();
       }
 
       // Panel: pantalla de entrar y con sesión de prueba

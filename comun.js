@@ -77,7 +77,7 @@ window.adjuntosHTML = (lista, titulo = "") => {
   const fotos = lista.filter(esImagen), docs = lista.filter((a) => !esImagen(a));
   const nombreFoto = (i) => (fotos.length > 1 ? `Foto ${i + 1} de ${fotos.length}` : "Foto") + (titulo ? ": " + titulo : "");
   return (fotos.length ? `<div class="galeria${fotos.length === 1 ? " una" : ""}">${fotos.map((f, i) =>
-      `<a href="${esc(urlSegura(f.url))}" target="_blank" rel="noopener" data-titulo="${esc(nombreFoto(i))}" aria-label="Ver en grande: ${esc(nombreFoto(i))}"><img src="${esc(urlSegura(f.url))}" alt="" loading="lazy" width="400" height="300"></a>`).join("")}</div>` : "")
+      `<a href="${esc(urlSegura(f.url))}" target="_blank" rel="noopener" data-titulo="${esc(nombreFoto(i))}" aria-label="Ver en grande: ${esc(nombreFoto(i))}"><img src="${esc(urlSegura(f.url))}" alt="" loading="lazy" decoding="async" width="400" height="300"></a>`).join("")}</div>` : "")
     + (docs.length ? `<div class="adjuntos">${docs.map((a) =>
       `<a class="adjunto" href="${esc(urlSegura(a.url))}" target="_blank" rel="noopener"${a.tipo === "application/pdf" ? ` data-visor="pdf" data-titulo="${esc(a.nombre || "PDF")}"` : ""}>${icono("documento")}
         <span><b>${esc(a.nombre || "Archivo")}</b><small>${tipoTxt(a)}${a.tamano ? " · " + tamanoTxt(a.tamano) : ""}</small></span></a>`).join("")}</div>` : "");

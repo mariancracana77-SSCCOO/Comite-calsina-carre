@@ -308,7 +308,7 @@
     const hoy = hoyISO();
     const prox = D.reuniones.filter((r) => r.fecha >= hoy);
     const pas = D.reuniones.filter((r) => r.fecha < hoy).reverse();
-    $("lista-proximas").innerHTML = prox.map(tarjetaReunion).join("") || vacio("No hay reuniones previstas", "Cuando se convoque una reunión o una asamblea, saldrá aquí con el día, la hora y el lugar.", "calendario");
+    $("lista-proximas").innerHTML = prox.map(tarjetaReunion).join("") || vacio("No hay reuniones previstas", "Cuando se convoque una reunión o una asamblea, saldrá aquí con el día, la hora y el lugar.", "calendario", ["#actas", "Ver las actas de las reuniones pasadas"]);
     $("lista-pasadas").innerHTML = pas.map(tarjetaReunion).join("");
     $("pasadas-caja").hidden = !pas.length;
     pintaMes();
@@ -333,7 +333,7 @@
     const lista = D.actas.filter((a) => (filtroAno === "todos" || a.fecha.startsWith(filtroAno))
       && (!q || [a.titulo, a.tipo, a.resumen, a.acuerdos].join(" ").toLowerCase().includes(q)));
     $("lista-actas").innerHTML = lista.map(tarjetaActa).join("")
-      || (q ? vacio("No hay actas con esas palabras", "Prueba con otras palabras o mira todas las actas.", "buscar") : vacio("Todavía no hay actas", "Aquí saldrán el resumen y los acuerdos de cada reunión.", "acta"));
+      || (q ? vacio("No hay actas con esas palabras", "Prueba con otras palabras o mira todas las actas.", "buscar") : vacio("Todavía no hay actas", "Aquí saldrán el resumen y los acuerdos de cada reunión.", "acta", ["#reuniones", "Ver el calendario de reuniones"]));
   };
   $("buscar-actas").addEventListener("input", pintaActas);
   $("anos-actas").addEventListener("click", (e) => {
@@ -346,7 +346,7 @@
     const nombres = Object.keys(grupos);
     $("lista-documentos").innerHTML = nombres.map((g) =>
       `${nombres.length > 1 ? `<h2 class="titulo-bloque">${esc(g)}</h2>` : ""}<div class="lista">${grupos[g].map(tarjetaDocumento).join("")}</div>`).join("")
-      || vacio("Todavía no hay documentos", "Aquí estarán el convenio, el calendario laboral, las tablas salariales y otros documentos útiles.", "documento");
+      || vacio("Todavía no hay documentos", "Aquí estarán el convenio, el calendario laboral, las tablas salariales y otros documentos útiles. Si buscas uno en concreto, pídelo por el buzón.", "documento", ["#buzon", "Pedir un documento"]);
   };
 
   // ---------- Sugerencias y preguntas ----------

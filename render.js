@@ -2,6 +2,10 @@
 // para que el panel enseñe exactamente lo que verán los trabajadores.
 (function () {
   const nuevo = (d) => esNuevo(d) ? '<span class="etq nuevo">Nuevo</span>' : "";
+  // v23 (lo pidió Lorena, 10/11/2026): «Actualizado el …» bien visible en avisos y actas, con la fecha de
+  // actualizado (o la de creado si no hay). En los avisos solo sale si es otro día que la fecha del aviso.
+  const dia = (d) => { try { const x = typeof d === "string" && d.length === 10 ? d : diaMadrid(new Date(d)); return /^\d{4}-\d{2}-\d{2}$/.test(x) ? x : ""; } catch (_) { return ""; } };
+  const actualizadoEl = (x, distintoDe) => { const f = dia(x.actualizado || x.creado || ""); return f && f !== distintoDe ? `<span class="actualizado">Actualizado el ${esc(fechaLarga(f))}</span>` : ""; };
   const botonCompartir = (ancla, titulo, texto) =>
     `<button type="button" class="btn-linea" data-compartir="${ancla}" data-t="${esc(titulo)}" data-x="${esc(texto)}">${icono("compartir")}Compartir</button>`;
 
@@ -86,7 +90,7 @@
       <div class="aviso-cuerpo">
         ${senal(rojo)}
         <div class="aviso-txt">
-          <div class="meta">${hoy ? '<span class="etq rojo">Destacado hoy</span>' : a.urgente ? '<span class="etq rojo">Urgente</span>' : '<span class="etq azul">Aviso</span>'}${nuevo(a.fecha)}<span>${esc(fechaLarga(a.fecha || new Date()))}</span></div>
+          <div class="meta">${hoy ? '<span class="etq rojo">Destacado hoy</span>' : a.urgente ? '<span class="etq rojo">Urgente</span>' : '<span class="etq azul">Aviso</span>'}${nuevo(a.fecha)}<span>${esc(fechaLarga(a.fecha || new Date()))}</span>${actualizadoEl(a, dia(a.fecha || new Date()))}</div>
           <h3>${esc(a.titulo || "Sin título")}</h3>
           ${plegable(a.contenido, "aviso-" + a.id)}
           ${adjuntosHTML(a.adjuntos, a.titulo)}
@@ -116,7 +120,7 @@
 
   const acta = (a) => `
     <article class="tarjeta acta" id="acta-${a.id}">
-      <div class="meta">${a.tipo ? `<span class="etq azul">${esc(a.tipo)}</span>` : ""}${nuevo(a.creado)}<span>${esc(fechaLarga(a.fecha || hoyISO()))}</span></div>
+      <div class="meta">${a.tipo ? `<span class="etq azul">${esc(a.tipo)}</span>` : ""}${nuevo(a.creado)}<span>Reunión del ${esc(fechaLarga(a.fecha || hoyISO()))}</span>${actualizadoEl(a, "")}</div>
       <h3>${esc(a.titulo || "Sin título")}</h3>
       ${a.resumen ? `<h4>Resumen</h4><div class="texto">${textoHTML(a.resumen)}</div>` : ""}
       ${a.acuerdos ? `<h4>Acuerdos</h4><div class="texto acuerdos">${textoHTML(a.acuerdos)}</div>` : ""}
@@ -170,7 +174,7 @@
     const wa = tel.replace(/^\+/, "").replace(/^(?=[67]\d{8}$)/, "34");
     return `
     <article class="tarjeta miembro">
-      ${m.foto && m.foto.url ? `<img class="inicial foto" src="${esc(urlSegura(m.foto.url))}" alt="" loading="lazy" width="54" height="54">` : `<div class="inicial" aria-hidden="true">${esc(ini)}</div>`}
+      ${m.foto && m.foto.url ? `<img class="inicial foto" src="${esc(urlSegura(m.foto.url))}" alt="" loading="lazy" decoding="async" width="54" height="54">` : `<div class="inicial" aria-hidden="true">${esc(ini)}</div>`}
       <div>
         <h3>${esc(m.nombre || "Nombre")}</h3>
         <p class="cargo">${esc(m.cargo)}${m.sindicato ? " · " + esc(m.sindicato) : ""}</p>
