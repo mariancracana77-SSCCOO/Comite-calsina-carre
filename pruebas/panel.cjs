@@ -399,6 +399,21 @@ const jpegConExif = (jpg) => {
       await p.evaluate(() => { location.hash = "#preguntas"; }); await p.waitForTimeout(500);
       ok(await p.isVisible('#filas .vacio-caja [data-nuevo="preguntas"]'), "Lista vacía: explica y tiene el botón para añadir");
       await foto(p, "e1-lista-vacia");
+      // Auditoría visual: «Nuevo» solo donde se crea algo, pie en una fila, Borrar/Duplicar al final y correos sin partir
+      const fabOculto = [];
+      for (const h of ["accesos", "textos", "papelera", "cartel", "peticiones"]) { await ve(p, h); if (await p.evaluate(() => document.getElementById("fab").hidden)) fabOculto.push(h); }
+      await ve(p, "avisos"); const fabAvisos = await p.evaluate(() => !document.getElementById("fab").hidden);
+      ok(fabOculto.length === 5 && fabAvisos, `Visual A6: «Nuevo» oculto en Ajustes, Textos, Papelera, Cartel y Peticiones, y visible en Avisos (${fabOculto})`);
+      await p.click('[data-editar-en="avisos:1"]'); await p.waitForTimeout(300);
+      const pie = await p.evaluate(() => {
+        const c = document.getElementById("ed-cancelar").getBoundingClientRect(), g = document.getElementById("ed-guardar").getBoundingClientRect();
+        return { unaFila: Math.abs((c.top + c.bottom) - (g.top + g.bottom)) < 4, enForm: !!document.querySelector("#ed-acciones-form #ed-borrar") && !!document.querySelector("#ed-acciones-form #ed-duplicar"), alto: Math.round(document.querySelector(".ed-pie").getBoundingClientRect().height) };
+      });
+      ok(pie.unaFila && pie.enForm && pie.alto < 100, `Visual A8: en el móvil, «Cancelar» y «Guardar» en una fila y «Borrar»/«Duplicar» al final del formulario (${JSON.stringify(pie)})`);
+      p.respuesta = true; await p.click("#ed-cancelar"); await p.waitForTimeout(300);
+      await ve(p, "accesos", 900);
+      const lineas = await p.evaluate(() => [...document.querySelectorAll("#lista-admins .correo")].map((e) => Math.round(e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight || 20))));
+      ok(lineas.length && lineas.every((n) => n <= 2), `Visual A11: los correos de Ajustes no se parten letra a letra (líneas: ${lineas})`);
       await p.close();
     })().catch((e) => fallos.push("Bloque 9 no ha podido acabar: " + e.message.split("\n")[0]));
 

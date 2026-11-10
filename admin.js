@@ -244,6 +244,8 @@
   const icDe = (k, i) => i || SECCIONES[k]?.ic || "documento";
 
   // ================== UTILIDADES ==================
+  // Un correo solo se parte por la @ o por un punto, nunca letra a letra
+  const correoHTML = (e) => `<span class="correo">${esc(e).replace(/@/g, "<wbr>@").replace(/\./g, ".<wbr>")}</span>`;
   const resumen = (t, n = 110) => { t = String(t || "").replace(/\*\*/g, "").replace(/\s+/g, " ").trim(); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
   let toastT;
   // Los avisos en rojo (algo ha fallado) se quedan más tiempo, para que dé tiempo a leerlos
@@ -474,7 +476,8 @@
     actual = k;
     if (location.hash.slice(1) !== k) history.replaceState(null, "", "#" + k);
     marcaMenu(k);
-    $("fab").hidden = k === "peticiones"; // aquí no se publica nada: el botón «Nuevo» estorbaría
+    // Donde no se crea nada (Pedir un cambio, Ajustes, Textos, Papelera, Cartel) el botón «Nuevo» estorbaría y taparía lo de abajo
+    $("fab").hidden = ["peticiones", "accesos", "textos", "papelera", "cartel"].includes(k);
     cierraHoja();
     window.scrollTo(0, 0);
     $("zona").innerHTML = '<div class="esq"></div><div class="esq"></div>';
@@ -618,7 +621,7 @@
           <p>¿Qué quieres publicar hoy?</p>
         </div>
         <div class="hola-resumen">
-          <a href="#buzon" class="hola-dato${PEND_BUZON ? " aviso" : ""}">${icono("mensaje")}<b>${buz.error ? "–" : PEND_BUZON}</b><span>${PEND_BUZON === 1 ? "mensaje sin leer" : "mensajes sin leer"}</span></a>
+          <a href="#buzon" class="hola-dato${PEND_BUZON ? " pendiente" : ""}">${icono("mensaje")}<b>${buz.error ? "–" : PEND_BUZON}</b><span>${PEND_BUZON === 1 ? "mensaje sin leer" : "mensajes sin leer"}</span></a>
           ${(() => { const r = (reu.data || [])[0]; if (reu.error) return `<a href="#reuniones" class="hola-dato">${icono("calendario")}<b>–</b><span>reuniones</span></a>`; if (!r) return `<a href="#reuniones" class="hola-dato">${icono("calendario")}<b>–</b><span>sin reuniones en 14 días</span></a>`;
             const dias = Math.round((fechaDia(r.fecha) - fechaDia(hoyISO())) / 86400000);
             return `<button type="button" class="hola-dato" data-editar-en="reuniones:${r.id}">${icono("calendario")}<b>${dias === 0 ? "Hoy" : dias === 1 ? "Mañana" : dias + " días"}</b><span>${esc(r.titulo)}</span></button>`; })()}
@@ -990,8 +993,18 @@
   };
   // Campos que se enseñan: unos solo al crear (avisar al publicar) y otros solo al editar (avisar del cambio)
   const camposDe = (S) => S.campos.filter(([, , , o = {}]) => ED.orig ? !o.soloNuevo : !o.soloEditar);
+  // Visual A8: en el móvil, «Borrar» y «Duplicar» van al final del formulario (lejos de «Publicar») y el pie
+  // queda en una fila: «Cancelar» y «Publicar». Se mueven los mismos botones, así siguen sus avisos y candados.
+  const MOVIL_ED = matchMedia("(max-width: 520px)");
+  const colocaAcciones = () => {
+    const pie = document.querySelector(".ed-pie"), caja = $("ed-acciones-form");
+    if (MOVIL_ED.matches && caja && ED?.orig) { caja.append($("ed-duplicar"), $("ed-borrar")); caja.hidden = false; }
+    else { pie.prepend($("ed-borrar"), $("ed-duplicar")); if (caja) caja.hidden = true; }
+  };
+  MOVIL_ED.addEventListener?.("change", colocaAcciones);
   const abrirEditor = (k, x, { duplicando = false, foco = "", despues = null, vuelve = null } = {}) => {
     const S = SECCIONES[k];
+    document.querySelector(".ed-pie").prepend($("ed-borrar"), $("ed-duplicar")); // antes de rehacer el formulario, que no se pierdan
     // vuelve: a dónde va el foco al cerrar (la fila que se abrió); despues: algo que hacer solo si se guarda bien
     ED = { k, orig: duplicando ? null : x, adj: x?.adjuntos ? [...x.adjuntos] : [], foto: duplicando ? null : (x?.foto || null), subidos: [], quitados: [], sucio: duplicando,
       guardando: false, despues, vuelve: vuelve || document.activeElement };
@@ -1006,7 +1019,7 @@
       if (asis) asis.insertAdjacentHTML("afterend", h); else $("ed-form").insertAdjacentHTML("afterbegin", h);
     }
     // En el móvil la vista previa está en otra pestaña: un botón grande al final para verla antes de publicar
-    $("ed-form").insertAdjacentHTML("beforeend", `<button type="button" class="btn sec ver-previa" data-ver-previa>${icono("ojo")}Ver cómo quedará en la web</button>`);
+    $("ed-form").insertAdjacentHTML("beforeend", `<button type="button" class="btn sec ver-previa" data-ver-previa>${icono("ojo")}Ver cómo quedará en la web</button><div class="ed-acciones-form" id="ed-acciones-form" hidden></div>`);
     // ¿Quedó un borrador sin guardar de la otra vez?
     const bo = duplicando ? null : leeBorrador(claveBorrador());
     if (bo) {
@@ -1021,6 +1034,7 @@
     pintaAdj();
     $("ed-borrar").hidden = !ED.orig; $("ed-borrar").innerHTML = icono("borrar") + "Borrar";
     $("ed-duplicar").hidden = !ED.orig; $("ed-duplicar").innerHTML = icono("duplicar") + "Duplicar";
+    colocaAcciones();
     const ancla = ED.orig ? (S.ancla ? S.ancla + "-" + ED.orig.id : S.verWeb?.()) : "";
     $("ed-ver-web").hidden = !ancla; if (ancla) $("ed-ver-web").href = "./#" + ancla;
     estado($("ed-msg"), "");
@@ -1641,7 +1655,7 @@
       <div class="lista">${error ? `<p class="vacio">${esc(errTxt(error))}</p>` : data.map((p) => `
         <div class="tarjeta fila papelera-fila">
           <div class="fila-abre"><b>${esc((SECCIONES[p.tabla] ? tituloDe(SECCIONES[p.tabla], p.datos) : p.datos.titulo) || "Sin título")}</b>
-            <span class="fila-sub">Borrado ${esc(new Date(p.borrado).toLocaleString("es-ES", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }))}${p.por ? " por " + esc(p.por) : ""}</span>
+            <span class="fila-sub">Borrado ${esc(new Date(p.borrado).toLocaleString("es-ES", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }))}${p.por ? " por " + correoHTML(p.por) : ""}</span>
             <span class="chips-fila"><span class="chip-p">${esc(nombreTabla(p.tabla))}</span></span></div>
           <span class="papelera-btns"><button type="button" class="btn-linea" data-recuperar="${p.id}">${icono("recuperar")}Recuperar</button>
           <button type="button" class="btn-linea peligro" data-para-siempre="${p.id}">${icono("borrar")}Borrar para siempre</button></span>
@@ -1896,7 +1910,7 @@
     const { data, error } = await sb.from("peticiones_claude").select("id,creado,texto,adjuntos,estado,respuesta,mensajes,deshacer,version,propuesta,decision,decision_el,ficha,pasada_lorena,oculta_padre").order("id", { ascending: false }).limit(PET_LIMITE);
     if (!$("pet-hechas") || actual !== "peticiones") return;
     if (error) { z.innerHTML = `<p class="vacio">No se ha podido cargar: ${esc(errTxt(error))}</p>`; return; }
-    const burbuja = (m) => `<li class="pet-m ${m.quien === "claude" || m.quien === "lorena" ? "de-claude" : "de-padre"}${m.quien === "lorena" ? " de-lorena" : ""}${m.aviso ? " aviso" : ""}"><small>${m.quien === "claude" ? "Claude" : m.quien === "lorena" ? "Lorena" : "Tú"} · ${esc(horaPet(m.cuando))}</small>${m.texto ? `<div class="pet-texto">${textoHTML(m.texto)}</div>` : ""}${adjPet(m.adjuntos)}</li>`;
+    const burbuja = (m) => `<li class="pet-m ${m.quien === "claude" || m.quien === "lorena" ? "de-claude" : "de-padre"}${m.quien === "lorena" ? " de-lorena" : ""}${m.aviso ? " es-aviso" : ""}"><small>${m.quien === "claude" ? "Claude" : m.quien === "lorena" ? "Lorena" : "Tú"} · ${esc(horaPet(m.cuando))}</small>${m.texto ? `<div class="pet-texto">${textoHTML(m.texto)}</div>` : ""}${adjPet(m.adjuntos)}</li>`;
     const filas = data || [], abiertas = new Set(petLee("comite-adm-pet-abiertas", [])), vistos = petLee("comite-adm-pet-vistos", {});
     const deClaude = (x) => (Array.isArray(x.mensajes) ? x.mensajes : []).filter((m) => m.quien === "claude").length;
     const item = (x) => {
@@ -2133,7 +2147,7 @@
       <div class="lista" id="lista-admins">${error ? `<p class="vacio">${esc(errTxt(error))}</p>` : data.map((a) => `
         <div class="tarjeta admin-fila" data-admin="${esc(a.email)}">
           <div class="admin-cab">
-            <div class="fila-abre"><b>${esc(a.email)}</b><span class="fila-sub" data-estado-cuenta>${a.email.toLowerCase() === yo ? "Tú · " : ""}Comprobando la cuenta…</span></div>
+            <div class="fila-abre"><b>${correoHTML(a.email)}</b><span class="fila-sub" data-estado-cuenta>${a.email.toLowerCase() === yo ? "Tú · " : ""}Comprobando la cuenta…</span></div>
             <div class="admin-btns">
               <button type="button" class="btn-linea" data-poner-clave="${esc(a.email)}">${icono("candado")}Poner contraseña</button>
               ${a.email.toLowerCase() === yo ? "" : `<button type="button" class="btn-linea peligro" data-quitar-admin="${esc(a.email)}">${icono("borrar")}Quitar</button>`}

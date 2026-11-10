@@ -187,15 +187,18 @@ button.fila-abre:hover b { color: var(--azul); }
 .ed-pie .btn { min-height: 50px; }
 @media (max-width: 520px) {
   /* v23: minmax(0, 1fr) y texto que puede partirse: con 320 px y letra muy grande, «Cancelar» se salía de la pantalla */
-  .ed-pie { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  /* Visual A8: una sola fila, «Cancelar» (1/3) y «Publicar» (2/3); «Borrar» y «Duplicar» van al final del formulario */
+  .ed-pie { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 8px; }
   .ed-pie .btn-linea, .ed-pie .btn.sec { justify-content: center; padding: 8px 6px; min-height: 46px; font-size: .85rem; white-space: normal; text-align: center; line-height: 1.15; min-width: 0; }
   .ed-pie .estado { grid-column: 1 / -1; order: -1; min-height: 0; }
-  .ed-pie #ed-guardar { grid-column: 1 / -1; }
+  .ed-pie #ed-guardar { white-space: normal; line-height: 1.15; min-width: 0; }
+  .ed-pie #ed-cancelar, .ed-pie #ed-guardar { min-height: 50px; }
   .ed-pie [hidden] { display: none !important; }
-  /* Con letra grande no caben tres: Borrar y Duplicar arriba, Cancelar y Guardar a lo ancho */
-  :root[data-letra] .ed-pie { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  :root[data-letra] .ed-pie #ed-cancelar { grid-column: 1 / -1; }
 }
+.ed-acciones-form { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; padding-top: 16px; border-top: 1px dashed var(--borde); }
+.ed-acciones-form[hidden] { display: none; }
+.ed-acciones-form .btn-linea { flex: 1 1 9em; min-height: 48px; justify-content: center; }
+.ed-acciones-form #ed-borrar { margin-left: auto; }
 
 /* Archivos */
 .lista-adj { display: grid; gap: 6px; }
@@ -276,7 +279,7 @@ span.hola-dato { cursor: default; }
 .hola-dato .ico { width: 20px; height: 20px; color: var(--celeste); margin-bottom: 2px; }
 .hola-dato b { font-family: "Montserrat", sans-serif; font-size: 1.25rem; line-height: 1.1; }
 .hola-dato span { font-size: .74rem; color: rgba(255, 255, 255, .75); line-height: 1.25; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.hola-dato.aviso { border-color: rgba(0, 198, 255, .6); background: rgba(0, 198, 255, .14); }
+.hola-dato.pendiente { border-color: rgba(0, 198, 255, .6); background: rgba(0, 198, 255, .14); }
 a.hola-dato:hover, button.hola-dato:hover { border-color: var(--celeste); }
 @media (min-width: 900px) {
   .hola-bloque { grid-template-columns: 1fr minmax(0, 1.1fr); align-items: center; padding: 26px 28px; }
@@ -409,7 +412,7 @@ details.pet-item.est-en_curso, details.pet-item.est-nueva { border-left: 5px sol
 .pet-m { display: grid; gap: 2px; padding: 8px 12px; border-radius: 12px; background: var(--fondo); border: 1px solid var(--borde); max-width: 92%; min-width: 0; }
 .pet-m.de-padre { justify-self: end; border-right: 4px solid var(--suave); }
 .pet-m.de-claude { justify-self: start; border-left: 4px solid var(--celeste); background: var(--azul-claro); }
-.pet-m.aviso { font-style: italic; }
+.pet-m.es-aviso { font-style: italic; }
 .pet-m small { color: var(--suave); font-weight: 700; }
 .pet-m p { margin: 0; }
 .pet-fotos { display: grid; gap: 8px; margin-top: 6px; }
@@ -539,3 +542,9 @@ details.pet-mas-info ul { padding-left: 20px; display: grid; gap: 4px; }
 .toast-btn { flex: none; min-height: 44px; padding: 6px 14px; border-radius: 10px; border: 2px solid #fff; background: transparent; color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
 .toast-btn:focus-visible { outline: 3px solid #00C6FF; outline-offset: 2px; }
 .lista .vacio-caja .btn { margin-top: 6px; }
+
+/* Visual A11: el correo no se parte letra a letra: el texto pasa arriba y los botones debajo */
+.correo { overflow-wrap: break-word; word-break: normal; }
+.fila-abre b .correo { overflow-wrap: break-word; }
+.admin-cab .fila-abre, .papelera-fila .fila-abre { flex: 1 1 15em; }
+.admin-cab .fila-abre b { overflow-wrap: break-word; }
