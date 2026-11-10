@@ -6,7 +6,7 @@
 window.SUPABASE_URL = "https://ytxpubqyhnohhugpukdm.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_tmkeed90aj4Fv00UoTTy7Q_qBPUAaCj";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "24"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "25"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 // Dirección de la web: sale de donde esté publicada (no hay que tocarla si cambia el dominio)
 window.WEB_URL = new URL("./", location.href).href;
 

@@ -579,6 +579,36 @@ const jpegConExif = (jpg) => {
       });
     })().catch((e) => fallos.push("Bloque 10 no ha podido acabar: " + e.message.split("\n")[0]));
 
+    // ---- 11. v25 (lo pidió Lorena, 10/11/2026): «Lo pendiente» arriba del Inicio, sin cambiar lo demás ----
+    await (async () => {
+      const c11 = await nuevoCtx({ w: 1280, h: 900 });
+      // Un aviso que se publica solo hoy (dentro de 2 minutos) y una reunión mañana
+      await c11.addInitScript(() => { window.__PRE = [(DB) => {
+        const en = (min) => new Date(Date.now() + min * 60000).toISOString();
+        const d = new Date(Date.now() + 86400000), man = new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+        DB.avisos.push({ id: 50, titulo: "Aviso que sale hoy", contenido: "", urgente: false, fecha: en(2), publicar_en: en(2), adjuntos: [], actualizado: en(0) });
+        DB.reuniones.push({ id: 50, titulo: "Reunión de mañana", descripcion: "", tipo: "Reunión del comité", fecha: man, hora: "10:00", hora_fin: null, lugar: "Sala", creado: en(0), actualizado: en(0) });
+      }]; });
+      const q = await pagina(c11, "pendiente");
+      await ve(q, "inicio", 800);
+      const lp = await q.evaluate(() => { const e = document.getElementById("lo-pendiente"); return e ? { txt: e.textContent, primero: document.getElementById("zona").firstElementChild === e, buzon: !!e.querySelector('a[href="#buzon"]'), acta: !!e.querySelector('[data-nuevo="actas"]'), aviso: !!e.querySelector('[data-editar-en="avisos:50"]'), reu: !!e.querySelector('[data-editar-en="reuniones:50"]'), hola: !!document.querySelector("#zona .hola-bloque"), acciones: document.querySelectorAll("#zona .accion-tarjeta").length } : null; });
+      ok(lp && lp.primero, "v25: «Lo pendiente» sale arriba del todo en el Inicio");
+      ok(lp && lp.buzon && /1 mensaje del buzón sin leer/.test(lp.txt), `v25: «Lo pendiente» cuenta el buzón sin leer (${lp && lp.txt})`);
+      ok(lp && lp.acta && /Asamblea de octubre/.test(lp.txt), "v25: «Lo pendiente» avisa de la reunión pasada sin acta");
+      ok(lp && lp.aviso && /Aviso que sale hoy/.test(lp.txt), "v25: «Lo pendiente» avisa del aviso programado para hoy");
+      ok(lp && lp.reu, "v25: «Lo pendiente» avisa de la reunión de mañana");
+      ok(lp && lp.hola && lp.acciones >= 5, "v25: el resto del Inicio sigue igual (bloque azul y botones)");
+      await foto(q, "v25-lo-pendiente");
+      await q.click('#lo-pendiente [data-nuevo="actas"]'); await q.waitForTimeout(400);
+      ok(await q.evaluate(() => !document.getElementById("editor").hidden && /acta/i.test(document.getElementById("editor").textContent)), "v25: tocar «Falta el acta» abre «Nueva acta»");
+      await q.keyboard.press("Escape"); await q.waitForTimeout(200);
+      // Todo al día: sin buzón pendiente, sin reuniones pasadas sin acta
+      await q.evaluate(() => { __DB.buzon.forEach((m) => { m.leido = true; }); __DB.reuniones = __DB.reuniones.filter((r) => r.fecha >= new Date().toISOString().slice(0, 10)); __DB.avisos = __DB.avisos.filter((a) => a.id !== 50); __DB.reuniones = __DB.reuniones.filter((r) => r.id !== 50); location.hash = "#avisos"; });
+      await q.waitForTimeout(300); await ve(q, "inicio", 700);
+      ok(/nada\. Está todo al día/.test(await q.textContent("#lo-pendiente")), "v25: sin nada pendiente, dice que está todo al día");
+      await c11.close();
+    })().catch((e) => fallos.push("Bloque 11 no ha podido acabar: " + e.message.split("\n")[0]));
+
     for (const x of b2Cerrar) await x.close().catch(() => {});
     await ctx.close();
   } finally {

@@ -25,10 +25,10 @@
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://ytxpubqyhnohhugpukdm.supabase.co" crossorigin>
-<link rel="stylesheet" href="fuentes.css?v=24">
-<link rel="stylesheet" href="styles.css?v=24">
+<link rel="stylesheet" href="fuentes.css?v=25">
+<link rel="stylesheet" href="styles.css?v=25">
 </head>
-<body>
+<body class="web">
 <a class="saltar" href="#contenido">Ir al contenido</a>
 
 <header class="cabecera">
@@ -37,6 +37,12 @@
       <span class="marca-logo"><img src="img/logo-96.webp" alt="" width="48" height="48"></span>
       <span class="marca-txt"><b>Calsina Carré</b><small>Comité de empresa</small></span>
     </a>
+    <!-- v25 (lo pidió Lorena, 10/11/2026): en el PC el buscador se ve siempre, escrito; en el móvil sigue la lupa -->
+    <form class="cab-busca" id="cab-busca" role="search" action="#buscar">
+      <label for="cab-buscar" class="sr-only">Buscar en toda la web</label>
+      <input type="search" id="cab-buscar" placeholder="Buscar en la web" autocomplete="off" enterkeyhint="search">
+      <button type="submit">Buscar</button>
+    </form>
     <div class="cab-botones">
       <button type="button" id="b-buscar" class="cab-btn" aria-label="Buscar en toda la web"></button>
       <button type="button" id="b-letra" class="cab-btn" aria-label="Cambiar el tamaño de la letra"><span class="aa">Aa</span></button>
@@ -93,10 +99,13 @@
         <span id="accesos-secciones" class="accesos-extra"></span>
       </nav>
       <div id="novedades"></div>
+      <!-- v25: en el PC (1000 px o más), el aviso importante del momento a lo ancho, con titular grande y entradilla -->
+      <div id="portada-lead" class="portada-lead"></div>
       <div class="portada-grid">
         <aside class="col-lateral" aria-label="Lo más importante">
           <div id="urgente"></div>
           <div id="proxima"></div>
+          <div id="agenda" class="agenda"></div>
           <div id="consultas"></div>
           <p id="consultas-estado" class="sr-only" role="status"></p>
           <div class="tarjeta contacto-card">
@@ -151,6 +160,8 @@
       </div>
     </div>
     <div class="caja">
+      <!-- v25: en el móvil, la próxima reunión arriba del calendario (en el PC ya sale al lado) -->
+      <div id="reunion-arriba" class="reunion-arriba"></div>
       <div class="mes" id="mes-calendario">
         <div class="segmentos mes-vistas" role="tablist" aria-label="Ver el calendario">
           <button type="button" role="tab" id="ver-mes" aria-selected="true" aria-controls="mes-cuerpo">Mes</button>
@@ -193,6 +204,10 @@
       </div>
       <div id="bloque-documentos" role="tabpanel" aria-labelledby="seg-documentos" hidden>
         <p class="sub-vista">Convenio, calendario laboral, tablas salariales y otros documentos que te pueden hacer falta.</p>
+        <label class="buscador solo-pc">
+          <span class="sr-only">Buscar en los documentos</span>
+          <input type="search" id="buscar-docs" placeholder="Buscar en los documentos" autocomplete="off">
+        </label>
         <div id="lista-documentos"></div>
       </div>
       <div id="bloque-actas" role="tabpanel" aria-labelledby="seg-actas">
@@ -254,7 +269,7 @@
     <div class="cab-apartado">
       <div class="cab-apartado-in">
         <span class="ic" id="seccion-ic"></span>
-        <div><p class="miga" id="seccion-miga" hidden></p><h1 id="seccion-titulo"></h1><p id="seccion-desc"></p></div>
+        <div><nav class="miga" id="seccion-miga" aria-label="Estás en"></nav><h1 id="seccion-titulo"></h1><p id="seccion-desc"></p></div>
       </div>
     </div>
     <div class="caja">
@@ -340,32 +355,50 @@
   <a href="#avisos-movil" class="barra-buzon" id="barra-campana" aria-label="Avisos al móvil"><span class="ic" data-ic="campana"></span><span>Avisos</span></a>
 </nav>
 
+<!-- v25: banda del buzón y del contacto, una sola vez, antes del pie (solo en el PC; en el móvil están la barra de abajo y los accesos) -->
+<section class="banda-contacto" aria-label="Buzón y contacto con el comité">
+  <div class="banda-in">
+    <div class="banda-parte b-buzon">
+      <h2>¿Tienes una queja o una idea?</h2>
+      <p>Escríbela en el buzón anónimo: no se guarda tu nombre ni tu teléfono.</p>
+      <a href="#buzon">Ir al buzón anónimo</a>
+    </div>
+    <div class="banda-parte b-contacto">
+      <h2>Habla con el comité</h2>
+      <p>Cualquier miembro te atiende en persona, por teléfono o por correo.</p>
+      <a href="#nosotros">Ver los miembros y cómo contactar</a>
+    </div>
+  </div>
+</section>
+
 <footer class="pie">
   <div class="pie-in">
     <div class="pie-marca">
       <div class="pie-logo"><img src="img/logo-96.webp" alt="" width="48" height="48"><div><b>Calsina Carré</b><small>Comité de empresa</small></div></div>
       <p>La web del comité de empresa para toda la plantilla. Gratis, sin publicidad y sin registrarte.</p>
     </div>
+    <!-- v25: mapa de la web. En el PC no se repite lo que ya está en la banda de arriba ni el correo del pie (clase solo-movil) -->
     <nav class="pie-col" aria-label="Apartados de la web">
       <h2>Apartados</h2>
-      <a href="#actualidad">Info general</a><a href="#avisos">Avisos</a><a href="#reuniones">Calendario de reuniones</a><a href="#actas">Actas</a><a href="#documentos">Documentos útiles</a>
+      <a href="#actualidad">Info general</a><a href="#avisos">Avisos</a><a href="#reuniones">Calendario de reuniones</a><a href="#actas">Actas</a><a href="#documentos">Documentos útiles</a><span id="pie-secciones" class="pie-secciones"></span>
     </nav>
     <nav class="pie-col" aria-label="El comité">
       <h2>El comité</h2>
-      <a href="#nosotros">Quiénes somos</a><a href="#buzon">Buzón anónimo</a><a href="#preguntas">Preguntas frecuentes</a><a href="#avisos-movil">Avisos al móvil</a><a href="mailto:ssccoo.calsinacarre@gmail.com">Escribir al comité (email)</a><a href="#buscar">Buscar</a>
+      <a href="#nosotros" class="solo-movil">Quiénes somos</a><a href="#buzon" class="solo-movil">Buzón anónimo</a><a href="#preguntas">Preguntas frecuentes</a><a href="#avisos-movil">Avisos al móvil</a><a href="mailto:ssccoo.calsinacarre@gmail.com" class="solo-movil">Escribir al comité (email)</a><a href="#buscar">Buscar</a>
     </nav>
   </div>
   <div class="pie-legal">
     <span>© <span id="pie-ano">2026</span> Comité de Empresa de Calsina Carré</span>
     <span>Web del comité de empresa. No es una web oficial de Calsina Carré.</span>
+    <span class="solo-pc">Contacto: <a href="mailto:ssccoo.calsinacarre@gmail.com">ssccoo.calsinacarre@gmail.com</a></span>
     <span><a href="#aviso-legal">Aviso legal</a> · <a href="#privacidad">Privacidad</a> · <a href="#cookies">Cookies</a> · <a href="admin.html">Acceso del comité</a></span>
   </div>
 </footer>
 
 <script src="lib/supabase.js"></script>
-<script src="comun.js?v=24"></script>
-<script src="render.js?v=24"></script>
-<script src="app.js?v=24"></script>
-<script src="visor.js?v=24"></script>
+<script src="comun.js?v=25"></script>
+<script src="render.js?v=25"></script>
+<script src="app.js?v=25"></script>
+<script src="visor.js?v=25"></script>
 </body>
 </html>

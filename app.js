@@ -23,6 +23,31 @@
     $("b-letra").setAttribute("aria-label", "Tamaño de letra: " + ({ "": "normal", grande: "grande", "muy-grande": "muy grande" }[l]));
   });
   $("b-buscar").addEventListener("click", () => { location.hash = "buscar"; });
+  // v25: buscador escrito de la cabecera (se ve en el PC); lleva lo escrito al apartado «Buscar»
+  $("cab-busca").addEventListener("submit", (e) => {
+    e.preventDefault();
+    $("buscar-todo").value = $("cab-buscar").value.trim();
+    if (location.hash === "#buscar") buscar(); else location.hash = "buscar";
+  });
+  // v25: el PC (1000 px o más) tiene su propia maqueta (portada tipo periódico, actas y documentos en tabla)
+  const esPC = matchMedia("(min-width: 1000px)");
+
+  // ---------- v25: miga de pan («Inicio › Actas › …») en las páginas interiores (lo pidió Lorena, 10/11/2026) ----------
+  const NOMBRE_VISTA = { avisos: "Avisos", reuniones: "Calendario de reuniones", actas: "Actas", buzon: "Sugerencias y preguntas", nosotros: "Nosotros", buscar: "Buscar", privacidad: "Privacidad", "aviso-legal": "Aviso legal", cookies: "Cookies" };
+  const migaHTML = (t) => `<ol>${t.map(([h, x], i) => i === t.length - 1 ? `<li><span aria-current="page">${esc(x)}</span></li>` : `<li><a href="${esc(h)}">${esc(x)}</a></li>`).join("")}</ol>`;
+  const ponMiga = (vista, h, m) => {
+    if (!NOMBRE_VISTA[vista]) return;
+    const caja = $("v-" + vista).querySelector(".cab-apartado-in > div"); if (!caja) return;
+    let nav = caja.querySelector(":scope > .miga");
+    if (!nav) { caja.insertAdjacentHTML("afterbegin", '<nav class="miga" aria-label="Estás en"></nav>'); nav = caja.firstElementChild; }
+    const t = [["#actualidad", "Inicio"], ["#" + vista, NOMBRE_VISTA[vista]]];
+    if (vista === "actas" && (m ? m[1] === "documento" : !$("bloque-documentos").hidden)) t.push(["#documentos", "Documentos útiles"]);
+    const lista = m && { aviso: D.avisos, reunion: D.reuniones, acta: D.actas, documento: D.documentos, pregunta: D.preguntas }[m[1]];
+    const x = lista && lista.find((y) => String(y.id) === m[2]);
+    if (x) t.push([null, x.titulo || x.pregunta || ""]);
+    else if (h === "preguntas" || (m && m[1] === "pregunta")) t.push([null, "Preguntas frecuentes"]);
+    nav.innerHTML = migaHTML(t);
+  };
 
   // ---------- Navegación entre apartados ----------
   const irA = (hash, { foco = false } = {}) => {
@@ -32,6 +57,7 @@
     let vista = VISTAS.includes(h) ? h : "actualidad", destino = null;
     quitaFalta();
     if (h === "documentos") { vista = "actas"; ponSegmento("documentos"); }
+    if (h === "actas") ponSegmento("actas"); // v25: «Actas» (menú, mapa o miga) abre las actas aunque antes se vieran los documentos
     if (h === "avisos-movil") { vista = "avisos"; }
     if (h === "preguntas") { vista = "buzon"; destino = "preguntas"; }
     // v11: secciones propias (#seccion-N) y lo publicado en ellas (#publicacion-N)
@@ -50,6 +76,9 @@
       destino = h;
     }
     VISTAS.forEach((v) => { $("v-" + v).hidden = v !== vista; });
+    document.body.dataset.vista = vista; // v25: la banda de contacto no repite el apartado en el que ya estás
+    ponMiga(vista, h, m);
+    if (vista === "buscar" && $("buscar-todo").value) buscar();
     const pest = vista === "seccion" ? pestSeccion : vista in PESTANA_DE ? PESTANA_DE[vista] : vista;
     document.querySelectorAll("#pestanas a").forEach((a) => {
       const sel = a.dataset.vista === pest;
@@ -71,6 +100,7 @@
         if (el) {
           // v23: un aviso o anuncio largo sale desplegado (antes dependía de que los datos llegaran en menos de 1 s)
           R.abrePlegable(el);
+          abreFila(el); // v25: en el PC el acta o el documento está dentro de su fila de la tabla
           el.scrollIntoView({ block: "start" }); el.classList.add("resalta"); setTimeout(() => el.classList.remove("resalta"), 2200);
         } else if (m && hayDatos) ponFalta(vista, m[1]);
       });
@@ -188,6 +218,21 @@
       : `<div class="novedades al-dia">${icono("check")}<span>Estás al día: no hay nada nuevo desde tu última visita.</span></div>`;
   };
 
+  // Tarjeta «Próxima reunión» (portada del móvil y, desde la v25, arriba del calendario en el móvil)
+  const citaHTML = (prox) => {
+    const dias = Math.round((fechaDia(prox.fecha) - fechaDia(hoyISO())) / 86400000), d = fechaDia(prox.fecha);
+    return `
+      <a class="destacado cita" href="#reunion-${prox.id}">
+        <span class="destacado-cab"><span class="destacado-etq">${icono("calendario")}Próxima reunión</span><span class="faltan">${dias === 0 ? "Es hoy" : dias === 1 ? "Mañana" : "En " + dias + " días"}</span></span>
+        <span class="cita-cuerpo">
+          <span class="dia" aria-hidden="true"><b>${d.getDate()}</b><span>${d.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}</span></span>
+          <span class="cita-datos"><b>${esc(prox.titulo)}</b>
+            <span class="destacado-txt">${esc(fechaSemana(prox.fecha))}${prox.hora ? " · " + esc(horario(prox)) : ""}</span>
+            ${prox.lugar ? `<span class="destacado-txt">${icono("lugar")}${esc(prox.lugar)}</span>` : ""}</span>
+        </span>
+      </a>`;
+  };
+
   // ---------- Actualidad (portada) ----------
   const pintaActualidad = () => {
     $("bienvenida").textContent = D.paginas.bienvenida || "";
@@ -206,20 +251,32 @@
         ${urg.contenido ? `<span class="destacado-txt">${esc(txtCorto(urg.contenido, 150))}</span>` : ""}
         <span class="destacado-ir">Leer el aviso${icono("flecha")}</span>
       </a>` : "";
-    const prox = D.reuniones.find((r) => r.fecha >= hoyISO());
-    $("proxima").innerHTML = prox ? (() => {
-      const dias = Math.round((fechaDia(prox.fecha) - fechaDia(hoyISO())) / 86400000), d = fechaDia(prox.fecha);
+    // v25: en el PC, el aviso importante del momento a lo ancho (el urgente; si no hay, el último del mes)
+    const lead = urg || D.avisos.find((a) => Date.now() - new Date(a.fecha) < 30 * 86400000);
+    $("portada-lead").innerHTML = lead ? (() => {
+      const rojo = lead === urg, etq = lead === hoyDest ? "Destacado hoy" : rojo ? "Aviso urgente" : "Último aviso";
       return `
-      <a class="destacado cita" href="#reunion-${prox.id}">
-        <span class="destacado-cab"><span class="destacado-etq">${icono("calendario")}Próxima reunión</span><span class="faltan">${dias === 0 ? "Es hoy" : dias === 1 ? "Mañana" : "En " + dias + " días"}</span></span>
-        <span class="cita-cuerpo">
-          <span class="dia" aria-hidden="true"><b>${d.getDate()}</b><span>${d.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}</span></span>
-          <span class="cita-datos"><b>${esc(prox.titulo)}</b>
-            <span class="destacado-txt">${esc(fechaSemana(prox.fecha))}${prox.hora ? " · " + esc(horario(prox)) : ""}</span>
-            ${prox.lugar ? `<span class="destacado-txt">${icono("lugar")}${esc(prox.lugar)}</span>` : ""}</span>
-        </span>
-      </a>`;
+      <article class="lead${rojo ? " urgente" : ""}" aria-labelledby="lead-titular">
+        ${rojo ? '<span class="rayas" aria-hidden="true"></span>' : ""}
+        <div class="lead-cuerpo">${R.senal(rojo)}
+          <div class="lead-txt">
+            <p class="lead-etq">${esc(etq)} · ${esc(fechaLarga(lead.fecha || new Date()))}</p>
+            <h2 class="lead-titular" id="lead-titular">${esc(lead.titulo || "Aviso")}</h2>
+            ${lead.contenido ? `<p class="lead-entradilla">${esc(txtCorto(lead.contenido, 280))}</p>` : ""}
+            <a class="lead-ir" href="#aviso-${lead.id}">Leer el aviso completo<span class="sr-only">: ${esc(lead.titulo || "")}</span></a>
+          </div>
+        </div>
+      </article>`;
     })() : "";
+    const prox = D.reuniones.find((r) => r.fecha >= hoyISO());
+    $("proxima").innerHTML = prox ? citaHTML(prox) : "";
+    // v25: agenda «Próximas reuniones» de la portada del PC: el día en grande, el título y la hora y el lugar
+    const proximas = D.reuniones.filter((r) => r.fecha >= hoyISO()).slice(0, 4);
+    $("agenda").innerHTML = `<h2 class="agenda-tit">Próximas reuniones</h2>` + (proximas.length ? `<ol class="agenda-lista">${proximas.map((r) => {
+      const d = fechaDia(r.fecha);
+      return `<li><a class="agenda-item" href="#reunion-${r.id}"><span class="agenda-dia" aria-hidden="true"><b>${d.getDate()}</b><span>${esc(d.toLocaleDateString("es-ES", { month: "short" }).replace(".", ""))}</span></span>
+        <span class="agenda-datos"><b>${esc(r.titulo || "Reunión")}</b><span>${esc(fechaSemana(r.fecha))}${r.hora ? " · " + esc(horario(r)) : ""}</span>${r.lugar ? `<span>${esc(r.lugar)}</span>` : ""}</span></a></li>`;
+    }).join("")}</ol>` : '<p class="agenda-vacia">No hay reuniones convocadas por ahora.</p>');
     pintaNovedades();
     pintaConsultas();
     $("lista-actualidad").innerHTML = D.actualidad.slice(0, TOPE_LISTA.actualidad).map(tarjetaNoticia).join("") + verMas("actualidad") || vacio("Todavía no hay anuncios", "Aquí saldrá la información general del comité: acuerdos, cambios de turnos y pausas, convenio, nóminas y todo lo que te afecta.", "periodico", ["#avisos-movil", "Avisarme cuando haya novedades"]);
@@ -239,8 +296,13 @@
     const sig = D[k][antes], el = sig && $((k === "avisos" ? "aviso-" : "noticia-") + sig.id);
     if (el) { el.tabIndex = -1; el.focus({ preventScroll: true }); }
   });
+  // v25 (lo pidió Lorena, 10/11/2026): lo urgente arriba, con su señal de peligro; los demás avisos, en una lista más compacta
+  // con la fecha bien visible. Urgente = destacado hoy o urgente de los últimos 14 días (lo mismo que la portada).
+  const urgenteAhora = (a) => (a.destacar_dia && a.destacar_dia === hoyISO()) || (a.urgente && Date.now() - new Date(a.fecha) < 14 * 86400000);
   const pintaAvisos = () => {
-    $("lista-avisos").innerHTML = D.avisos.slice(0, TOPE_LISTA.avisos).map(tarjetaAviso).join("") + verMas("avisos") || vacio("No hay avisos por ahora", "Cuando el comité publique un aviso, saldrá aquí. Activa los avisos y te llegará al móvil.", "megafono");
+    const lista = D.avisos.slice(0, TOPE_LISTA.avisos), urg = lista.filter(urgenteAhora), resto = lista.filter((a) => !urgenteAhora(a));
+    $("lista-avisos").innerHTML = (lista.length ? (urg.length ? `<h2 class="titulo-bloque">Urgentes</h2><div class="lista avisos-urgentes">${urg.map(tarjetaAviso).join("")}</div>` : "")
+      + (resto.length ? `${urg.length ? '<h2 class="titulo-bloque">Otros avisos</h2>' : ""}<div class="lista avisos-normales">${resto.map(tarjetaAviso).join("")}</div>` : "") + verMas("avisos") : "") || vacio("No hay avisos por ahora", "Cuando el comité publique un aviso, saldrá aquí. Activa los avisos y te llegará al móvil.", "megafono");
     pintaCuenta();
   };
 
@@ -324,6 +386,7 @@
     const hoy = hoyISO();
     const prox = D.reuniones.filter((r) => r.fecha >= hoy);
     const pas = D.reuniones.filter((r) => r.fecha < hoy).reverse();
+    $("reunion-arriba").innerHTML = prox[0] ? citaHTML(prox[0]) : "";
     $("lista-proximas").innerHTML = prox.map(tarjetaReunion).join("") || vacio("No hay reuniones previstas", "Cuando se convoque una reunión o una asamblea, saldrá aquí con el día, la hora y el lugar.", "calendario", ["#actas", "Ver las actas de las reuniones pasadas"]);
     $("lista-pasadas").innerHTML = pas.map(tarjetaReunion).join("");
     $("pasadas-caja").hidden = !pas.length;
@@ -338,8 +401,46 @@
       $("bloque-" + k).hidden = k !== s;
     });
   }
-  $("seg-actas").addEventListener("click", () => { ponSegmento("actas"); history.replaceState(null, "", "#actas"); });
-  $("seg-documentos").addEventListener("click", () => { ponSegmento("documentos"); history.replaceState(null, "", "#documentos"); });
+  $("seg-actas").addEventListener("click", () => { ponSegmento("actas"); history.replaceState(null, "", "#actas"); ponMiga("actas", "actas", null); });
+  $("seg-documentos").addEventListener("click", () => { ponSegmento("documentos"); history.replaceState(null, "", "#documentos"); ponMiga("actas", "documentos", null); });
+
+  // ---------- v25: actas y documentos en TABLA en el PC (Fecha · Título · Tipo · «Ver» / «Descargar»); en el móvil, tarjetas ----------
+  // Cada fila lleva debajo su fila de detalle (la tarjeta de siempre, de render.js), que se abre con «Ver».
+  let ordenActas = "desc";
+  const fechaTabla = (iso) => { const d = dia10(iso); return d ? fechaDia(d).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" }).replace(".", "") : ""; };
+  const dia10 = (x) => { if (!x) return ""; const t = String(x); return t.length === 10 ? t : diaMadrid(new Date(t)); };
+  const primerArchivo = (x) => (x.adjuntos || []).find((a) => a.tipo === "application/pdf") || (x.adjuntos || []).find((a) => !esImagen(a));
+  const filaTabla = (clave, fecha, titulo, tipo, archivo, enlace, detalle) => `
+    <tr class="fila-tabla">
+      <td class="t-fecha">${fecha ? `<time datetime="${esc(fecha)}">${esc(fechaTabla(fecha))}</time>` : "—"}</td>
+      <td class="t-tit">${esc(titulo || "Sin título")}</td>
+      <td class="t-tipo">${esc(tipo || "—")}</td>
+      <td class="t-acc"><button type="button" class="enlace-txt" data-ver-fila="${clave}" aria-expanded="false" aria-controls="det-${clave}">Ver<span class="sr-only">: ${esc(titulo || "")}</span></button>${archivo
+        ? `<a class="enlace-txt" href="${esc(urlSegura(archivo.url))}" target="_blank" rel="noopener" download>Descargar<span class="sr-only">: ${esc(archivo.nombre || titulo || "")}</span></a>`
+        : enlace ? `<a class="enlace-txt" href="${esc(urlSegura(enlace))}" target="_blank" rel="noopener">Abrir<span class="sr-only">: ${esc(titulo || "")}</span></a>` : ""}</td>
+    </tr>
+    <tr class="fila-detalle" id="det-${clave}" hidden><td colspan="4">${detalle}</td></tr>`;
+  const tablaHTML = (nombre, filas, conOrden) => `
+    <div class="tabla-caja"><table class="tabla">
+      <caption class="sr-only">${esc(nombre)}</caption>
+      <thead><tr>
+        <th scope="col"${conOrden ? ` aria-sort="${ordenActas === "desc" ? "descending" : "ascending"}"><button type="button" class="enlace-txt" data-orden-actas>Fecha<span aria-hidden="true">${ordenActas === "desc" ? " ↓" : " ↑"}</span><span class="sr-only">: cambiar el orden</span></button>` : ">Fecha"}</th>
+        <th scope="col">Título</th><th scope="col">Tipo</th><th scope="col"><span class="sr-only">Abrir o descargar</span></th>
+      </tr></thead>
+      <tbody>${filas}</tbody>
+    </table></div>`;
+  const abreFila = (el, abre = true) => {
+    const tr = el && el.closest ? el.closest("tr.fila-detalle") : null; if (!tr) return;
+    tr.hidden = !abre;
+    const b = document.querySelector(`[data-ver-fila="${tr.id.slice(4)}"]`);
+    if (b) { b.setAttribute("aria-expanded", String(abre)); b.firstChild.textContent = abre ? "Ocultar" : "Ver"; }
+  };
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-ver-fila]");
+    if (b) { const tr = $("det-" + b.dataset.verFila); if (tr) abreFila(tr, tr.hidden); return; }
+    if (e.target.closest("[data-orden-actas]")) { ordenActas = ordenActas === "desc" ? "asc" : "desc"; pintaActas(); document.querySelector("[data-orden-actas]")?.focus(); }
+  });
+  esPC.addEventListener("change", () => { pintaActas(); pintaDocumentos(); });
 
   const pintaActas = () => {
     const anos = [...new Set(D.actas.map((a) => a.fecha.slice(0, 4)))];
@@ -348,6 +449,11 @@
     const q = $("buscar-actas").value.trim().toLowerCase();
     const lista = D.actas.filter((a) => (filtroAno === "todos" || a.fecha.startsWith(filtroAno))
       && (!q || [a.titulo, a.tipo, a.resumen, a.acuerdos].join(" ").toLowerCase().includes(q)));
+    if (esPC.matches && lista.length) {
+      const orden = [...lista].sort((a, b) => ordenActas === "desc" ? b.fecha.localeCompare(a.fecha) : a.fecha.localeCompare(b.fecha));
+      $("lista-actas").innerHTML = tablaHTML("Actas", orden.map((a) => filaTabla("acta-" + a.id, a.fecha, a.titulo, a.tipo, primerArchivo(a), null, tarjetaActa(a))).join(""), true);
+      return;
+    }
     $("lista-actas").innerHTML = lista.map(tarjetaActa).join("")
       || (q ? vacio("No hay actas con esas palabras", "Prueba con otras palabras o mira todas las actas.", "buscar") : vacio("Todavía no hay actas", "Aquí saldrán el resumen y los acuerdos de cada reunión.", "acta", ["#reuniones", "Ver el calendario de reuniones"]));
   };
@@ -356,7 +462,16 @@
     const b = e.target.closest("[data-ano]"); if (!b) return;
     filtroAno = b.dataset.ano; pintaActas();
   });
+  $("buscar-docs").addEventListener("input", () => pintaDocumentos());
   const pintaDocumentos = () => {
+    const q = sinAcentos($("buscar-docs").value.trim());
+    if (esPC.matches && D.documentos.length) {
+      const lista = D.documentos.filter((d) => !q || sinAcentos([d.titulo, d.categoria, d.descripcion, (d.adjuntos || []).map((a) => a.nombre).join(" ")].join(" ")).includes(q));
+      $("lista-documentos").innerHTML = lista.length
+        ? tablaHTML("Documentos útiles", lista.map((d) => filaTabla("documento-" + d.id, dia10(d.actualizado || d.creado), d.titulo, d.categoria, primerArchivo(d), d.enlace, tarjetaDocumento(d))).join(""), false)
+        : vacio("No hay documentos con esas palabras", "Prueba con otras palabras o pídelo por el buzón.", "buscar");
+      return;
+    }
     const grupos = {};
     D.documentos.forEach((d) => { (grupos[d.categoria || "General"] ||= []).push(d); });
     const nombres = Object.keys(grupos);
@@ -423,13 +538,14 @@ Es técnico, son preferencias tuyas o una medición propia sin datos personales,
   const pintaPestanasSecciones = () => {
     document.querySelectorAll("#pestanas .pest-seccion").forEach((a) => a.remove());
     $("pest-nosotros").insertAdjacentHTML("beforebegin", principales().map((a) => `<a href="#seccion-${a.id}" data-vista="seccion-${a.id}" class="pest-seccion">${esc(a.titulo)}</a>`).join(""));
+    $("pie-secciones").innerHTML = principales().map((a) => `<a href="#seccion-${a.id}">${esc(a.titulo)}</a>`).join("");
     $("accesos-secciones").innerHTML = principales().map((a) => `<a href="#seccion-${a.id}"><span class="ic">${icono(a.icono || "carpeta")}</span><span>${esc(a.titulo)}</span></a>`).join("");
   };
   // Pinta la sección y devuelve la pestaña que hay que marcar (la de la sección principal)
   const pintaSeccion = (id, esPub = false) => {
     const a = D.apartados.find((x) => x.id === id), v = $("v-seccion");
     if (!a) {
-      $("seccion-ic").innerHTML = icono("carpeta"); $("seccion-titulo").textContent = esPub ? "Publicación no disponible" : "Sección no disponible"; $("seccion-miga").hidden = true;
+      $("seccion-ic").innerHTML = icono("carpeta"); $("seccion-titulo").textContent = esPub ? "Publicación no disponible" : "Sección no disponible"; $("seccion-miga").innerHTML = migaHTML([["#actualidad", "Inicio"], [null, "No disponible"]]);
       $("seccion-desc").hidden = false;
       $("seccion-desc").textContent = esPub ? "Esta publicación ya no está en la web o se ha ocultado." : "Esta sección ya no está en la web o se ha ocultado.";
       $("seccion-hijas").innerHTML = ""; $("seccion-pubs").innerHTML = vacio("No hay nada aquí", "Vuelve a la portada para ver lo último del comité.", "carpeta", ["#actualidad", "Ir a Info general"]);
@@ -440,8 +556,8 @@ Es técnico, son preferencias tuyas o una medición propia sin datos personales,
     $("seccion-titulo").textContent = a.titulo;
     $("seccion-desc").textContent = String(a.descripcion || "").replace(/\*\*/g, "");
     $("seccion-desc").hidden = !a.descripcion;
-    $("seccion-miga").hidden = !padre;
-    $("seccion-miga").innerHTML = padre ? `<a href="#seccion-${padre.id}">${icono("atras")}${esc(padre.titulo)}</a>` : "";
+    // v25: miga completa «Inicio › Sección madre › Sección»
+    $("seccion-miga").innerHTML = migaHTML([["#actualidad", "Inicio"], ...(padre ? [["#seccion-" + padre.id, padre.titulo]] : []), [null, a.titulo]]);
     const hijas = D.apartados.filter((x) => x.padre_id === a.id);
     const cuenta = (sid) => D.publicaciones.filter((p) => p.apartado_id === sid).length;
     $("seccion-hijas").innerHTML = hijas.map((h) => R.seccion(h, cuenta(h.id))).join("");

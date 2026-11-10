@@ -84,6 +84,7 @@
       eq(c, v) { filtros.push((r) => r[c] === v); return q; },
       gt(c, v) { filtros.push((r) => r[c] != null && r[c] > v); return q; },
       gte(c, v) { filtros.push((r) => r[c] >= v); return q; },
+      lt(c, v) { filtros.push((r) => r[c] != null && r[c] < v); return q; },
       lte(c, v) { filtros.push((r) => r[c] <= v); return q; },
       order(c, o = {}) { orden.push([c, o.ascending !== false]); return q; },
       limit(n) { lim = n; return q; },

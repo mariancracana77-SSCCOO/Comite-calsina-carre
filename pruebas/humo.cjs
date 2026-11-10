@@ -11,6 +11,9 @@ fs.mkdirSync(OUT, { recursive: true });
 (async () => {
   const srv = spawn("python3", ["-m", "http.server", String(PUERTO)], { cwd: RAIZ, stdio: "ignore" });
   await new Promise((r) => setTimeout(r, 900));
+  // v25: el puerto tiene que servir ESTA carpeta (otra prueba podría estar usando el mismo puerto con otra copia)
+  const servido = await fetch(BASE + "pruebas/humo.cjs").then((r) => r.text()).catch(() => "");
+  if (servido !== fs.readFileSync(__filename, "utf8")) { console.error(`El puerto ${PUERTO} no sirve esta carpeta (${RAIZ}): usa otro con PUERTO=…`); srv.kill(); process.exit(2); }
   const b = await chromium.launch({ args: ["--lang=es-ES"], env: { ...process.env, LANG: "es_ES.UTF-8", LANGUAGE: "es_ES" } });
   const errores = [], fallos = [];
   const CASOS = [
@@ -53,7 +56,7 @@ fs.mkdirSync(OUT, { recursive: true });
         await p.goto(BASE + (vacio ? "?prueba-vacio" : "") + "#actualidad"); await p.waitForTimeout(700);
         const u = await p.evaluate(() => {
           const caja = (s) => { const e = document.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect(); return r.width || r.height ? { top: r.top, bottom: r.bottom } : null; };
-          return { movil: caja("#urgente-movil .destacado.con-senal"), lateral: caja("#urgente .destacado.con-senal"), buzon: caja(".hero-btn-sec"), hero: caja(".hero"), accesos: caja(".accesos"), rayas: !!document.querySelector("#urgente-movil .rayas") };
+          return { lead: caja("#portada-lead .lead.urgente"), movil: caja("#urgente-movil .destacado.con-senal"), lateral: caja("#urgente .destacado.con-senal"), buzon: caja(".hero-btn-sec"), hero: caja(".hero"), accesos: caja(".accesos"), rayas: !!document.querySelector("#urgente-movil .rayas") };
         });
         if (vacio) {
           if (u.movil || u.lateral) fallos.push(`${c.nombre}: sin avisos sale una caja de urgente`);
@@ -61,8 +64,17 @@ fs.mkdirSync(OUT, { recursive: true });
         } else if (c.w < 760) {
           if (!u.movil || u.lateral) fallos.push(`${c.nombre}: el urgente no sale (solo una vez) debajo del bloque azul`);
           else if (!(u.movil.top >= u.buzon.bottom && u.movil.bottom <= u.accesos.top) || !u.rayas) fallos.push(`${c.nombre}: el urgente no está entre «Buzón anónimo» y los accesos (${JSON.stringify(u)})`);
-        } else if (!u.lateral || u.movil) fallos.push(`${c.nombre}: en el PC el urgente tiene que salir solo en la columna de la derecha`);
+        } else if (c.w >= 1000) { if (!u.lead || u.lateral || u.movil) fallos.push(`${c.nombre}: en el PC el urgente tiene que salir solo a lo ancho, arriba de la portada (v25)`); }
+        else if (!u.lateral || u.movil) fallos.push(`${c.nombre}: en la tableta el urgente tiene que salir solo en la columna de la derecha`);
       }
+      // v25 (lo pidió Lorena: «mientras se vea lo del camión y carretilla»): la imagen del camión y la carretilla se ve, sin tapar
+      await p.goto(BASE + "#actualidad"); await p.waitForTimeout(500);
+      const cam = await p.evaluate(() => {
+        const e = document.querySelector(".hero-arte"), r = e.getBoundingClientRect(), cs = getComputedStyle(e);
+        const enc = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return { w: r.width, h: r.height, izq: r.left, der: r.right, img: cs.backgroundImage, vis: cs.display !== "none" && cs.visibility !== "hidden" && +cs.opacity > 0, encima: enc === e || e.contains(enc) || (enc && enc.contains(e) && enc.classList.contains("hero-in")) };
+      });
+      if (!cam.vis || !/portada(-movil)?\.webp/.test(cam.img) || cam.h < 80 || cam.w < (c.w >= 1000 ? 450 : 260) || cam.izq < -40 || cam.der > c.w + 40 || !cam.encima) fallos.push(`${c.nombre}: la imagen del camión y la carretilla no se ve bien (${JSON.stringify(cam)})`);
       // Secciones propias: pestaña, acceso en la portada, subsección, enlace directo a una publicación y sección oculta
       await p.goto(BASE + "#actualidad"); await p.waitForTimeout(600);
       if (!(await p.$('#pestanas a[href="#seccion-1"]'))) fallos.push(`${c.nombre}: la sección principal no sale como pestaña`);
@@ -93,6 +105,93 @@ fs.mkdirSync(OUT, { recursive: true });
         pg.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource/.test(m.text())) errores.push(`${c.nombre} extra: ${m.text()}`); });
         return [x, pg];
       };
+      // ---- v25: lo nuevo (portada de periódico en el PC, un solo sitio para cada cosa, tablas, miga y avisos) ----
+      if (c.nombre === "pc" || c.nombre === "390") {
+        const pcV = c.nombre === "pc";
+        for (const w of pcV ? [1280, 1440, 1920, 1000] : [390]) {
+          const [cx, px] = await nuevoCtx("", { w, h: 900 });
+          await px.goto(BASE + "#actualidad"); await px.waitForTimeout(700);
+          const r = await px.evaluate(() => {
+            const visible = (e) => !!e && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden";
+            const v = document.getElementById("v-actualidad");
+            return {
+              iconos: [...v.querySelectorAll("svg.ico")].filter(visible).map((i) => (i.closest("[class]")?.className || "?")),
+              accesos: visible(document.querySelector(".accesos")), botonesHero: visible(document.querySelector(".hero-btns")), barra: visible(document.querySelector(".barra-fija")),
+              banda: [...document.querySelectorAll(".banda-contacto")].filter(visible).length,
+              lead: (() => { const t = document.querySelector("#portada-lead .lead-titular"); return visible(t) ? parseFloat(getComputedStyle(t).fontSize) : 0; })(),
+              leadLeer: visible(document.querySelector('#portada-lead a.lead-ir[href^="#aviso-"]')),
+              columnas: (() => { const l = document.getElementById("lista-actualidad"); return getComputedStyle(l).gridTemplateColumns.split(" ").length; })(),
+              leerMasTexto: [...v.querySelectorAll("#lista-actualidad .acciones .btn-linea, #lista-actualidad .leer-mas")].filter(visible).every((b) => getComputedStyle(b).backgroundColor === "rgba(0, 0, 0, 0)" && getComputedStyle(b).borderTopWidth === "0px"),
+              agenda: [...document.querySelectorAll("#agenda .agenda-item")].filter(visible).map((a) => ({ dia: parseFloat(getComputedStyle(a.querySelector(".agenda-dia b")).fontSize), txt: a.textContent.replace(/\s+/g, " ").trim() })),
+              buscador: visible(document.getElementById("cab-buscar")), lupa: visible(document.getElementById("b-buscar")),
+            };
+          });
+          if (pcV) {
+            if (r.iconos.length) fallos.push(`${w}: hay iconos decorativos en la portada del PC (${r.iconos.join(", ")})`);
+            if (r.accesos || r.botonesHero || r.barra) fallos.push(`${w}: en el PC siguen los accesos, los botones del bloque azul o la barra de abajo (${JSON.stringify({ a: r.accesos, h: r.botonesHero, b: r.barra })})`);
+            if (r.banda !== 1) fallos.push(`${w}: la banda del buzón y el contacto no sale una sola vez (${r.banda})`);
+            if (r.lead < 28 || !r.leadLeer) fallos.push(`${w}: el aviso importante no va a lo ancho con titular grande y «Leer el aviso completo» (${r.lead}px)`);
+            if (r.columnas < 2) fallos.push(`${w}: los anuncios no van en columnas (${r.columnas})`);
+            if (!r.leerMasTexto) fallos.push(`${w}: «Leer más» y «Compartir» de los anuncios no son enlaces de texto`);
+            if (r.agenda.length < 2 || r.agenda.some((x) => x.dia < 28 || !/Viernes|Lunes|Martes|Miércoles|Jueves|Sábado|Domingo/i.test(x.txt) || !/\d\d:\d\d/.test(x.txt))) fallos.push(`${w}: la agenda «Próximas reuniones» no tiene el día en grande, el título y la hora (${JSON.stringify(r.agenda)})`);
+            if (!r.buscador || r.lupa) fallos.push(`${w}: en el PC el buscador no se ve escrito`);
+            // Un solo sitio para cada cosa: fuera del menú de arriba y de la miga, ningún enlace se repite en la misma pantalla
+            for (const v of ["actualidad", "avisos", "reuniones", "actas", "documentos", "buzon", "nosotros", "seccion-1", "buscar", "privacidad", "aviso-legal", "cookies"]) {
+              await px.goto(BASE + "#" + v); await px.waitForTimeout(350);
+              const rep = await px.evaluate(() => {
+                const visible = (e) => e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden";
+                const zonas = [document.querySelector(".vista:not([hidden])"), document.querySelector(".banda-contacto"), document.querySelector(".pie")];
+                const hs = zonas.flatMap((z) => [...z.querySelectorAll("a[href]")]).filter((a) => visible(a) && !a.closest(".miga, .acepto, .nota-buzon, .texto, .cab-apartado")).map((a) => a.getAttribute("href"));
+                const cab = [...document.querySelectorAll(".pestanas a[href]")].map((a) => a.getAttribute("href"));
+                const dup = (l) => [...new Set(l.filter((x, i) => l.indexOf(x) !== i))];
+                return [...dup(hs), ...dup(cab)];
+              });
+              if (rep.length) fallos.push(`${w} #${v}: enlaces repetidos en la misma pantalla del PC: ${rep.join(", ")}`);
+            }
+            // Buscador de la cabecera
+            await px.goto(BASE + "#actualidad"); await px.waitForTimeout(300);
+            await px.fill("#cab-buscar", "turnos"); await px.press("#cab-buscar", "Enter"); await px.waitForTimeout(400);
+            if (!(await px.evaluate(() => location.hash === "#buscar" && document.querySelectorAll("#lista-buscar .resultado").length > 0))) fallos.push(`${w}: el buscador de la cabecera no lleva a los resultados`);
+          } else {
+            // En el móvil no se mueve nada: barra de abajo, accesos y botones del bloque azul siguen; sin banda ni tabla
+            if (!r.accesos || !r.botonesHero || !r.barra || r.banda) fallos.push(`390: en el móvil se ha movido algo (${JSON.stringify({ a: r.accesos, h: r.botonesHero, b: r.barra, banda: r.banda })})`);
+            if (!r.lupa) fallos.push("390: en el móvil falta la lupa de la cabecera");
+            await px.goto(BASE + "#reuniones"); await px.waitForTimeout(400);
+            if (!(await px.evaluate(() => { const a = document.querySelector("#reunion-arriba .destacado.cita"), m = document.getElementById("mes-calendario"); return a && a.getClientRects().length && a.getBoundingClientRect().bottom <= m.getBoundingClientRect().top; }))) fallos.push("390: la próxima reunión no sale arriba del calendario");
+          }
+          // Actas: tabla en el PC (Fecha · Título · Tipo · Ver/Descargar) con buscador; tarjetas en el móvil
+          await px.goto(BASE + "#actas"); await px.waitForTimeout(400);
+          const ta = await px.evaluate(() => ({ tabla: !!document.querySelector("#lista-actas table.tabla"), cab: [...document.querySelectorAll("#lista-actas th")].map((t) => t.textContent.trim()), filas: document.querySelectorAll("#lista-actas tr.fila-tabla").length, tarjetas: document.querySelectorAll("#lista-actas > .tarjeta.acta").length,
+            miga: [...document.querySelectorAll("#v-actas .miga li")].map((l) => l.textContent.trim()) }));
+          if (JSON.stringify(ta.miga) !== JSON.stringify(["Inicio", "Actas"])) fallos.push(`${w}: la miga de pan de Actas no es «Inicio › Actas» (${ta.miga})`);
+          if (pcV) {
+            if (!ta.tabla || ta.filas !== 2 || !/^Fecha/.test(ta.cab[0]) || ta.cab[1] !== "Título" || ta.cab[2] !== "Tipo") fallos.push(`${w}: las actas no salen en tabla (${JSON.stringify(ta)})`);
+            await px.click('[data-ver-fila="acta-1"]'); await px.waitForTimeout(200);
+            if (!(await px.evaluate(() => { const d = document.getElementById("acta-1"); return d && d.getClientRects().length > 0 && document.querySelector('[data-ver-fila="acta-1"]').getAttribute("aria-expanded") === "true"; }))) fallos.push(`${w}: «Ver» no abre el acta en la tabla`);
+            await px.fill("#buscar-actas", "septiembre"); await px.waitForTimeout(200);
+            if ((await px.evaluate(() => document.querySelectorAll("#lista-actas tr.fila-tabla").length)) !== 1) fallos.push(`${w}: el buscador no filtra la tabla de actas`);
+            await px.goto(BASE + "#documentos"); await px.waitForTimeout(400);
+            const td = await px.evaluate(() => ({ filas: document.querySelectorAll("#lista-documentos tr.fila-tabla").length, desc: !!document.querySelector('#lista-documentos .t-acc a[download]'), busca: document.getElementById("buscar-docs").getClientRects().length > 0, miga: [...document.querySelectorAll("#v-actas .miga li")].map((l) => l.textContent.trim()).join(" › ") }));
+            if (td.filas !== 2 || !td.desc || !td.busca) fallos.push(`${w}: los documentos no salen en tabla con «Descargar» y buscador (${JSON.stringify(td)})`);
+            if (td.miga !== "Inicio › Actas › Documentos útiles") fallos.push(`${w}: miga de Documentos mal (${td.miga})`);
+            if (w === 1440) await px.screenshot({ path: path.join(OUT, "web-pc-1440-documentos.png"), fullPage: true });
+          } else if (ta.tabla || ta.tarjetas !== 2) fallos.push(`390: en el móvil las actas tienen que seguir en tarjetas (${JSON.stringify(ta)})`);
+          // Enlace directo a un acta: abre su fila y la miga termina en su título
+          await px.goto(BASE + "#acta-1"); await px.waitForTimeout(500);
+          const ea = await px.evaluate(() => ({ ve: document.getElementById("acta-1")?.getClientRects().length > 0, miga: [...document.querySelectorAll("#v-actas .miga li")].map((l) => l.textContent.trim()), actual: document.querySelector("#v-actas .miga [aria-current=page]")?.textContent }));
+          if (!ea.ve || ea.miga.length !== 3 || ea.actual !== "Reunión con la empresa de octubre") fallos.push(`${w}: el enlace directo a un acta no la abre o la miga no termina en su título (${JSON.stringify(ea)})`);
+          if (w === 1440 || w === 390) await px.screenshot({ path: path.join(OUT, `web-${w}-acta-directa.png`), fullPage: false });
+          // Avisos: lo urgente arriba con su señal de peligro; los demás en lista compacta con la fecha
+          await px.goto(BASE + "#avisos"); await px.waitForTimeout(400);
+          const av = await px.evaluate(() => ({ urg: [...document.querySelectorAll(".avisos-urgentes .aviso.urgente .senal.roja")].length, norm: [...document.querySelectorAll(".avisos-normales .aviso")].length,
+            orden: (() => { const u = document.querySelector(".avisos-urgentes"), n = document.querySelector(".avisos-normales"); return !!u && !!n && !!(u.compareDocumentPosition(n) & 4); })(),
+            fecha: (() => { const f = document.querySelector(".avisos-normales .aviso .meta > span:not([class])"); return f ? getComputedStyle(f).order === "-1" && +getComputedStyle(f).fontWeight >= 600 : false; })(),
+            miga: [...document.querySelectorAll("#v-avisos .miga li")].map((l) => l.textContent.trim()).join(" › ") }));
+          if (av.urg !== 1 || av.norm !== 1 || !av.orden || !av.fecha) fallos.push(`${w}: avisos sin separar por importancia (${JSON.stringify(av)})`);
+          if (av.miga !== "Inicio › Avisos") fallos.push(`${w}: miga de Avisos mal (${av.miga})`);
+          await cx.close();
+        }
+      }
       if (c.nombre === "320" || c.nombre === "390-letra") {
         // Cabecera: el nombre no se mete debajo de los botones; accesos de la portada dentro de la pantalla
         for (const letra of [null, "muy-grande"]) for (const w of [320, 360]) {

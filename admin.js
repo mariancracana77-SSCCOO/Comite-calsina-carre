@@ -616,12 +616,15 @@
   // ================== INICIO ==================
   const pintaInicio = async () => {
     const hoy = hoyISO(), en14 = diaLocal(14);
-    const [reu, prog, ult, buz] = await Promise.all([
+    // v25: para «Lo pendiente», las reuniones de los últimos 60 días y las actas de esas fechas (para ver cuáles no tienen acta)
+    const [reu, prog, ult, buz, pasadas, actasRec] = await Promise.all([
       sb.from("reuniones").select("*").gte("fecha", hoy).lte("fecha", en14).order("fecha"),
       sb.from("avisos").select("*").gt("publicar_en", ahoraISO()).order("publicar_en"),
       Promise.all(["avisos", "actualidad", "reuniones", "actas", "encuestas", "documentos", "publicaciones"].map((t) =>
         sb.from(t).select("*").order(t === "avisos" ? "fecha" : "creado", { ascending: false }).limit(4).then((r) => ({ error: r.error, filas: (r.data || []).map((x) => ({ ...x, _t: t })) })))),
       sb.from("buzon").select("id", { count: "exact", head: true }).eq("leido", false).eq("archivado", false),
+      sb.from("reuniones").select("id,titulo,fecha").gte("fecha", diaLocal(-60)).lt("fecha", hoy).order("fecha", { ascending: false }),
+      sb.from("actas").select("id,fecha").gte("fecha", diaLocal(-60)),
       cargaAps().catch(() => {}),
     ]);
     if (actual !== "inicio") return;
@@ -632,7 +635,26 @@
     const ultimos = ult.flatMap((u) => u.filas).sort((a, b) => String(fechaDe(b)).localeCompare(String(fechaDe(a)))).slice(0, 8);
     const hora = new Date().getHours();
     const NO_CARGA = '<p class="vacio">No se ha podido cargar. Prueba de nuevo dentro de un momento.</p>';
+    // v25 (lo pidió Lorena, 10/11/2026): una línea «Lo pendiente» arriba, con lo que pide atención y sale de los datos que ya hay:
+    // mensajes del buzón sin leer, reuniones pasadas sin acta, avisos programados para hoy y la reunión de mañana.
+    // No cambia nada más del Inicio.
+    const pend = [];
+    if (!buz.error && PEND_BUZON) pend.push(`<a href="#buzon">${PEND_BUZON === 1 ? "1 mensaje del buzón sin leer" : PEND_BUZON + " mensajes del buzón sin leer"}</a>`);
+    if (!pasadas.error && !actasRec.error) {
+      const conActa = new Set((actasRec.data || []).map((a) => a.fecha));
+      const sinActa = (pasadas.data || []).filter((r) => !conActa.has(r.fecha));
+      if (sinActa.length === 1) pend.push(`<button type="button" class="btn-texto" data-nuevo="actas">Falta el acta de «${esc(sinActa[0].titulo || "la reunión")}» (${esc(fechaLarga(sinActa[0].fecha))})</button>`);
+      else if (sinActa.length) pend.push(`<button type="button" class="btn-texto" data-nuevo="actas">Faltan las actas de ${sinActa.length} reuniones pasadas</button>`);
+    }
+    const progHoy = (prog.data || []).filter((a) => diaMadrid(new Date(a.publicar_en)) === hoy);
+    if (progHoy.length === 1) pend.push(`<button type="button" class="btn-texto" data-editar-en="avisos:${progHoy[0].id}">Hoy se publica solo «${esc(progHoy[0].titulo)}»</button>`);
+    else if (progHoy.length) pend.push(`<span>Hoy se publican solos ${progHoy.length} avisos</span>`);
+    const manana = (reu.data || []).find((r) => r.fecha === diaLocal(1));
+    if (manana) pend.push(`<button type="button" class="btn-texto" data-editar-en="reuniones:${manana.id}">Mañana hay reunión: «${esc(manana.titulo)}»</button>`);
+    const sinDatosPend = buz.error || pasadas.error || actasRec.error || prog.error || reu.error;
+    const pendHTML = `<p class="lo-pendiente${pend.length ? " hay" : ""}" id="lo-pendiente"><b>Lo pendiente:</b> ${pend.length ? pend.join('<span class="sep" aria-hidden="true"> · </span>') : sinDatosPend ? "no se ha podido mirar (sin conexión)." : "nada. Está todo al día."}</p>`;
     $("zona").innerHTML = `
+      ${pendHTML}
       ${sinRed ? `<p class="nota-campo aviso-red" role="alert">${icono("alerta")}<span><b>No hay conexión:</b> estos datos pueden no estar al día. Prueba de nuevo dentro de un momento.</span></p>` : ""}
       <section class="hola-bloque">
         <div class="hola-txt">

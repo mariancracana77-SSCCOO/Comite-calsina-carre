@@ -737,3 +737,184 @@ main:focus, main:focus-visible { outline: none; }
   :root:not([data-theme="light"]) .etq.rojo { background: rgba(255, 123, 123, .18); color: #ffa3a3; }
   :root:not([data-theme="light"]) .etq.nuevo { background: rgba(123, 209, 130, .18); color: #9be0a0; }
 }
+
+/* ---------- v25: ideas de mejora que aprobó Lorena (10/11/2026) ----------
+   En el MÓVIL no se mueve nada (barra de abajo y accesos igual). En el PC (1000 px o más): portada como un periódico,
+   sin iconos decorativos, menú arriba, un solo mapa de la web abajo, banda del buzón y el contacto, y pie corto. */
+.cab-busca, .banda-contacto, .portada-lead, .agenda, .solo-pc { display: none; }
+.reunion-arriba:empty { display: none; }
+.reunion-arriba { margin: 0 0 14px; }
+.pie-secciones { display: contents; }
+
+/* 7. Miga de pan en las páginas interiores (todas las medidas) */
+.cab-apartado .miga { margin: -6px 0 2px; font-size: .88rem; }
+.miga ol { display: flex; flex-wrap: wrap; align-items: center; margin: 0; padding: 0; list-style: none; }
+.miga li { display: inline-flex; align-items: center; min-width: 0; max-width: 100%; }
+.miga li + li::before { content: "›"; margin: 0 8px; color: rgba(255, 255, 255, .6); }
+.miga a { display: inline-flex; align-items: center; min-height: 44px; color: var(--celeste); font-weight: 700; text-decoration: none; }
+.miga a:hover { text-decoration: underline; }
+.miga [aria-current] { color: rgba(255, 255, 255, .85); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 8. Móvil más cuidado, sin mover nada: barra de color según el tipo (aviso, reunión, acta, documento) */
+.tarjeta.aviso { --barra: #0E5FAE; }
+.tarjeta.aviso.urgente { --barra: var(--rojo); }
+.tarjeta.reunion { --barra: #00C6FF; }
+.tarjeta.acta { --barra: #0B1E3C; }
+.tarjeta:is(.aviso, .reunion, .acta) { background: linear-gradient(var(--barra), var(--barra)) left top / 5px 100% no-repeat, var(--tarjeta); }
+.tarjeta.documento { background: repeating-linear-gradient(180deg, #0E5FAE 0 12px, #00C6FF 12px 24px) left top / 5px 100% no-repeat, var(--tarjeta); }
+/* Botones de 48 px o más (en la web; el panel no cambia) */
+.web .btn-linea, .web .chip, .web .leer-mas, .web .segmentos button { min-height: 48px; }
+.web .mes-btn { width: 48px; height: 48px; }
+.web .cab-btn::after { inset: -4px; }
+.web .pie-col a, .web .pie-legal a { min-height: 48px; }
+
+/* 5. Avisos: lo urgente arriba con su señal; los demás en una lista compacta con la fecha bien visible */
+#lista-avisos { display: block; }
+#lista-avisos > .titulo-bloque:first-child { margin-top: 4px; }
+.avisos-normales { gap: 8px; }
+@media (min-width: 760px) { .avisos-normales { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+.avisos-normales .aviso { padding: 12px 14px 20px 16px; }
+.avisos-normales .aviso-cuerpo { gap: 12px; }
+.avisos-normales .aviso .senal { width: 34px; height: 43px; margin: 0; }
+.avisos-normales .aviso:not(.urgente) .meta > .etq.azul { display: none; }
+.avisos-normales .aviso .meta > span:not([class]) { order: -1; font-weight: 700; color: var(--azul-osc); }
+.avisos-normales .aviso h3 { font-size: 1rem; margin: 2px 0 4px; }
+.avisos-normales .aviso .texto.plegable:not(.abierto):not(.corto) { max-height: 5em; }
+.avisos-normales .aviso .acciones { margin-top: 6px; }
+#lista-avisos > .ver-mas { margin-top: 12px; }
+
+/* 4. Tablas de actas y documentos (solo se pintan en el PC) */
+.tabla-caja { overflow-x: auto; border: 1px solid var(--borde); border-radius: var(--r-l); background: var(--tarjeta); box-shadow: var(--sombra); }
+.tabla { width: 100%; border-collapse: collapse; }
+.tabla th { padding: 6px 16px; text-align: left; font-family: "Montserrat", "Inter", sans-serif; font-weight: 700; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); border-bottom: 2px solid var(--azul-osc); white-space: nowrap; }
+.tabla td { padding: 6px 16px; border-top: 1px solid var(--borde); vertical-align: middle; }
+.tabla tbody tr:first-child td { border-top: 0; }
+.tabla .t-fecha { width: 9.5em; white-space: nowrap; color: var(--suave); font-variant-numeric: tabular-nums; }
+.tabla .t-tit { font-weight: 600; overflow-wrap: anywhere; }
+.tabla .t-tipo { color: var(--suave); }
+.tabla .t-acc { width: 1%; white-space: nowrap; text-align: right; }
+.enlace-txt { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--azul); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.t-acc .enlace-txt + .enlace-txt { margin-left: 14px; }
+.tabla th .enlace-txt { padding: 0; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; text-decoration: none; }
+.tabla .fila-detalle > td { padding: 0 16px 16px; border-top: 0; }
+.tabla .fila-detalle .tarjeta { box-shadow: none; }
+
+/* 10. Modo oscuro más fino: azul noche con profundidad, paneles oscuros con borde fino brillante.
+   Y sin la manchita gris de la señal de peligro (el brillo de la señal cuadrada no va en el triángulo). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --fondo: #08142a; --tarjeta: #0f2038; --azul-claro: #16304f; --borde: #23395a; }
+  :root:not([data-theme="light"]) body { background: radial-gradient(130% 55% at 50% -8%, rgba(14, 95, 174, .28), transparent 60%) no-repeat, var(--fondo); }
+  :root:not([data-theme="light"]) .tarjeta, :root:not([data-theme="light"]) .destacado, :root:not([data-theme="light"]) .mes { border-color: rgba(0, 198, 255, .22); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05); }
+  :root:not([data-theme="light"]) .tarjeta.acta { --barra: #E6EEF7; }
+  :root:not([data-theme="light"]) .senal.roja .senal-brillo { display: none; }
+}
+:root[data-theme="dark"] { --fondo: #08142a; --tarjeta: #0f2038; --azul-claro: #16304f; --borde: #23395a; }
+:root[data-theme="dark"] body { background: radial-gradient(130% 55% at 50% -8%, rgba(14, 95, 174, .28), transparent 60%) no-repeat, var(--fondo); }
+:root[data-theme="dark"] .tarjeta, :root[data-theme="dark"] .destacado, :root[data-theme="dark"] .mes { border-color: rgba(0, 198, 255, .22); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05); }
+:root[data-theme="dark"] .tarjeta.acta { --barra: #E6EEF7; }
+:root[data-theme="dark"] .senal.roja .senal-brillo { display: none; }
+/* Lo urgente sigue con su borde rojo también en oscuro */
+:root[data-theme="dark"] .tarjeta.aviso.urgente, :root[data-theme="dark"] .destacado.urgente { border-color: var(--rojo); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tarjeta.aviso.urgente, :root:not([data-theme="light"]) .destacado.urgente { border-color: var(--rojo); } }
+
+/* 3. En el móvil y la tableta, la próxima reunión arriba del calendario; en el PC ya sale al lado */
+@media (min-width: 900px) { #v-reuniones .reunion-arriba { display: none; } }
+
+/* 1, 2, 3 y 6. El PC (1000 px o más) */
+@media (min-width: 1000px) {
+  .web { --ancho: 1180px; }
+  .solo-movil { display: none !important; }
+  .solo-pc { display: revert; }
+  .web .cab-fila, .web .pestanas, .web .caja, .web .hero-in, .web .pie-in, .web .pie-legal { max-width: var(--ancho); }
+  .web .cab-apartado-in, .web .sin-red, .web .instalar { max-width: calc(var(--ancho) - 32px); }
+  /* Cabecera: marca, buscador escrito y los dos botones (letra y tema); el menú debajo */
+  .web .marca { flex: 0 1 auto; }
+  .web .pestanas-fila { flex-wrap: wrap; overflow: visible; row-gap: 0; mask-image: none; }
+  .cab-busca { display: flex; align-items: center; flex: 0 1 380px; margin-left: auto; }
+  .cab-busca input { flex: 1; min-width: 0; height: 46px; padding: 0 14px; border: 1px solid rgba(255, 255, 255, .4); border-right: 0; border-radius: var(--r-m) 0 0 var(--r-m); background: rgba(255, 255, 255, .08); color: #fff; font: inherit; font-size: .95rem; }
+  .cab-busca input::placeholder { color: rgba(255, 255, 255, .72); }
+  .cab-busca button { height: 46px; padding: 0 18px; border: 0; border-radius: 0 var(--r-m) var(--r-m) 0; background: #fff; color: #0B1E3C; font: inherit; font-weight: 700; cursor: pointer; }
+  .web #b-buscar { display: none; }
+  /* Portada: bloque de arriba con el camión y la carretilla en grande, sin botones (están en el menú y en la banda) */
+  .web .hero { padding: 26px 24px 30px; }
+  .web .hero-in { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 32px; }
+  .web .hero-btns { display: none; }
+  .web .hero-eyebrow { padding: 0; border: 0; background: none; text-shadow: none; color: var(--celeste); letter-spacing: .16em; }
+  .web .hero-titulo { font-size: 2.6rem; }
+  .web .hero-sub { font-size: 1.1rem; }
+  .web .accesos, .web .contacto-card, .web .col-lateral > #urgente, .web #proxima, .web .barra-fija, .web .legal-nav { display: none !important; }
+  /* El aviso importante del momento, a lo ancho */
+  .portada-lead:not(:empty) { display: block; margin: 28px 0 6px; }
+  .lead { position: relative; overflow: hidden; padding: 0 32px 30px; border-radius: var(--r-l); background: var(--tarjeta); border: 1px solid var(--borde); border-top: 4px solid var(--azul); box-shadow: var(--sombra); }
+  .lead.urgente { border-color: var(--rojo); border-top-width: 1px; background: linear-gradient(90deg, var(--rojo-claro), var(--tarjeta) 60%); }
+  .lead .rayas { display: block; margin: 0 -32px; height: 14px; }
+  .lead::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 8px; background: linear-gradient(90deg, #f2f4f7 0 18px, transparent 18px 34px) 8px 50% / 34px 2px repeat-x, #2a3442; }
+  .lead.urgente::after { background: linear-gradient(90deg, #ffcc33 0 18px, transparent 18px 34px) 8px 50% / 34px 2px repeat-x, #2a3442; }
+  .lead-cuerpo { display: flex; gap: 28px; align-items: flex-start; padding-top: 24px; }
+  .lead .senal { width: 84px; height: 105px; margin: 0; }
+  .lead-txt { flex: 1; min-width: 0; }
+  .lead-etq { margin: 0 0 6px; font-family: "Montserrat", sans-serif; font-weight: 700; font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--azul); }
+  .lead.urgente .lead-etq, .lead.urgente .lead-ir { color: var(--rojo); }
+  .lead-titular { margin: 0; font-family: "Montserrat", sans-serif; font-weight: 800; font-size: 2.15rem; line-height: 1.15; color: var(--azul-osc); text-wrap: balance; overflow-wrap: anywhere; }
+  .lead-entradilla { margin: 12px 0 0; max-width: 48em; font-size: 1.15rem; line-height: 1.55; }
+  .lead-ir { display: inline-flex; align-items: center; min-height: 48px; margin-top: 4px; font-weight: 700; color: var(--azul); text-underline-offset: 3px; }
+  /* Anuncios en columnas, como un periódico: fecha, titular y resumen; «Leer más» y «Compartir» como enlaces de texto */
+  .web .portada-grid { grid-template-columns: minmax(0, 1fr) 340px; gap: 40px; margin-top: 22px; }
+  .web .col-lateral { top: 150px; gap: 26px; }
+  .web #v-actualidad .cab-bloque { margin: 0 0 4px; padding-bottom: 8px; border-bottom: 2px solid var(--azul-osc); }
+  .web #v-actualidad .titulo-seccion::before { display: none; }
+  .web #v-actualidad .titulo-seccion { font-size: 1.15rem; }
+  .web #v-actualidad .cab-bloque .sub-vista { margin: 0; }
+  .web #lista-actualidad { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 36px; }
+  .web #lista-actualidad > .tarjeta { padding: 18px 0 10px; border: 0; border-bottom: 1px solid var(--borde); border-radius: 0; background: none; box-shadow: none; }
+  .web #lista-actualidad > .tarjeta h3 { font-size: 1.3rem; line-height: 1.25; }
+  .web #lista-actualidad > .ver-mas, .web #lista-actualidad > .vacio-caja { grid-column: 1 / -1; }
+  .web #v-actualidad .meta .etq { padding: 0; background: none; color: var(--azul); }
+  .web #v-actualidad .ico, .web #v-actualidad .vacio-ic { display: none; }
+  .web #v-actualidad .leer-mas, .web #v-actualidad .acciones .btn-linea, .web #v-actualidad .vacio-caja .btn-linea {
+    min-height: 44px; padding: 0; border: 0; border-radius: 0; background: none; color: var(--azul); font-size: 1rem; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+  .web #v-actualidad .acciones { margin-top: 4px; gap: 4px 22px; }
+  .web #v-actualidad .adjunto { padding: 2px 0; background: none; }
+  .web #v-actualidad .adjunto b { color: var(--azul); text-decoration: underline; text-underline-offset: 3px; }
+  .web #v-actualidad .novedades.al-dia { padding: 8px 0; border: 0; background: none; }
+  /* Agenda «Próximas reuniones»: el día en grande, el título y la hora y el lugar */
+  .agenda { display: block; }
+  .agenda-tit { margin: 0; padding-bottom: 8px; border-bottom: 2px solid var(--azul-osc); font-family: "Montserrat", sans-serif; font-weight: 800; font-size: 1.15rem; color: var(--azul-osc); }
+  .agenda-lista { margin: 0; padding: 0; list-style: none; }
+  .agenda-lista li + li { border-top: 1px solid var(--borde); }
+  .agenda-item { display: flex; gap: 16px; align-items: flex-start; padding: 14px 0; color: var(--texto); text-decoration: none; }
+  .agenda-item:hover .agenda-datos b { text-decoration: underline; }
+  .agenda-dia { flex: none; width: 58px; text-align: center; line-height: 1; color: var(--azul); }
+  .agenda-dia b { display: block; font-family: "Montserrat", sans-serif; font-weight: 800; font-size: 2.3rem; }
+  .agenda-dia span { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
+  .agenda-datos { display: grid; gap: 2px; min-width: 0; }
+  .agenda-datos b { font-family: "Montserrat", sans-serif; font-weight: 700; color: var(--azul-osc); overflow-wrap: anywhere; }
+  .agenda-datos span { color: var(--suave); font-size: .92rem; }
+  .agenda-vacia { margin: 12px 0 0; color: var(--suave); }
+  .web #v-actualidad .consulta { border-width: 1px; }
+  /* Páginas interiores: título grande, sin el dibujo decorativo */
+  .web .cab-apartado { padding: 26px 24px 34px; }
+  .web .cab-apartado .ic { display: none; }
+  .web .cab-apartado h1 { font-size: 2.5rem; }
+  .web .cab-apartado p { font-size: 1.05rem; max-width: 46em; }
+  .web #lista-actas { margin-top: 16px; }
+  /* 6. Banda del buzón y del contacto, una sola vez, antes del pie */
+  .banda-contacto { display: block; margin-top: 48px; background: var(--azul-claro); border-top: 1px solid var(--borde); }
+  .banda-in { max-width: var(--ancho); margin: 0 auto; padding: 32px 16px; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 40px; }
+  .banda-parte h2 { margin: 0 0 6px; font-family: "Montserrat", sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--azul-osc); }
+  .banda-parte p { margin: 0; color: var(--suave); }
+  .banda-parte a { display: inline-flex; align-items: center; min-height: 48px; color: var(--azul); font-weight: 700; text-underline-offset: 3px; }
+  .banda-parte + .banda-parte { padding-left: 40px; border-left: 1px solid var(--borde); }
+  body[data-vista="buzon"] .b-buzon, body[data-vista="nosotros"] .b-contacto { display: none; }
+  body[data-vista="buzon"] .b-contacto { padding-left: 0; border-left: 0; }
+  /* 2. Pie corto: marca, mapa de la web, contacto y textos legales */
+  .web .pie { margin-top: 0; }
+  .web .pie-in { padding-top: 26px; padding-bottom: 14px; }
+  .web .pie-marca p { display: none; }
+  .web .pie-in { grid-template-columns: 1fr 1.7fr 1fr; }
+  .web .pie-col[aria-label="Apartados de la web"] { display: grid; grid-template-columns: repeat(2, max-content); column-gap: 40px; align-content: start; }
+  .web .pie-col[aria-label="Apartados de la web"] h2 { grid-column: 1 / -1; }
+  .web .pie-legal { padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+  .web .pie-legal { align-items: center; }
+  .web .aviso-privacidad { bottom: calc(16px + env(safe-area-inset-bottom)); }
+}
