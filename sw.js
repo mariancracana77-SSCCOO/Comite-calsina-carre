@@ -1,6 +1,6 @@
 // Permite instalar la web como app y abrirla sin conexión.
 // Cambiar VERSION junto con ?v= en los HTML y VERSION_WEB en comun.js.
-const VERSION = "23";
+const VERSION = "24";
 const CACHE = "comite-v" + VERSION;
 const ARCHIVOS = [
   "./", "index.html", "admin.html", "guia.html", "404.html",

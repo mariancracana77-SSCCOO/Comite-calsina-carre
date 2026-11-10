@@ -196,7 +196,9 @@
     const hoyDest = D.avisos.find((a) => a.destacar_dia === hoyISO());
     const urg = hoyDest || D.avisos.find((a) => a.urgente && Date.now() - new Date(a.fecha) < 14 * 86400000);
     const txtCorto = (t, n) => { t = String(t || "").replace(/\*\*/g, "").replace(/\s+/g, " ").trim(); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
-    $("urgente").innerHTML = urg ? `
+    // v24: el mismo aviso en dos sitios: #urgente-movil (móvil, debajo del bloque azul) y #urgente (columna de la derecha en el PC).
+    // El CSS enseña solo uno según el ancho.
+    $("urgente").innerHTML = $("urgente-movil").innerHTML = urg ? `
       <a class="destacado urgente con-senal" href="#aviso-${urg.id}">
         <span class="rayas" aria-hidden="true"></span>${R.senal(true)}
         <span class="destacado-etq">${urg === hoyDest ? "Destacado hoy" : "Aviso urgente"}</span>

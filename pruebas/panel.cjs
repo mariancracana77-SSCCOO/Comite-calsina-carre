@@ -547,6 +547,36 @@ const jpegConExif = (jpg) => {
       await foto(q, "r-m7-editor-320");
       await c3.close();
       });
+      await paso("v24", async () => {
+      // v24 (lo eligió Lorena, 10/11/2026): lista de avisos con señal pequeña, título como en la web y explicación plegada
+      await ve(p, "avisos", 700);
+      const l = await p.evaluate(() => ({
+        senales: [...document.querySelectorAll("#filas .fila")].map((f) => ({ t: f.querySelector(".fila-abre b").textContent, roja: !!f.querySelector(".mini-senal .senal.roja"), hay: !!f.querySelector(".mini-senal .senal") })),
+        mayus: getComputedStyle(document.querySelector("#zona .titulo-vista")).textTransform,
+        plegada: document.getElementById("ayuda-lista").classList.contains("plegada"), boton: !document.querySelector("[data-mas-info]").hidden,
+      }));
+      ok(l.senales.length >= 3 && l.senales.every((x) => x.hay), `v24: cada aviso de la lista lleva su señal (${l.senales.length})`);
+      ok(l.senales.find((x) => /Asamblea/.test(x.t))?.roja && !l.senales.find((x) => /programado/.test(x.t))?.roja, "v24: la señal es la de peligro solo en el urgente");
+      ok(l.mayus === "none", `v24: el título de la lista no va en mayúsculas (${l.mayus})`);
+      ok(l.plegada && l.boton, "v24: la explicación sale plegada, con «Cómo funciona»");
+      await p.click("[data-mas-info]");
+      ok(await p.evaluate(() => !document.getElementById("ayuda-lista").classList.contains("plegada") && document.querySelector("[data-mas-info]").getAttribute("aria-expanded") === "true"), "v24: «Cómo funciona» abre la explicación");
+      // Recuadro «¿Cómo de importante es?» con urgente y destacar_dia dentro, que se guardan igual que antes
+      await nuevo(p, "avisos"); await p.$('[data-borrador="no"]').then((x) => x && x.click());
+      const g = await p.evaluate(() => { const fs = document.querySelector("#ed-form fieldset.importancia"); return fs ? { leyenda: fs.querySelector("legend").textContent, urg: !!fs.querySelector("#f-urgente"), dia: !!fs.querySelector("#f-destacar_dia"), quitar: !!fs.querySelector('[data-vaciar="destacar_dia"]'), expl: !!fs.querySelector(".casilla-expl") } : null; });
+      ok(g && /Cómo de importante es/.test(g.leyenda) && g.urg && g.dia && g.quitar && g.expl, `v24: el editor junta «Urgente» y «Destacar el día» en «¿Cómo de importante es?» (${JSON.stringify(g)})`);
+      const dia = await p.evaluate(() => { const d = new Date(Date.now() + 3 * 864e5); return d.toISOString().slice(0, 10); });
+      await p.fill("#f-titulo", "Aviso del recuadro v24"); await p.fill("#f-contenido", "Prueba");
+      await p.check("#f-urgente"); await p.fill("#f-destacar_dia", dia);
+      await p.click("#ed-guardar"); await p.waitForTimeout(700);
+      const a = await p.evaluate(() => __DB.avisos.find((x) => x.titulo === "Aviso del recuadro v24"));
+      ok(a && a.urgente === true && a.destacar_dia === dia, `v24: desde el recuadro se guardan bien urgente y destacar_dia (${JSON.stringify(a && { u: a.urgente, d: a.destacar_dia })})`);
+      await p.click(`[data-editar-en="avisos:${a?.id}"]`); await p.waitForTimeout(400);
+      await p.uncheck("#f-urgente"); await p.click('[data-vaciar="destacar_dia"]');
+      await p.click("#ed-guardar"); await p.waitForTimeout(700);
+      const a2 = await p.evaluate((id) => __DB.avisos.find((x) => x.id === id), a?.id);
+      ok(a2 && a2.urgente === false && !a2.destacar_dia, `v24: y se quitan bien (${JSON.stringify(a2 && { u: a2.urgente, d: a2.destacar_dia })})`);
+      });
     })().catch((e) => fallos.push("Bloque 10 no ha podido acabar: " + e.message.split("\n")[0]));
 
     for (const x of b2Cerrar) await x.close().catch(() => {});

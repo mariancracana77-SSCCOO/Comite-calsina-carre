@@ -26,8 +26,10 @@
       campos: [
         ["titulo", "Título", "texto", { req: true, ph: "Ej.: Cambio de turnos en noviembre" }],
         ["contenido", "Texto del aviso", "largo"],
-        ["urgente", "Urgente: destacarlo arriba en la portada", "si", { def: false }],
-        ["destacar_dia", "Destacar en la portada el día (opcional)", "fecha", { quitar: "Quitar el destacado", ayuda: "El aviso se ve como siempre y ese día (de 0:00 a 23:59) sale en rojo arriba del todo en la portada. Ese día, a partir de las 8 de la mañana, llega «DESTACADO HOY» a los móviles con avisos." }],
+        // v24 (lo eligió Lorena, 10/11/2026): «Urgente» y «Destacar un día» juntos en el recuadro «¿Cómo de importante es?»
+        // (GRUPOS_CAMPOS). Solo cambia cómo se ven: se guardan igual (urgente y destacar_dia).
+        ["urgente", "Urgente", "si", { def: false, grupo: "importancia", explica: "Sale arriba en la portada, con la señal de peligro, durante 14 días." }],
+        ["destacar_dia", "Destacar en la portada el día (opcional)", "fecha", { grupo: "importancia", quitar: "Quitar el destacado", ayuda: "Solo ese día (de 0:00 a 23:59) sale en rojo arriba del todo en la portada, y desde las 8 de la mañana llega «DESTACADO HOY» a los móviles con avisos." }],
         ["adjuntos", "Archivos adjuntos", "archivos"],
         ["notificar", "Avisar al móvil al publicar", "si", { def: true, soloNuevo: true, ayuda: "Llega una notificación a los móviles que tienen los avisos activados." }],
         ["_cambio", "Volver a avisar al móvil de este cambio", "si", { def: false, soloEditar: true }],
@@ -743,7 +745,10 @@
     const S = SECCIONES[k];
     const chips = [conSeccion && S.nombre, ...(S.chips ? S.chips(x) : [])].filter(Boolean);
     const sub = S.sub ? S.sub(x) : "";
-    return `<div class="tarjeta fila${k === "avisos" && (x.urgente || x.destacar_dia === hoyISO()) ? " urgente" : ""}${k === "apartados" && x.padre_id && !conSeccion ? " fila-hija" : ""}">
+    const rojo = k === "avisos" && (x.urgente || x.destacar_dia === hoyISO());
+    // v24: en los avisos, la señal pequeña de la web (azul con «i», o la de peligro si es urgente o está destacado hoy)
+    return `<div class="tarjeta fila${rojo ? " urgente" : ""}${k === "avisos" ? " con-mini-senal" : ""}${k === "apartados" && x.padre_id && !conSeccion ? " fila-hija" : ""}">
+      ${k === "avisos" ? `<span class="mini-senal">${R.senal(rojo)}</span>` : ""}
       <button type="button" class="fila-abre" data-editar-en="${k}:${x.id}">
         <b>${esc(tituloDe(S, x))}</b>
         ${sub ? `<span class="fila-sub">${esc(sub)}</span>` : ""}
@@ -758,9 +763,12 @@
     const S = SECCIONES[k];
     $("zona").innerHTML = `<div class="cab-seccion"><h1 class="titulo-vista">${esc(S.nombre)}</h1>
       <button type="button" class="btn solo-pc" data-nuevo="${k}">${icono("mas")}${esc(S.nuevo)}</button></div>
-      <p class="sub-vista">${esc(S.ayuda)}</p>
+      <p class="sub-vista plegada" id="ayuda-lista">${esc(S.ayuda)}</p>
+      <button type="button" class="mas-info" data-mas-info aria-expanded="false" aria-controls="ayuda-lista" hidden>Cómo funciona</button>
       <label class="buscador"><span class="sr-only">Buscar en ${esc(S.nombre)}</span><input type="search" id="filtro" placeholder="Buscar en ${esc(S.nombre.toLowerCase())}" autocomplete="off"></label>
       <div class="lista" id="filas"><div class="esq"></div></div>`;
+    // v24: la explicación sale plegada en 2 líneas; «Cómo funciona» la abre (solo si no cabe entera)
+    requestAnimationFrame(() => { const a = $("ayuda-lista"); if (a && a.scrollHeight > a.clientHeight + 2) document.querySelector("[data-mas-info]").hidden = false; });
     await S.antes?.();
     let q = sb.from(S.tabla).select("*");
     S.orden.forEach(([c, asc]) => { q = q.order(c, { ascending: asc }); });
@@ -779,6 +787,13 @@
     pinta();
   };
   $("zona").addEventListener("click", async (e) => {
+    const mas = e.target.closest("[data-mas-info]");
+    if (mas) {
+      const abre = mas.getAttribute("aria-expanded") !== "true";
+      mas.setAttribute("aria-expanded", String(abre)); $("ayuda-lista").classList.toggle("plegada", !abre);
+      mas.textContent = abre ? "Ver menos" : "Cómo funciona";
+      return;
+    }
     const ed = e.target.closest("[data-editar-en]");
     if (ed) {
       const [k, id] = ed.dataset.editarEn.split(":");
@@ -823,7 +838,7 @@
       case "largo": return `<div class="campo" data-campo="${col}"><label for="${id}">${esc(etq)}${marca}</label>
         ${o.sinFormato ? "" : `<div class="formato"><button type="button" class="btn-linea peq" data-formato="negrita:${col}"><b>N</b> Negrita</button><button type="button" class="btn-linea peq" data-formato="lista:${col}">• Lista</button></div>`}
         <textarea id="${id}" rows="${o.sinFormato ? 4 : 7}"${ph}>${esc(val ?? "")}</textarea>${ay}</div>`;
-      case "si": return `<label class="casilla" data-campo="${col}"><input type="checkbox" id="${id}"${val ? " checked" : ""}><span>${esc(etq)}</span></label>`;
+      case "si": return `<label class="casilla${o.grupo ? " en-grupo" : ""}" data-campo="${col}"><input type="checkbox" id="${id}"${val ? " checked" : ""}><span>${esc(etq)}${o.explica ? `<small class="casilla-expl">${esc(o.explica)}</small>` : ""}</span></label>`;
       case "opcion": {
         // La lista puede ser de textos o de pares [valor, lo que se lee]; y puede salir de una función (v11: secciones)
         const ops = (typeof o.lista === "function" ? o.lista(ED?.orig) : (o.lista || [])).map((x) => Array.isArray(x) ? x : [x, x]);
@@ -1027,6 +1042,23 @@
   };
   // Campos que se enseñan: unos solo al crear (avisar al publicar) y otros solo al editar (avisar del cambio)
   const camposDe = (S) => S.campos.filter(([, , , o = {}]) => ED.orig ? !o.soloNuevo : !o.soloEditar);
+  // v24: recuadros que juntan campos seguidos con la misma «grupo» (en avisos: urgente y destacar_dia)
+  const GRUPOS_CAMPOS = {
+    importancia: { titulo: "¿Cómo de importante es?", sub: "Si no marcas nada, sale como un aviso normal (señal azul)." },
+  };
+  const camposHTML = (cs, x) => {
+    let h = "", abierto = "";
+    cs.forEach((c) => {
+      const g = c[3]?.grupo || "";
+      if (g !== abierto) {
+        if (abierto) h += "</fieldset>";
+        if (g) { const G = GRUPOS_CAMPOS[g]; h += `<fieldset class="grupo-campos ${esc(g)}"><legend>${esc(G.titulo)}</legend>${G.sub ? `<p class="grupo-sub">${esc(G.sub)}</p>` : ""}`; }
+        abierto = g;
+      }
+      h += campoHTML(c, x && !c[0].startsWith("_") && c[0] in x ? x[c[0]] : (typeof c[3]?.def === "function" ? c[3].def() : c[3]?.def));
+    });
+    return h + (abierto ? "</fieldset>" : "");
+  };
   // Visual A8: en el móvil, «Borrar» y «Duplicar» van al final del formulario (lejos de «Publicar») y el pie
   // queda en una fila: «Cancelar» y «Publicar». Se mueven los mismos botones, así siguen sus avisos y candados.
   const MOVIL_ED = matchMedia("(max-width: 520px)");
@@ -1046,7 +1078,7 @@
     ["ed-guardar", "ed-borrar", "ed-duplicar", "ed-cancelar"].forEach((b) => { $(b).disabled = false; });
     $("ed-modo").textContent = duplicando ? "Copia de " + S.uno : x ? "Editar " + S.uno : S.nuevo;
     $("ed-form").innerHTML = (x && S.avisoEditar ? `<p class="nota-campo">${icono("alerta")}${esc(S.avisoEditar)}</p>` : "")
-      + camposDe(S).map((c) => campoHTML(c, x && !c[0].startsWith("_") && c[0] in x ? x[c[0]] : (typeof c[3]?.def === "function" ? c[3].def() : c[3]?.def))).join("");
+      + camposHTML(camposDe(S), x);
     if (S.asistente && !ED.orig) { $("ed-form").insertAdjacentHTML("afterbegin", asistenteHTML()); prepararAsistente(); }
     if (PLANTILLAS[k] && !x) {
       const h = `<div class="plantilla-fila"><button type="button" class="btn-linea" data-plantilla>${icono("documento")}Empezar con una plantilla</button><small>Rellena un ejemplo que tú cambias.</small></div>`;

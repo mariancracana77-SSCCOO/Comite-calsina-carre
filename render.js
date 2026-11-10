@@ -103,10 +103,14 @@
     const f = r.fecha || hoyISO(), d = fechaDia(f), pasada = f < hoyISO();
     return `
     <article class="tarjeta reunion${pasada ? " pasada" : ""}" id="reunion-${r.id}">
-      <div class="dia" aria-hidden="true"><b>${d.getDate()}</b><span>${d.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}</span></div>
+      <div class="reunion-cab">
+        <div class="dia" aria-hidden="true"><b>${d.getDate()}</b><span>${d.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}</span></div>
+        <div class="reunion-titulo">
+          <div class="meta">${r.tipo ? `<span class="etq azul">${esc(r.tipo)}</span>` : ""}${f === hoyISO() ? '<span class="etq rojo">Hoy</span>' : ""}</div>
+          <h3>${esc(r.titulo || "Sin título")}</h3>
+        </div>
+      </div>
       <div class="reunion-cuerpo">
-        <div class="meta">${r.tipo ? `<span class="etq azul">${esc(r.tipo)}</span>` : ""}${f === hoyISO() ? '<span class="etq rojo">Hoy</span>' : ""}</div>
-        <h3>${esc(r.titulo || "Sin título")}</h3>
         <p class="dato">${icono("calendario")}${esc(fechaSemana(f))}${r.hora ? " · " + esc(horario(r)) : ""}</p>
         ${r.lugar ? `<p class="dato">${icono("lugar")}${esc(r.lugar)}</p>` : ""}
         ${r.descripcion ? `<div class="texto">${textoHTML(r.descripcion)}</div>` : ""}

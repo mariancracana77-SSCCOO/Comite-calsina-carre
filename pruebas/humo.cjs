@@ -47,6 +47,22 @@ fs.mkdirSync(OUT, { recursive: true });
         if (!(await p.$("#v-" + v + " .vacio-caja"))) fallos.push(`${c.nombre}: #${v} vacío no enseña su explicación`);
         if (c.nombre === "390") await p.screenshot({ path: path.join(OUT, `web-390-vacio-${v}.png`), fullPage: true });
       }
+      // v24 (lo eligió Lorena, 10/11/2026): en el móvil, lo urgente justo debajo de «Buzón anónimo» y antes de los accesos;
+      // sin nada urgente, sin hueco; en el PC, en la columna de la derecha
+      for (const vacio of [false, true]) {
+        await p.goto(BASE + (vacio ? "?prueba-vacio" : "") + "#actualidad"); await p.waitForTimeout(700);
+        const u = await p.evaluate(() => {
+          const caja = (s) => { const e = document.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect(); return r.width || r.height ? { top: r.top, bottom: r.bottom } : null; };
+          return { movil: caja("#urgente-movil .destacado.con-senal"), lateral: caja("#urgente .destacado.con-senal"), buzon: caja(".hero-btn-sec"), hero: caja(".hero"), accesos: caja(".accesos"), rayas: !!document.querySelector("#urgente-movil .rayas") };
+        });
+        if (vacio) {
+          if (u.movil || u.lateral) fallos.push(`${c.nombre}: sin avisos sale una caja de urgente`);
+          if (c.w < 760 && u.accesos.top - u.hero.bottom > 30) fallos.push(`${c.nombre}: sin nada urgente queda un hueco de ${Math.round(u.accesos.top - u.hero.bottom)}px antes de los accesos`);
+        } else if (c.w < 760) {
+          if (!u.movil || u.lateral) fallos.push(`${c.nombre}: el urgente no sale (solo una vez) debajo del bloque azul`);
+          else if (!(u.movil.top >= u.buzon.bottom && u.movil.bottom <= u.accesos.top) || !u.rayas) fallos.push(`${c.nombre}: el urgente no está entre «Buzón anónimo» y los accesos (${JSON.stringify(u)})`);
+        } else if (!u.lateral || u.movil) fallos.push(`${c.nombre}: en el PC el urgente tiene que salir solo en la columna de la derecha`);
+      }
       // Secciones propias: pestaña, acceso en la portada, subsección, enlace directo a una publicación y sección oculta
       await p.goto(BASE + "#actualidad"); await p.waitForTimeout(600);
       if (!(await p.$('#pestanas a[href="#seccion-1"]'))) fallos.push(`${c.nombre}: la sección principal no sale como pestaña`);
