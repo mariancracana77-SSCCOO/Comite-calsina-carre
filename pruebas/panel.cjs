@@ -15,7 +15,8 @@ fs.mkdirSync(OUT, { recursive: true });
 const PARCHE = `;(function () {
   const c = window.supabase.createClient();
   window.supabase.createClient = () => c;
-  const P = window.__P = { caducada: false, sinRed: false, falloAviso: false, esperaAviso: 0, sesion: true, entra: false, blobs: [], authCb: null };
+  const P = window.__P = { caducada: false, sinRed: false, falloAviso: false, esperaAviso: 0, sesion: true, entra: false, blobs: [], authCb: null,
+    cuelga: false, cuelgaAviso: false, sesionRed: false, tope: 0, borrados: [] };
   const sinRed = () => ({ data: null, count: null, error: { message: "TypeError: Failed to fetch" } });
   const from0 = c.from;
   c.from = (t) => {
@@ -27,6 +28,7 @@ const PARCHE = `;(function () {
     q.upsert = (v) => { modo = "inserta"; return ups(v); };
     q.then = (ok, ko) => {
       if (P.sinRed) return Promise.resolve(sinRed()).then(ok, ko);
+      if (P.cuelga && modo) return new Promise(() => {}); // conexión colgada: nunca contesta
       if (P.caducada && modo === "escribe") return Promise.resolve({ data: [], error: null }).then(ok, ko);
       if (P.caducada && modo === "inserta") return Promise.resolve({ data: null, error: { code: "42501", message: "new row violates row-level security policy for table" } }).then(ok, ko);
       if (P.caducada) return Promise.resolve({ data: [], count: 0, error: null }).then(ok, ko);
@@ -39,13 +41,15 @@ const PARCHE = `;(function () {
   const inv0 = c.functions.invoke;
   c.functions.invoke = async (n, o) => {
     if (P.sinRed || (P.falloAviso && n === "notificar")) return { data: null, error: { name: "FunctionsFetchError", message: "Failed to send a request to the Edge Function", context: new TypeError("Failed to fetch") } };
+    if (n === "notificar" && P.cuelgaAviso) return new Promise(() => {});
     if (n === "notificar" && P.esperaAviso) await new Promise((r) => setTimeout(r, P.esperaAviso));
     return inv0(n, o);
   };
   const st0 = c.storage.from;
-  c.storage.from = (b) => { const s = st0(b), up = s.upload; s.upload = async (ruta, f, op) => { if (P.sinRed) return { error: { message: "Failed to fetch" } }; P.blobs.push({ ruta, f, tipo: op && op.contentType }); return up(ruta, f, op); }; return s; };
+  c.storage.from = (b) => { const s = st0(b), up = s.upload, rm = s.remove; s.remove = async (rutas) => { P.borrados.push(...rutas); return rm(rutas); }; s.upload = async (ruta, f, op) => { if (P.sinRed) return { error: { message: "Failed to fetch" } }; P.blobs.push({ ruta, f, tipo: op && op.contentType }); return up(ruta, f, op); }; return s; };
   const gs = c.auth.getSession;
-  c.auth.getSession = async () => P.sesion ? gs() : { data: { session: null }, error: null };
+  // sesionRed: token caducado y la renovación falla por la red (supabase-js no lanza: da session null con error)
+  c.auth.getSession = async () => P.sesionRed ? { data: { session: null }, error: { name: "AuthRetryableFetchError", message: "Failed to fetch" } } : P.sesion ? gs() : { data: { session: null }, error: null };
   c.auth.onAuthStateChange = (cb) => { P.authCb = cb; return { data: { subscription: { unsubscribe() {} } } }; };
   c.auth.signInWithPassword = async () => { if (!P.entra) return { data: null, error: { message: "Invalid login credentials" } }; P.sesion = true; P.caducada = false; return { data: {}, error: null }; };
 })();`;
@@ -68,7 +72,7 @@ const jpegConExif = (jpg) => {
   const errores = [], fallos = [], bien = [];
   const ok = (cond, txt) => { (cond ? bien : fallos).push(txt); };
   const nuevoCtx = async (o = {}) => {
-    const ctx = await b.newContext({ viewport: { width: o.w || 390, height: o.h || 844 }, colorScheme: o.oscuro ? "dark" : "light", serviceWorkers: "block", locale: "es-ES", timezoneId: "Europe/Madrid", acceptDownloads: true });
+    const ctx = await (o.nav || b).newContext({ viewport: { width: o.w || 390, height: o.h || 844 }, colorScheme: o.oscuro ? "dark" : "light", serviceWorkers: "block", locale: "es-ES", timezoneId: "Europe/Madrid", acceptDownloads: true });
     await ctx.route("**/lib/supabase.js*", (r) => r.fulfill({ contentType: "application/javascript", body: MOCK + PARCHE }));
     await ctx.route("https://ytxpubqyhnohhugpukdm.supabase.co/**", (r) => r.fulfill({ path: path.join(RAIZ, "img/icon-192.png") }));
     await ctx.addInitScript((l) => { localStorage.setItem("prueba-sesion", "1"); if (l) localStorage.setItem("comite-letra", l); }, o.letra || "");
@@ -341,7 +345,8 @@ const jpegConExif = (jpg) => {
     await (async () => {
       p = await pagina(ctx, "comodo");
       // Borrador: se escribe, se recarga la página sin guardar y al volver a abrir se ofrece
-      await nuevo(p, "avisos");
+      // (si quedó uno de antes de otras pruebas, se descarta: escribir sin contestar ya no lo machaca)
+      await nuevo(p, "avisos"); await p.$('[data-borrador="no"]').then((x) => x && x.click()); await p.waitForTimeout(150);
       await p.fill("#f-titulo", "Aviso que se queda a medias");
       await p.fill("#f-contenido", "Texto que no quiero perder");
       await p.waitForTimeout(800);
@@ -373,7 +378,7 @@ const jpegConExif = (jpg) => {
       await p.click("#ed-guardar"); await p.waitForTimeout(700);
       ok(await p.evaluate(() => __DB.reuniones.some((r) => r.titulo === "Convocatoria: reunión del comité")), "Plantilla: cambiado lo de los corchetes, se publica");
       // Vista previa en el móvil: botón grande al final
-      await nuevo(p, "avisos"); await p.click('[data-borrador="no"]').catch(() => {});
+      await nuevo(p, "avisos"); await p.$('[data-borrador="no"]').then((x) => x && x.click());
       await p.fill("#f-titulo", "Prueba de vista previa");
       await p.click("[data-ver-previa]"); await p.waitForTimeout(250);
       ok(await p.evaluate(() => document.querySelector(".ed-cuerpo").dataset.ver === "previa" && /Prueba de vista previa/.test(document.getElementById("ed-previa").textContent)), "Vista previa: «Ver cómo quedará en la web» la enseña");
@@ -423,6 +428,128 @@ const jpegConExif = (jpg) => {
       await p.close();
     })().catch((e) => fallos.push("Bloque 9 no ha podido acabar: " + e.message.split("\n")[0]));
 
+    const b2Cerrar = [];
+    // ---- 10. Lo que encontró el revisor (10/11): B1, I1–I4 y menores. Cada paso va aparte: si uno falla, los demás siguen ----
+    const paso = async (nombre, fn) => {
+      p = await pagina(ctx, "revisor-" + nombre);
+      p.respuesta = true;
+      try { await fn(); } catch (e) { fallos.push(`Revisor ${nombre}: no ha podido acabar (${e.message.split("\n")[0]})`); }
+      await p.close().catch(() => {});
+    };
+    const borrador = (k) => p.evaluate((k) => localStorage.getItem(k), k);
+    await (async () => {
+      await paso("B1", async () => {
+      // B1: plantilla recuperada del borrador sin cambiar los corchetes
+      await nuevo(p, "avisos"); await p.click("[data-plantilla]"); await p.waitForTimeout(900);
+      p.respuesta = true; await p.reload(); await p.waitForTimeout(600);
+      await nuevo(p, "avisos"); await p.click('[data-borrador="si"]'); await p.waitForTimeout(200);
+      await p.click("#ed-guardar"); await p.waitForTimeout(600);
+      ok(/corchetes/.test(await p.textContent("#ed-msg")) && await p.evaluate(() => !__DB.avisos.some((a) => /\[qué pasa\]/.test(a.titulo))), "Revisor B1: una plantilla recuperada del borrador no se publica con [ ] sin cambiar");
+      await foto(p, "r-b1-plantilla-borrador");
+      await p.fill("#f-titulo", "Turnos [provisional]"); await p.fill("#f-contenido", "Horario del turno [de tarde] cambiado");
+      await p.click("#ed-guardar"); await p.waitForTimeout(700);
+      ok(await p.evaluate(() => __DB.avisos.some((a) => a.titulo === "Turnos [provisional]")), "Revisor B1: corchetes escritos por el padre (no de la plantilla) sí se publican");
+      });
+      await paso("I1", async () => {
+      // I1: sin cobertura con el token caducado no se dice «sesión caducada»
+      await ve(p, "avisos"); await p.click('[data-editar-en="avisos:2"]'); await p.waitForTimeout(300);
+      await p.fill("#f-titulo", "Cambio sin cobertura");
+      await p.evaluate(() => { __P.sesionRed = true; });
+      await p.click("#ed-guardar"); await p.waitForTimeout(600);
+      const mRed = await p.textContent("#ed-msg");
+      ok(/No hay conexión/.test(mRed) && !/caducado/.test(mRed) && await p.evaluate(() => !document.getElementById("editor").hidden && document.getElementById("s-entrar").hidden) && (await p.inputValue("#f-titulo")) === "Cambio sin cobertura", `Revisor I1: sin red, «No hay conexión» y el editor sigue con lo escrito (${mRed})`);
+      await foto(p, "r-i1-sin-red");
+      await p.evaluate(() => { __P.sesionRed = false; });
+      });
+      await paso("I2-guardar", async () => {
+      // I2: conexión colgada al guardar: a los pocos segundos (en la prueba) se desbloquea y se explica
+      await ve(p, "avisos"); await p.click('[data-editar-en="avisos:2"]'); await p.waitForTimeout(300);
+      await p.fill("#f-titulo", "Cambio con la red colgada");
+      await p.evaluate(() => { __P.tope = 1200; __P.cuelga = true; });
+      await p.click("#ed-guardar"); await p.waitForTimeout(2200);
+      const mCol = await p.textContent("#ed-msg");
+      ok(await p.evaluate(() => !document.getElementById("ed-guardar").disabled && !document.getElementById("ed-cancelar").disabled) && /no responde/.test(mCol), `Revisor I2: guardado colgado: se desbloquea y lo explica (${mCol})`);
+      await foto(p, "r-i2-guardar-colgado");
+      await p.evaluate(() => { __P.cuelga = false; }); p.respuesta = true;
+      await p.click("#ed-cancelar"); await p.waitForTimeout(300);
+      ok(await p.evaluate(() => document.getElementById("editor").hidden), "Revisor I2: después se puede cerrar el editor");
+      });
+      await paso("I2-aviso", async () => {
+      // I2: aviso a los móviles colgado: se cierra y dice que puede haber llegado (no invita a repetir)
+      await nuevo(p, "avisos"); await p.$('[data-borrador="no"]').then((x) => x && x.click());
+      await p.evaluate(() => { __P.cuelgaAviso = true; __P.tope = 1200; });
+      await p.fill("#f-titulo", "Aviso con la red colgada");
+      await p.click("#ed-guardar"); await p.waitForTimeout(2400);
+      const tCol = (await p.isVisible("#toast")) ? await p.textContent("#toast") : "";
+      ok(await p.evaluate(() => document.getElementById("editor").hidden) && /puede que el aviso ya haya llegado/.test(tCol) && !/Deshacer/.test(tCol), `Revisor I2: aviso a los móviles colgado: se dice que puede haber llegado (${tCol})`);
+      await foto(p, "r-i2-aviso-colgado");
+      await p.evaluate(() => { __P.cuelgaAviso = false; __P.tope = 0; });
+      });
+      await paso("I3-duplicar", async () => {
+      // I3: «Duplicar» no pisa el borrador de algo nuevo
+      await nuevo(p, "reuniones"); await p.$('[data-borrador="no"]').then((x) => x && x.click());
+      await p.fill("#f-titulo", "BORRADOR IMPORTANTE de una reunión nueva"); await p.waitForTimeout(800);
+      await p.reload(); await p.waitForTimeout(600);
+      await ve(p, "reuniones"); await p.click('[data-editar-en="reuniones:1"]'); await p.waitForTimeout(300);
+      p.dialogos = []; await p.click("#ed-duplicar"); await p.waitForTimeout(400);
+      // M3: una copia sin tocar se cierra sin preguntar
+      await p.click("#ed-cancelar"); await p.waitForTimeout(300);
+      ok(p.dialogos.length === 0 && await p.evaluate(() => document.getElementById("editor").hidden), `Revisor M3: «Duplicar» y «Cancelar» sin cambios no pregunta (${p.dialogos.length})`);
+      await ve(p, "reuniones"); await p.click('[data-editar-en="reuniones:1"]'); await p.waitForTimeout(300);
+      await p.click("#ed-duplicar"); await p.waitForTimeout(400);
+      await p.fill("#f-titulo", "Copia de la reunión"); await p.waitForTimeout(800);
+      ok(/BORRADOR IMPORTANTE/.test(await borrador("comite-adm-borrador-reuniones-nuevo") || ""), "Revisor I3: «Duplicar» no machaca el borrador de una reunión nueva");
+      p.respuesta = true; await p.click("#ed-cancelar"); await p.waitForTimeout(300);
+      });
+      await paso("I3-sin-contestar", async () => {
+      // I3: escribir sin contestar «Recuperarlo / Descartarlo» no machaca el borrador anterior
+      await ve(p, "avisos"); await p.click('[data-editar-en="avisos:1"]'); await p.waitForTimeout(300);
+      await p.fill("#f-titulo", "Primer borrador del aviso 1"); await p.waitForTimeout(800);
+      await p.reload(); await p.waitForTimeout(600);
+      await ve(p, "avisos"); await p.click('[data-editar-en="avisos:1"]'); await p.waitForTimeout(300);
+      await p.fill("#f-contenido", "Escribo sin contestar"); await p.waitForTimeout(800);
+      ok(/Primer borrador del aviso 1/.test(await borrador("comite-adm-borrador-avisos-1") || ""), "Revisor I3: escribir sin contestar al borrador no lo machaca");
+      p.respuesta = true; await p.click("#ed-cancelar"); await p.waitForTimeout(300);
+      ok(/Primer borrador del aviso 1/.test(await borrador("comite-adm-borrador-avisos-1") || ""), "Revisor I3: cancelar sin contestar tampoco lo borra");
+      });
+      await paso("I4", async () => {
+      // I4: un anuncio oculto que se pone a la vista marca «Volver a avisar»
+      await ve(p, "inicio"); await p.evaluate(() => { __DB.actualidad[1].publicado = false; }); await ve(p, "actualidad");
+      await p.click('[data-editar-en="actualidad:2"]'); await p.waitForTimeout(300);
+      await p.check("#f-publicado"); await p.waitForTimeout(200);
+      ok(await p.isChecked("#f-_cambio"), "Revisor I4: anuncio oculto que pasa a verse: se marca «Volver a avisar»");
+      await p.click("#ed-cancelar"); await p.waitForTimeout(300);
+      });
+      await paso("M1-M2", async () => {
+      // M1 y M2: «x.constructor» se rechaza y no rompe la tanda; descartar un borrador borra lo que subió
+      await nuevo(p, "avisos"); await p.$('[data-borrador="no"]').then((x) => x && x.click());
+      await p.setInputFiles("#f-subir", [{ name: "x.constructor", mimeType: "", buffer: Buffer.from("x") }, { name: "bueno.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4 prueba") }]);
+      await p.waitForTimeout(900);
+      const adjs = await p.evaluate(() => [...document.querySelectorAll("#ed-form .adj, #ed-form [data-quitar-adj]")].length);
+      const tM1 = (await p.isVisible("#toast")) ? await p.textContent("#toast") : "";
+      ok(/x\.constructor/.test(tM1) && adjs > 0, `Revisor M1: «x.constructor» se rechaza y el PDF de la misma tanda se sube (${tM1} | ${adjs})`);
+      await p.fill("#f-titulo", "Borrador con un PDF"); await p.waitForTimeout(800);
+      const ruta = await p.evaluate(() => { const b = JSON.parse(localStorage.getItem("comite-adm-borrador-avisos-nuevo") || "{}"); return (b.adj || [])[0]?.ruta || ""; });
+      await p.reload(); await p.waitForTimeout(600);
+      await nuevo(p, "avisos"); await p.click('[data-borrador="no"]'); await p.waitForTimeout(400);
+      ok(ruta && await p.evaluate((r) => __P.borrados.includes(r), ruta), `Revisor M2: al descartar el borrador se borra del almacén lo que subió (${ruta})`);
+      p.respuesta = true; await p.click("#ed-cancelar"); await p.waitForTimeout(300);
+      });
+      await paso("M7", async () => {
+      // M7: el editor con 320 px y letra muy grande tiene margen a los lados
+      // Con un navegador en inglés (como el móvil de alguien con el teléfono en otro idioma) la fecha y hora es más ancha
+      const b2 = await chromium.launch(); b2Cerrar.push(b2);
+      const c3 = await nuevoCtx({ w: 320, h: 640, letra: "muy-grande", nav: b2 }), q = await pagina(c3, "revisor-320");
+      await q.goto(BASE + "admin.html#avisos"); await q.waitForTimeout(600);
+      await q.click('[data-editar-en="avisos:1"]'); await q.waitForTimeout(400);
+      const m = await q.evaluate(() => { const f = document.getElementById("ed-form"), r = document.getElementById("f-titulo").getBoundingClientRect(); return { izq: Math.round(r.left), der: Math.round(innerWidth - r.right), ancho: f.scrollWidth - f.clientWidth }; });
+      ok(m.izq >= 10 && m.der >= 10 && m.ancho <= 0, `Revisor M7: a 320 px con letra muy grande, el editor tiene margen a los lados (${JSON.stringify(m)})`);
+      await foto(q, "r-m7-editor-320");
+      await c3.close();
+      });
+    })().catch((e) => fallos.push("Bloque 10 no ha podido acabar: " + e.message.split("\n")[0]));
+
+    for (const x of b2Cerrar) await x.close().catch(() => {});
     await ctx.close();
   } finally {
     await b.close(); srv.kill();
