@@ -20,7 +20,7 @@
   $("b-tema").addEventListener("click", () => { TEMA.cambiaTema(); pintaTema(); });
   $("b-letra").addEventListener("click", () => {
     const l = TEMA.cambiaLetra();
-    $("b-letra").setAttribute("aria-label", "Tamaño de letra: " + ({ "": "normal", grande: "grande", "muy-grande": "muy grande" }[l]));
+    $("b-letra").setAttribute("aria-label", "Tamaño de letra: " + ({ "": "normal", grande: "grande", "muy-grande": "muy grande", pequena: "pequeña" }[l]));
   });
   $("b-buscar").addEventListener("click", () => { location.hash = "buscar"; });
   // v25: buscador escrito de la cabecera (se ve en el PC); lleva lo escrito al apartado «Buscar»

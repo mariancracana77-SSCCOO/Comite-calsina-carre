@@ -288,7 +288,7 @@ a.hola-dato:hover, button.hola-dato:hover { border-color: var(--celeste); }
   .hola-bloque h1.hola { font-size: 2rem; }
 }
 @media (max-width: 360px) { .hola-dato { padding: 8px; } .hola-dato b { font-size: 1.05rem; } }
-/* v23: en el móvil con letra grande, las tres cajas del resumen cortaban el texto: una por fila, en horizontal */
+/* v23: en el móvil con letra grande (v26: y con la pequeña, a 320 px también cortaba), las tres cajas del resumen cortaban el texto: una por fila, en horizontal */
 @media (max-width: 560px) {
   :root[data-letra] .hola-resumen { grid-template-columns: 1fr; }
   :root[data-letra] .hola-dato { flex-direction: row; align-items: center; gap: 10px; }

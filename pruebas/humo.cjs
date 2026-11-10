@@ -19,6 +19,7 @@ fs.mkdirSync(OUT, { recursive: true });
   const CASOS = [
     { nombre: "320", w: 320, h: 700 }, { nombre: "390", w: 390, h: 844 },
     { nombre: "390-oscuro", w: 390, h: 844, oscuro: true }, { nombre: "390-letra", w: 390, h: 844, letra: "muy-grande" },
+    { nombre: "320-pequena-oscuro", w: 320, h: 700, oscuro: true, letra: "pequena" },
     { nombre: "pc", w: 1280, h: 860 },
   ];
   try {
@@ -41,7 +42,7 @@ fs.mkdirSync(OUT, { recursive: true });
         if (v === "buscar") { await p.fill("#buscar-todo", "turnos"); await p.waitForTimeout(150); }
         const ancho = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
         if (ancho > 1) fallos.push(`${c.nombre} #${v}: scroll lateral de ${ancho}px`);
-        if (["390", "pc", "390-oscuro"].includes(c.nombre) || (c.nombre === "390-letra" && v === "actualidad"))
+        if (["390", "pc", "390-oscuro"].includes(c.nombre) || ((c.nombre === "390-letra" || c.nombre === "320-pequena-oscuro") && v === "actualidad"))
           await p.screenshot({ path: path.join(OUT, `web-${c.nombre}-${v}.png`), fullPage: v === "actualidad" || c.nombre === "320" });
       }
       // Web sin contenido: los apartados vacíos tienen que explicar qué saldrá ahí
@@ -224,7 +225,7 @@ fs.mkdirSync(OUT, { recursive: true });
       }
       if (c.nombre === "320" || c.nombre === "390-letra") {
         // Cabecera: el nombre no se mete debajo de los botones; accesos de la portada dentro de la pantalla
-        for (const letra of [null, "muy-grande"]) for (const w of [320, 360]) {
+        for (const letra of [null, "muy-grande", "pequena"]) for (const w of [320, 360]) {
           const [cx, px] = await nuevoCtx("", { w, h: 760, letra });
           await px.goto(BASE + "#actualidad"); await px.waitForTimeout(500);
           const r = await px.evaluate(() => ({ cortado: [...document.querySelectorAll(".marca-txt b, .marca-txt small")].some((e) => e.scrollWidth > e.clientWidth + 0.5), marca: document.querySelector(".marca-txt").getBoundingClientRect().right, botones: document.querySelector(".cab-botones").getBoundingClientRect().left,
@@ -241,9 +242,24 @@ fs.mkdirSync(OUT, { recursive: true });
           await cx.close();
         }
       }
+      if (c.nombre === "390") {
+        // v26: el botón «Aa» pasa por normal → grande → muy grande → pequeña → normal, y la pequeña se recuerda
+        const [cx, px] = await nuevoCtx("", { w: 390, h: 844 });
+        await px.goto(BASE + "#actualidad"); await px.waitForTimeout(400);
+        const vistos = [];
+        for (let i = 0; i < 4; i++) { await px.click("#b-letra"); vistos.push(await px.evaluate(() => [document.documentElement.dataset.letra || "", getComputedStyle(document.documentElement).fontSize, document.getElementById("b-letra").getAttribute("aria-label")])); }
+        const esperado = [["grande", "20px"], ["muy-grande", "23px"], ["pequena", "16px"], ["", "18px"]];
+        esperado.forEach(([l, t], i) => { if (vistos[i][0] !== l || vistos[i][1] !== t) fallos.push(`letra: al pulsar ${i + 1} veces «Aa» sale ${vistos[i].join(" / ")} (tocaba ${l || "normal"} ${t})`); });
+        if (vistos[2][2] !== "Tamaño de letra: pequeña") fallos.push("letra: el botón no dice «pequeña» a los lectores de pantalla");
+        for (let i = 0; i < 3; i++) await px.click("#b-letra");
+        await px.reload(); await px.waitForTimeout(400);
+        const t = await px.evaluate(() => getComputedStyle(document.documentElement).fontSize);
+        if (t !== "16px") fallos.push(`letra: la pequeña no se recuerda al volver a entrar (${t})`);
+        await cx.close();
+      }
       if (c.nombre === "pc") {
         // Pestañas: en el PC se ven todas (antes «Nosotros» quedaba escondida sin poder moverla con el ratón)
-        for (const letra of [null, "muy-grande"]) for (const w of [1024, 1280]) {
+        for (const letra of [null, "muy-grande", "pequena"]) for (const w of [1024, 1280]) {
           const [cx, px] = await nuevoCtx("", { w, h: 800, letra });
           await px.goto(BASE + "#actualidad"); await px.waitForTimeout(500);
           const ocultas = await px.evaluate(() => { const f = document.getElementById("pestanas").getBoundingClientRect();

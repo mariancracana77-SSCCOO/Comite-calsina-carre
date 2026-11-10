@@ -324,7 +324,7 @@ const jpegConExif = (jpg) => {
 
     // ---- 8. 320 px con letra muy grande: el pie del editor cabe (I9) ----
     await (async () => {
-      for (const [nombre, o] of [["320-muy-grande", { w: 320, h: 700, letra: "muy-grande" }], ["320-oscuro-muy-grande", { w: 320, h: 700, letra: "muy-grande", oscuro: true }]]) {
+      for (const [nombre, o] of [["320-muy-grande", { w: 320, h: 700, letra: "muy-grande" }], ["320-oscuro-muy-grande", { w: 320, h: 700, letra: "muy-grande", oscuro: true }], ["320-oscuro-pequena", { w: 320, h: 700, letra: "pequena", oscuro: true }]]) {
         const c2 = await nuevoCtx(o), q = await pagina(c2, nombre);
         for (const k of ["avisos", "actas", "miembros", "encuestas"]) {
           await ve(q, k); await q.click("[data-editar-en]"); await q.waitForTimeout(300);

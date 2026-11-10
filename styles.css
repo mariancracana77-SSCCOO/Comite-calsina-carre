@@ -45,6 +45,10 @@
 }
 :root[data-letra="grande"] { --letra: 20px; }
 :root[data-letra="muy-grande"] { --letra: 23px; }
+/* v26: letra más pequeña que la normal (lo pidió Lorena, 10/11/2026; como en CCOO). Lo de «:root[data-letra]» de abajo es solo para la grande */
+:root[data-letra="pequena"] { --letra: 16px; }
+/* Los campos de escribir, nunca por debajo de 16 px: el iPhone acerca la pantalla al tocarlos si son más pequeños */
+:root[data-letra="pequena"] :is(input, textarea, select) { font-size: max(16px, 1em); }
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; overflow-x: clip; font-size: var(--letra); }
@@ -364,10 +368,10 @@ button.dia-mes { border: 0; font: inherit; cursor: pointer; width: 100%; padding
 .ano-mes .dia-mes { aspect-ratio: auto; height: 1.3em; font-size: .6rem; line-height: 1; border-radius: 3px; overflow: hidden; }
 @media (max-width: 359px) { .mes.ano { padding: 8px 5px; } .ano-rejilla { gap: 6px 4px; } .ano-mes .dia-mes { font-size: .5rem; letter-spacing: -.04em; } .ano-mes .mes-dias { font-size: .48rem; } }
 /* Con letra grande o muy grande, en el móvil los números del año no crecen (si no, se pisan) */
-@media (max-width: 599px) { :root[data-letra] .ano-mes .dia-mes { font-size: 11px; height: 16px; } :root[data-letra] .ano-mes .mes-dias { font-size: 10px; } }
-@media (max-width: 359px) { :root[data-letra] .ano-mes .dia-mes { font-size: 9.5px; letter-spacing: -.04em; } }
+@media (max-width: 599px) { :root:is([data-letra="grande"], [data-letra="muy-grande"]) .ano-mes .dia-mes { font-size: 11px; height: 16px; } :root:is([data-letra="grande"], [data-letra="muy-grande"]) .ano-mes .mes-dias { font-size: 10px; } }
+@media (max-width: 359px) { :root:is([data-letra="grande"], [data-letra="muy-grande"]) .ano-mes .dia-mes { font-size: 9.5px; letter-spacing: -.04em; } }
 @media (min-width: 600px) { .ano-mes .dia-mes { font-size: .7rem; height: 1.45em; } .ano-mes .mes-dias { font-size: .62rem; } }
-@media (min-width: 600px) { :root[data-letra] .ano-mes .dia-mes { font-size: 13px; height: 20px; } :root[data-letra] .ano-mes .mes-dias { font-size: 11px; } }
+@media (min-width: 600px) { :root:is([data-letra="grande"], [data-letra="muy-grande"]) .ano-mes .dia-mes { font-size: 13px; height: 20px; } :root:is([data-letra="grande"], [data-letra="muy-grande"]) .ano-mes .mes-dias { font-size: 11px; } }
 .ano-mes .dia-mes i { display: none; }
 .ano-mes .dia-mes.fest-es b, .ano-mes .dia-mes.fest-cat b { padding: 0; background: none; text-shadow: 0 0 2px #fff, 0 0 3px #fff, 0 0 4px #fff; }
 .ano-mes-nombre { display: block; width: 100%; min-height: 24px; padding: 1px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 0; border-radius: var(--r-s); background: var(--azul-claro); color: var(--azul-osc); font: inherit; font-weight: 700; font-size: .8rem; text-align: left; cursor: pointer; }
@@ -558,8 +562,8 @@ textarea, .campo input, .campo select, .campo textarea {
   .cabecera:not(.cab-panel) .marca-txt small { letter-spacing: .08em; }
 }
 @media (max-width: 399px) {
-  :root[data-letra] .cabecera:not(.cab-panel) .marca-txt b { font-size: 14px; }
-  :root[data-letra] .cabecera:not(.cab-panel) .marca-txt small { font-size: 10px; letter-spacing: .08em; }
+  :root:is([data-letra="grande"], [data-letra="muy-grande"]) .cabecera:not(.cab-panel) .marca-txt b { font-size: 14px; }
+  :root:is([data-letra="grande"], [data-letra="muy-grande"]) .cabecera:not(.cab-panel) .marca-txt small { font-size: 10px; letter-spacing: .08em; }
 }
 
 /* Calendario de reuniones en PC: el mes a la izquierda y las próximas al lado */
@@ -693,10 +697,10 @@ main:focus, main:focus-visible { outline: none; }
 @media (max-width: 359px) {
   .cabecera:not(.cab-panel) .cab-fila { padding-left: 8px; padding-right: 8px; gap: 6px; }
   .cabecera:not(.cab-panel) .marca { gap: 6px; }
-  .cabecera:not(.cab-panel) .marca-txt small, :root[data-letra] .cabecera:not(.cab-panel) .marca-txt small { font-size: 10px; letter-spacing: .06em; }
+  .cabecera:not(.cab-panel) .marca-txt small, :root:is([data-letra="grande"], [data-letra="muy-grande"]) .cabecera:not(.cab-panel) .marca-txt small { font-size: 10px; letter-spacing: .06em; }
 }
 @media (max-width: 339px) {
-  .cabecera:not(.cab-panel) .marca-txt b, :root[data-letra] .cabecera:not(.cab-panel) .marca-txt b { font-size: 13px; letter-spacing: 0; }
+  .cabecera:not(.cab-panel) .marca-txt b, :root:is([data-letra="grande"], [data-letra="muy-grande"]) .cabecera:not(.cab-panel) .marca-txt b { font-size: 13px; letter-spacing: 0; }
 }
 @media (min-width: 360px) and (max-width: 380px) { .cabecera:not(.cab-panel) .marca-txt small { letter-spacing: .13em; } }
 
