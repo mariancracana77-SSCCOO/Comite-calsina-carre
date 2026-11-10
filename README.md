@@ -73,7 +73,17 @@ Proyecto Supabase propio del comité, **separado del de CCOO**: `ytxpubqyhnohhug
 NODE_PATH=$(npm root -g) node pruebas/humo.cjs
 ```
 
-Abre la web y el panel con datos de prueba (sin tocar la base de datos real) en móvil de 320 y 390 px, oscuro, letra muy grande y PC. Avisa de errores y guarda capturas en `pruebas/capturas/`.
+Abre la web y el panel con datos de prueba (sin tocar la base de datos real) en móvil de 320 y 390 px, oscuro, letra muy grande y PC. Avisa de errores y guarda capturas en `pruebas/capturas/`. Desde la v23 hay dos pruebas más, que también se pasan antes de publicar:
+
+```bash
+NODE_PATH=$(npm root -g) node pruebas/panel.cjs
+```
+
+```bash
+NODE_PATH=$(npm root -g) node pruebas/sw.cjs
+```
+
+`panel.cjs` prueba el panel (doble toque, sesión caducada, sin conexión, salir sin guardar, fotos sin GPS, borrador, Deshacer, plantillas…) y `sw.cjs` el funcionamiento sin conexión. Cada una usa su puerto (`PUERTO=…`; 8790, 8794 y 8795 por defecto): si se pasan a la vez, que no coincidan.
 
 ## Versiones
 
@@ -87,7 +97,7 @@ Abre la web y el panel con datos de prueba (sin tocar la base de datos real) en 
 - **v15**: las fotos y los PDF de avisos, anuncios y publicaciones se abren dentro de la web, encima de la página y con «Cerrar», sin descargarlos (lo pidió el padre en el panel, petición n.º 5). Los Word y Excel siguen abriéndose aparte.
 - **v16**: anuncios y avisos largos salen recogidos con «Leer más» (petición n.º 4 del padre). Calendario de reuniones con colores: reuniones en verde, festivos de España en rojo y festivos de Cataluña con la senyera, con leyenda (petición n.º 3; al tocar un festivo sale su nombre; festivos de 2026, falta añadir 2027 cuando salga el oficial).
 - **v17**: calendario con botón «Mes / Año entero» (12 meses en pequeño; al tocar un mes se abre). Festivos laborales oficiales de Cataluña de 2026 y 2027 sacados del BOE (BOE-A-2025-21667 y BOE-A-2026-21254); los de España con la bandera española. Reuniones con la empresa en azul y las del comité en verde (petición n.º 6 del padre). También: panel del padre más fácil (lo pidió Lorena): sus peticiones en dos bloques, «Lo tuyo» (Te toca a ti / Esperando) arriba y «Confirmado por Lorena» debajo; preguntas de Claude con botones y «Otra cosa»; «Que lo siga Lorena», «Quitar de mi lista» y «No me gusta, quitarlo»; menos texto, buscador, negritas y fotos grandes en el chat. En la portada, el nombre «Comité de empresa · (nombre de la empresa)» se ve mejor.
-- **v23**: el nombre del camión de la portada se quita otra vez porque se veía borroso (lo pidió Lorena el 9/11/2026; «Calsina Carré» sigue en la cabecera, el título y los textos); «Avisar a Lorena» del panel dice «solo emergencias» y pregunta antes de avisar (fallo en la web o cambio que haga falta ya).
+- **v23**: el nombre del camión de la portada se quita otra vez porque se veía borroso (lo pidió Lorena el 9/11/2026; «Calsina Carré» sigue en la cabecera, el título y los textos); «Avisar a Lorena» del panel dice «solo emergencias» y pregunta antes de avisar (fallo en la web o cambio que haga falta ya). Revisión a fondo (tanda 3, 10/11/2026): **web** — carga primero la copia guardada y avisa si la red va lenta (12 s) o no hay conexión, «Actualizado el…» en avisos y actas, «Escribir al comité (email)» en el pie, botones de 44 px, la portada ya no salta al cargar, pestañas en dos filas en el PC, enlaces viejos avisan de que ya no existe, textos legales y del buzón nuevos, el service worker no se queda colgado, los avisos al móvil ya no piden activarse cada vez (petición n.º 10); **panel** — no publica dos veces con un doble toque, nunca dice «hecho» sin guardar (avisa si la sesión ha caducado y conserva lo escrito), pregunta antes de salir sin guardar, borrador guardado solo, «Deshacer», plantillas de aviso, convocatoria y acta, «Ver cómo quedará en la web» en el móvil, fotos sin GPS, «Borrar para siempre» en la Papelera, guía al día.
 - **v22**: revisión profesional (arreglos seguros): «Ir al contenido» ya no lleva a la portada; la dirección de la web sale sola de donde esté publicada (lista de lo que hay que cambiar en «Si cambia la dirección de la web»); barra de abajo sin botones cortados a 320 px con letra muy grande; más contraste en modo oscuro y contorno de foco visible; visor de PDF que dibuja las páginas al acercarse y se mueve con el teclado; el panel no se deja meter dentro de otra web; página 404 propia; caché sin conexión más fiable (espera a la red como mucho 4 s); imagen al compartir más ligera, logo pequeño, `favicon.ico` y `robots.txt`; «Borrar mis datos» también quita los avisos al móvil; subidas del panel limitadas a fotos, PDF y documentos de oficina; aviso al descargar la copia; textos de privacidad por defecto más exactos y nota en el buzón (no es el canal de denuncias de la Ley 2/2023). Además, vuelta a la cuenta y dirección de siempre con el nombre de Calsina Carré y el nombre en el camión de la portada (lo pidieron Lorena y su padre el 9/11/2026).
 - **v21**: versión sin nombres de empresa para la cuenta provisional (7/11/2026); no llegó a publicarse aquí: se quedó en local (rama `limpio`).
 - **v20**: petición n.º 8 del padre: en el calendario, «Año entero» cabe en una sola pantalla (3 columnas en el móvil, 4 en tableta y 6 en el PC, días más bajos; también con 320 px y letra grande).
