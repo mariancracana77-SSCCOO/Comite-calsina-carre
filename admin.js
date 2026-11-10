@@ -334,9 +334,27 @@
     estado($("e-estado"), "Tu sesión ha caducado. Vuelve a entrar con tu email y tu contraseña." + (ED ? " Lo que estabas escribiendo no se ha perdido: saldrá otra vez al entrar." : ""), "mal");
     $("e-clave").value = ""; $(TEMA.lee("comite-admin-email") ? "e-clave" : "e-email").focus();
   };
-  // Antes de guardar: ¿sigue la sesión? Si no, a la pantalla de entrar (y devuelve false)
+  // v23 (revisor I2): ni supabase-js ni las funciones tienen tiempo máximo. Con una conexión que se cuelga (no que falla),
+  // el editor se quedaba bloqueado para siempre. TOPE: a los 25 s se deja de esperar y se explica qué ha pasado.
+  const TOPE = { tope: true };
+  const tiempoTope = () => Number(window.__P?.tope) || 25000; // las pruebas lo acortan
+  const conTope = (promesa, ms = tiempoTope()) => {
+    let t; const espera = new Promise((ok) => { t = setTimeout(() => ok(TOPE), ms); });
+    return Promise.race([Promise.resolve(promesa), espera]).finally(() => clearTimeout(t));
+  };
+  const esDeRed = (e) => !!e && (e.name === "AuthRetryableFetchError" || /fetch|network|Load failed|Failed to send/i.test(e.message || String(e)));
+  const SIN_RED_ED = "No hay conexión: no se ha guardado. Lo escrito sigue aquí; prueba de nuevo dentro de un momento.";
+  const COLGADA_ED = "La conexión no responde: no se ha guardado. Lo escrito sigue aquí; prueba de nuevo dentro de un momento.";
+  // Antes de guardar: ¿sigue la sesión? true = sí; "red" = no se sabe (sin cobertura o colgada); false = ha caducado (y se lleva a entrar).
+  // Revisor I1: si el token ha caducado y la renovación falla por la red, getSession da {session: null, error} sin lanzar nada:
+  // eso es falta de conexión, no una sesión caducada.
   const haySesion = async () => {
-    try { const { data } = await sb.auth.getSession(); if (data?.session) return true; } catch (_) { return true; /* sin red: que lo diga el guardado */ }
+    try {
+      const r = await conTope(sb.auth.getSession());
+      if (r === TOPE) return "red";
+      if (r?.data?.session) return true;
+      if (esDeRed(r?.error)) return "red";
+    } catch (e) { return "red"; }
     sesionCaducada(); return false;
   };
   sb.auth.onAuthStateChange((ev) => {
@@ -523,7 +541,7 @@
     ED_HIST = false;
     if (!ED || ED.pausado) return;
     if (ED.guardando || (ED.sucio && !confirm("¿Salir sin guardar? Se perderá lo que has escrito."))) { historiaAbre(); return; }
-    if (ED.sucio) quitaBorrador(claveBorrador());
+    if (ED.sucio) soltarBorrador(ED);
     cerrarEditor(true, { borrarSubidos: true });
   });
   document.addEventListener("click", (e) => {
@@ -849,7 +867,9 @@
     odt: "application/vnd.oasis.opendocument.text", ods: "application/vnd.oasis.opendocument.spreadsheet", odp: "application/vnd.oasis.opendocument.presentation",
   };
   const ACEPTA_SUBIDA = "image/jpeg,image/png,image/webp,application/pdf," + Object.keys(TIPO_EXT).map((e) => "." + e).join(",");
-  const subidaPermitida = (f) => !!TIPO_EXT[extDe(f.name)] && !/svg|html|^text\/xml|^application\/xml|javascript/i.test(f.type || "");
+  // hasOwn: «x.constructor» o «x.__proto__» no son tipos (serían propiedades de cualquier objeto)
+  const tipoExt = (nombre) => { const e = extDe(nombre); return Object.prototype.hasOwnProperty.call(TIPO_EXT, e) ? TIPO_EXT[e] : ""; };
+  const subidaPermitida = (f) => !!tipoExt(f.name) && !/svg|html|^text\/xml|^application\/xml|javascript/i.test(f.type || "");
   const limpiaNombre = (n) => n.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w.-]+/g, "-").slice(-80);
   // v23: las fotos se vuelven a hacer en el propio móvil antes de subirlas. Así se les quitan los datos ocultos
   // (EXIF: el lugar donde se hizo con el GPS, el modelo del móvil, la hora). Se respeta cómo se ve (girada si hace
@@ -873,7 +893,7 @@
     for (const f of files) {
       if (f.size > 20 * 1048576) { grandes.push(f.name); continue; }
       if (!subidaPermitida(f)) { malos.push(f.name); continue; }
-      const tipo = TIPO_EXT[extDe(f.name)];
+      const tipo = tipoExt(f.name);
       estado($("ed-msg"), `Subiendo «${f.name}»…`);
       let cuerpo = f;
       try { if (/^image\//.test(tipo)) cuerpo = await limpiaFoto(f, tipo); } catch (e) { fallos.push(errTxt(e)); continue; }
@@ -924,7 +944,7 @@
       else if (!val && ["hora", "fecha", "tel", "email", "url"].includes(tipo)) val = null;
       v[col] = val;
     }
-    if (comprobar && ED?.plantilla && Object.values(v).some((t) => typeof t === "string" && QUEDA_PLANTILLA.test(t)))
+    if (comprobar && ED && quedaPlantilla(ED.k, v))
       return [v, "Todavía queda texto de la plantilla entre corchetes [ ]. Cámbialo por lo de verdad o bórralo."];
     if (comprobar && S.validar) { const m = S.validar(v); if (m) return [v, m]; }
     return [v, ""];
@@ -943,7 +963,8 @@
     $("ed-guardar").innerHTML = icono(programado ? "reloj" : "check") + (programado ? "Programar" : ED.orig ? "Guardar cambios" : oculto ? "Guardar sin publicar" : "Publicar");
   };
   // ---- v23: borrador guardado solo (en este móvil), por si se cierra la ventana, se acaba la batería o caduca la sesión ----
-  const claveBorrador = (E = ED) => E ? `comite-adm-borrador-${SECCIONES[E.k].tabla}-${E.orig ? E.orig.id : "nuevo"}` : "";
+  // Una copia («Duplicar») tiene su propia clave: no pisa el borrador de algo nuevo que estaba a medias
+  const claveBorrador = (E = ED) => E ? `comite-adm-borrador-${SECCIONES[E.k].tabla}-${E.orig ? E.orig.id : E.copiaDe ? "copia-" + E.copiaDe : "nuevo"}` : "";
   const valoresForm = () => {
     const o = {};
     $("ed-form").querySelectorAll("input[id^='f-'], textarea[id^='f-'], select[id^='f-']").forEach((el) => {
@@ -956,7 +977,8 @@
     clearTimeout(borradorT);
     const hazlo = () => {
       if (!ED || !ED.sucio || ED.guardando) return;
-      try { localStorage.setItem(claveBorrador(), JSON.stringify({ t: Date.now(), v: valoresForm(), adj: ED.adj, foto: ED.foto })); } catch (_) { /* sin sitio o bloqueado: no pasa nada */ }
+      if (ED.borrador) return; // hay un borrador anterior sin contestar («Recuperarlo / Descartarlo»): no se machaca
+      try { localStorage.setItem(claveBorrador(), JSON.stringify({ t: Date.now(), v: valoresForm(), adj: ED.adj, foto: ED.foto, plantilla: !!ED.plantilla })); } catch (_) { /* sin sitio o bloqueado: no pasa nada */ }
     };
     if (ya) hazlo(); else borradorT = setTimeout(hazlo, 500);
   };
@@ -970,8 +992,18 @@
     document.querySelectorAll("#ed-form [data-vaciar]").forEach((q) => { q.hidden = !$("f-" + q.dataset.vaciar)?.value; });
     ED.adj = Array.isArray(b.adj) ? b.adj : ED.adj;
     if (SECCIONES[ED.k].campos.some((c) => c[2] === "foto")) ED.foto = b.foto || null;
+    if (b.plantilla) ED.plantilla = true;
+    // Lo que subió aquel borrador y no está guardado: si al final se cancela, se borra del almacén
+    ED.subidos.push(...soloDelBorrador(b));
     ED.sucio = true; pintaAdj(); pintaFoto(); previa();
   };
+  // Archivos de un borrador que no están en lo guardado (los subió aquella sesión que se perdió)
+  const soloDelBorrador = (b) => {
+    const guardados = new Set([...(ED.orig?.adjuntos || []), ED.orig?.foto].filter(Boolean).map((a) => a.url));
+    return [...(Array.isArray(b.adj) ? b.adj : []), b.foto].filter((a) => a && a.ruta && !guardados.has(a.url));
+  };
+  // Se borra el borrador guardado, pero nunca uno anterior que todavía no se ha contestado
+  const soltarBorrador = (E) => { if (E && !E.borrador) quitaBorrador(claveBorrador(E)); };
   window.addEventListener("pagehide", () => guardaBorrador(true));
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") guardaBorrador(true); });
 
@@ -981,7 +1013,9 @@
     reuniones: { "f-titulo": "Convocatoria: reunión del comité", "f-lugar": "[sala o nave]", "f-descripcion": "Orden del día:\n- Lectura del acta anterior\n- [Tema 1]\n- [Tema 2]\n- Ruegos y preguntas\n\nSi quieres que se hable de algún tema, díselo a un miembro del comité o escríbelo en el buzón anónimo." },
     actas: { "f-titulo": "Acta de la reunión del [día]", "f-resumen": "Asisten [número] miembros del comité[ y representantes de la empresa].\n\nSe han tratado estos temas:\n- [Tema 1]\n- [Tema 2]", "f-acuerdos": "- [Primer acuerdo]\n- [Segundo acuerdo]" },
   };
-  const QUEDA_PLANTILLA = /\[[^\]\n]{1,40}\]/;
+  // Los trozos entre corchetes de cada plantilla, tal cual. Solo esos bloquean: un corchete que escriba el padre, no.
+  const TROZOS_PLANTILLA = Object.fromEntries(Object.entries(PLANTILLAS).map(([k, P]) => [k, [...new Set(Object.values(P).join("\n").match(/\[[^\]\n]+\]/g) || [])]]));
+  const quedaPlantilla = (k, v) => (TROZOS_PLANTILLA[k] || []).some((t) => Object.values(v).some((x) => typeof x === "string" && x.includes(t)));
   const ponPlantilla = () => {
     const P = PLANTILLAS[ED.k]; if (!P) return;
     const escrito = Object.keys(P).some((id) => $(id)?.value.trim());
@@ -1006,7 +1040,8 @@
     const S = SECCIONES[k];
     document.querySelector(".ed-pie").prepend($("ed-borrar"), $("ed-duplicar")); // antes de rehacer el formulario, que no se pierdan
     // vuelve: a dónde va el foco al cerrar (la fila que se abrió); despues: algo que hacer solo si se guarda bien
-    ED = { k, orig: duplicando ? null : x, adj: x?.adjuntos ? [...x.adjuntos] : [], foto: duplicando ? null : (x?.foto || null), subidos: [], quitados: [], sucio: duplicando,
+    ED = { k, orig: duplicando ? null : x, adj: x?.adjuntos ? [...x.adjuntos] : [], foto: duplicando ? null : (x?.foto || null), subidos: [], quitados: [], sucio: false,
+      copiaDe: duplicando ? (duplicando === true ? "x" : duplicando) : null,
       guardando: false, despues, vuelve: vuelve || document.activeElement };
     ["ed-guardar", "ed-borrar", "ed-duplicar", "ed-cancelar"].forEach((b) => { $(b).disabled = false; });
     $("ed-modo").textContent = duplicando ? "Copia de " + S.uno : x ? "Editar " + S.uno : S.nuevo;
@@ -1021,7 +1056,7 @@
     // En el móvil la vista previa está en otra pestaña: un botón grande al final para verla antes de publicar
     $("ed-form").insertAdjacentHTML("beforeend", `<button type="button" class="btn sec ver-previa" data-ver-previa>${icono("ojo")}Ver cómo quedará en la web</button><div class="ed-acciones-form" id="ed-acciones-form" hidden></div>`);
     // ¿Quedó un borrador sin guardar de la otra vez?
-    const bo = duplicando ? null : leeBorrador(claveBorrador());
+    const bo = leeBorrador(claveBorrador());
     if (bo) {
       if (JSON.stringify(bo.v) === JSON.stringify(valoresForm()) && JSON.stringify(bo.adj || []) === JSON.stringify(ED.adj)) quitaBorrador(claveBorrador());
       else {
@@ -1085,7 +1120,7 @@
     if (!ED) return;
     if (!forzar && ED.guardando) return; // mientras guarda no se cierra (si no, se quedaría a medias)
     if (!forzar && ED.sucio && !confirm("¿Salir sin guardar? Se perderá lo que has escrito.")) return;
-    if (!forzar && ED.sucio) quitaBorrador(claveBorrador());
+    if (!forzar && ED.sucio) soltarBorrador(ED);
     if (borrarSubidos) borraArchivos(ED.subidos);
     const vuelve = ED.vuelve;
     ED = null;
@@ -1111,7 +1146,7 @@
     if (!ED) return;
     ED.sucio = true;
     // v23: algo que estaba oculto y se pone a la vista nunca había avisado a los móviles: se marca «Volver a avisar»
-    if (/^f-publicada?$/.test(e.target.id) && e.target.checked && ED.orig && ED.orig[e.target.id.slice(2)] === false && $("f-_cambio") && !$("f-_cambio").checked) {
+    if (/^f-publicad[oa]$/.test(e.target.id) && e.target.checked && ED.orig && ED.orig[e.target.id.slice(2)] === false && $("f-_cambio") && !$("f-_cambio").checked) {
       $("f-_cambio").checked = true; avisa("Como antes no se veía, se avisará a los móviles al guardar. Si no quieres, quita «Volver a avisar».");
     }
     previa();
@@ -1139,7 +1174,7 @@
     if (bb) {
       const b = ED.borrador; ED.borrador = null; $("borrador-aviso")?.remove();
       if (bb.dataset.borrador === "si" && b) { ponBorrador(b); avisa("Recuperado. Revísalo y pulsa «" + $("ed-guardar").textContent.trim() + "»."); }
-      else { quitaBorrador(claveBorrador()); avisa("Borrador descartado."); }
+      else { if (b) borraArchivos(soloDelBorrador(b)); quitaBorrador(claveBorrador()); avisa("Borrador descartado."); }
       $("ed-form").querySelector("input:not([type=checkbox]), textarea")?.focus();
       return;
     }
@@ -1170,7 +1205,7 @@
   const NO_CAMBIO_TXT = "No se ha guardado: puede que tu sesión haya caducado o que alguien lo haya borrado. Sal del panel, vuelve a entrar y prueba otra vez.";
   // Si no ha cambiado nada, se pregunta al servidor si aún nos reconoce como admin: así se dice la causa de verdad
   const motivoNoCambio = async (txt) => {
-    try { const { data, error } = await sb.rpc("is_admin"); if (!error && data === false) return CADUCADA; } catch (_) { /* sin red: el texto general */ }
+    try { const r = await conTope(sb.rpc("is_admin"), 10000); if (r !== TOPE && !r.error && r.data === false) return CADUCADA; } catch (_) { /* sin red: el texto general */ }
     return txt;
   };
   $("ed-guardar").addEventListener("click", async () => {
@@ -1182,13 +1217,18 @@
     Object.keys(v).forEach((c) => { if (c.startsWith("_")) delete v[c]; });
     bloqueaPie(true); estado(msg, "Guardando…");
     const falla = (t) => { bloqueaPie(false); estado(msg, t, "mal"); };
-    if (!(await haySesion())) { bloqueaPie(false); return; }
+    const hs = await haySesion();
+    if (hs === "red") return falla(SIN_RED_ED);
+    if (!hs) { bloqueaPie(false); return; }
     let r;
-    try { r = E.orig ? await sb.from(S.tabla).update(v).eq("id", E.orig.id).select("id") : await sb.from(S.tabla).insert(v).select("id").single(); }
-    catch (e) { return falla(errTxt(e)); }
-    if (r.error) return falla(errTxt(r.error));
+    try { r = await conTope(E.orig ? sb.from(S.tabla).update(v).eq("id", E.orig.id).select("id") : sb.from(S.tabla).insert(v).select("id").single()); }
+    catch (e) { return falla(esDeRed(e) ? SIN_RED_ED : errTxt(e)); }
+    // Se ha enviado, pero no ha llegado respuesta: puede estar guardado o no. Se dice, para no publicarlo dos veces sin querer.
+    if (r === TOPE) return falla(E.orig ? "La conexión no responde y no se sabe si se ha guardado. Lo escrito sigue aquí: prueba otra vez dentro de un momento."
+      : "La conexión no responde y no se sabe si se ha publicado. Antes de volver a pulsar, pulsa «Cancelar» y mira en la lista si ya está; si no está, vuelve a intentarlo.");
+    if (r.error) return falla(esDeRed(r.error) ? SIN_RED_ED : errTxt(r.error));
     if (noCambio(r)) return falla(await motivoNoCambio(NO_CAMBIO_TXT));
-    quitaBorrador(claveBorrador(E));
+    soltarBorrador(E);
     const quitadosDeVerdad = E.quitados.filter((a) => !E.adj.some((x) => x.url === a.url) && !(E.foto && E.foto.url === a.url));
     borraArchivos(quitadosDeVerdad);
     const programado = E.k === "avisos" && v.publicar_en && v.publicar_en > ahoraISO();
@@ -1202,12 +1242,14 @@
     if (AVISABLE.includes(E.k) && id && !programado && !oculto && ((!E.orig && v.notificar) || cambio || (yaNoProgramado && E.orig.notificar !== false))) {
       estado(msg, "Avisando a los móviles…"); avisoMovil = true;
       const n = await avisarMoviles(E.k, id, cambio);
-      if (n == null) { txt += ", pero no se ha podido avisar a los móviles. Se intentará solo en unos minutos"; mal = true; }
+      // Colgado: el aviso puede haber salido o no. NO se dice «se intentará solo» ni se invita a repetir a ciegas.
+      if (n === TOPE) { txt += ", pero la conexión no ha respondido al avisar a los móviles: puede que el aviso ya haya llegado. No pulses «Volver a avisar» sin preguntar antes a algún compañero si le ha llegado"; mal = true; }
+      else if (n == null) { txt += ", pero no se ha podido avisar a los móviles. Se intentará solo en unos minutos"; mal = true; }
       else txt += n ? ` y avisado a ${n} ${n === 1 ? "móvil" : "móviles"}` : " (todavía no hay móviles apuntados a los avisos)";
     }
     if (programado && v.notificar !== false) txt += ": avisará a los móviles cuando se publique";
-    if (E.k === "apartados") await cargaAps().catch(() => {});
-    if (E.despues) await E.despues(id).catch(() => {});
+    if (E.k === "apartados") await conTope(cargaAps().catch(() => {}));
+    if (E.despues) await conTope(E.despues(id).catch(() => {}));
     // Deshacer un cambio: solo si no se ha avisado a los móviles ni se han quitado archivos (eso no tiene vuelta atrás)
     const deshacible = E.orig && !avisoMovil && !quitadosDeVerdad.length && !E.subidos.length && E.k !== "apartados";
     const antes = deshacible ? Object.fromEntries(Object.keys(v).map((c) => [c, E.orig[c] ?? null])) : null;
@@ -1242,13 +1284,16 @@
     const si = confirm(`¿Borrar «${tituloDe(S, E.orig)}»?${extra}\n\nSe quitará de la web. Si te equivocas, lo puedes recuperar desde «Papelera» durante 90 días.`);
     if (!si) { bloqueaPie(false); return; }
     estado($("ed-msg"), "Borrando…");
-    if (!(await haySesion())) { bloqueaPie(false); return; }
-    const r = await sb.from(S.tabla).delete().eq("id", E.orig.id).select("id").then((x) => x, (e) => ({ error: e }));
-    if (r.error) { bloqueaPie(false); return estado($("ed-msg"), errTxt(r.error), "mal"); }
+    const hs = await haySesion();
+    if (hs === "red") { bloqueaPie(false); return estado($("ed-msg"), "No hay conexión: no se ha borrado. Prueba de nuevo dentro de un momento.", "mal"); }
+    if (!hs) { bloqueaPie(false); return; }
+    const r = await conTope(sb.from(S.tabla).delete().eq("id", E.orig.id).select("id").then((x) => x, (e) => ({ error: e })));
+    if (r === TOPE) { bloqueaPie(false); return estado($("ed-msg"), "La conexión no responde y no se sabe si se ha borrado. Pulsa «Cancelar» y mira en la lista si sigue ahí.", "mal"); }
+    if (r.error) { bloqueaPie(false); return estado($("ed-msg"), esDeRed(r.error) ? "No hay conexión: no se ha borrado. Prueba de nuevo dentro de un momento." : errTxt(r.error), "mal"); }
     if (noCambio(r)) { bloqueaPie(false); return estado($("ed-msg"), await motivoNoCambio(NO_CAMBIO_TXT.replace("No se ha guardado", "No se ha borrado")), "mal"); }
-    quitaBorrador(claveBorrador(E));
+    soltarBorrador(E);
     // Una sección con cosas dentro no se deshace de un toque (hay que recuperar cada cosa): eso, en la Papelera
-    const pid = extra ? null : await enPapelera(S.tabla, E.orig.id);
+    const pid0 = extra ? null : await conTope(enPapelera(S.tabla, E.orig.id), 8000), pid = pid0 === TOPE ? null : pid0;
     avisa("Borrado. Está en la Papelera por si lo necesitas.", false, pid ? ["Deshacer", async () => {
       const { error } = await sb.rpc("recuperar_borrado", { p_id: pid }).then((x) => x, (e) => ({ error: e }));
       if (error) return avisa(errTxt(error) + " Puedes recuperarlo en la Papelera.", true);
@@ -1259,11 +1304,11 @@
   });
   $("ed-duplicar").addEventListener("click", () => {
     if (!ED || ED.guardando) return;
-    const S = SECCIONES[ED.k], [v] = leeForm(false), vuelve = ED.vuelve;
+    const S = SECCIONES[ED.k], [v] = leeForm(false), vuelve = ED.vuelve, idOrig = ED.orig?.id || "x";
     const copia = { ...v, adjuntos: [] };
     S.alDuplicar?.(copia);
     const k = ED.k; cerrarEditor(true, { seguir: true });
-    abrirEditor(k, copia, { duplicando: true, vuelve });
+    abrirEditor(k, copia, { duplicando: idOrig, vuelve });
     avisa(k === "reuniones" ? "Copia lista: elige el día nuevo y guarda" : "Copia lista: cambia lo que haga falta y guarda");
   });
 
@@ -1547,9 +1592,12 @@
   // ================== AVISOS AL MÓVIL ==================
   const AVISABLE = ["avisos", "actualidad", "reuniones", "actas", "encuestas", "documentos", "publicaciones"];
   // Devuelve a cuántos móviles ha llegado (o null si ha fallado)
+  // Si la conexión se cuelga, devuelve TOPE (no se sabe si ha llegado)
   const avisarMoviles = async (tabla, id, cambio = false) => {
     try {
-      const { data, error } = await sb.functions.invoke("notificar", { body: { modo: "publicado", tabla, id, cambio } });
+      const r = await conTope(sb.functions.invoke("notificar", { body: { modo: "publicado", tabla, id, cambio } }));
+      if (r === TOPE) return TOPE;
+      const { data, error } = r;
       if (error) throw error;
       return data?.push ? data.push.ok : 0;
     } catch (e) { return null; } // quien llama lo dice en su aviso (si no, «Publicado» lo tapaba al momento)
@@ -1691,7 +1739,8 @@
   const PET_ESTADO = { nueva: "Enviada: Claude la mirará", en_curso: "Claude está con ella", lista: "Hecha: mira las fotos y decide", publicada: "Ya está en la web", descartada: "Descartada", no_hecha: "Claude no la ha hecho: lee por qué", deshecha: "Vuelto a como estaba antes" };
   const PET_EN_MARCHA = ["nueva", "en_curso", "lista", "no_hecha"];
   let PET_LIMITE = 30, PET_ARCH = [];
-  const tipoPet = (f) => /^(image|video|audio)\//.test(f.type || "") ? f.type : ({ jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", heic: "image/heic", mp4: "video/mp4", mov: "video/quicktime", webm: "video/webm", "3gp": "video/3gpp", m4a: "audio/mp4", mp3: "audio/mpeg", ogg: "audio/ogg", opus: "audio/ogg", aac: "audio/aac", wav: "audio/wav", amr: "audio/amr" })[extDe(f.name)] || "";
+  const deMapa = (m, k) => Object.prototype.hasOwnProperty.call(m, k) ? m[k] : "";
+  const tipoPet = (f) => /^(image|video|audio)\//.test(f.type || "") ? f.type : deMapa({ jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", heic: "image/heic", mp4: "video/mp4", mov: "video/quicktime", webm: "video/webm", "3gp": "video/3gpp", m4a: "audio/mp4", mp3: "audio/mpeg", ogg: "audio/ogg", opus: "audio/ogg", aac: "audio/aac", wav: "audio/wav", amr: "audio/amr" }, extDe(f.name));
   const msgP = (id, txt, tipo = "") => { const el = $(id); if (el) estado(el, txt, tipo); };
   const petLee = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (_) { return d; } };
   const petGuarda = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };

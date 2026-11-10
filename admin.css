@@ -169,15 +169,17 @@ button.fila-abre:hover b { color: var(--azul); }
 .ed-pestanas { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--borde); }
 .ed-pestanas button { min-height: 48px; border: 0; background: none; font: inherit; font-weight: 700; color: var(--suave); cursor: pointer; border-bottom: 3px solid transparent; }
 .ed-pestanas button[aria-selected="true"] { color: var(--azul); border-bottom-color: var(--azul); }
-.ed-cuerpo { flex: 1; min-height: 0; display: grid; }
+.ed-cuerpo { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); } /* minmax: nada del formulario lo ensancha (a 320 px tocaba los bordes) */
 .ed-form, .ed-previa { overflow-y: auto; padding: 18px 16px 28px; }
-.ed-form { display: grid; gap: 18px; align-content: start; }
+.ed-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-content: start; } /* minmax: un campo ancho (fecha y hora con letra muy grande) no ensancha el formulario */
+.ed-form .campo { min-width: 0; }
+.ed-form input, .ed-form select, .ed-form textarea { min-width: 0; max-width: 100%; }
 .ed-cuerpo[data-ver="form"] .ed-previa, .ed-cuerpo[data-ver="previa"] .ed-form { display: none; }
 .ed-previa { background: var(--fondo); }
 .previa-cab { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: var(--suave); font-weight: 700; font-size: .85rem; }
 @media (min-width: 900px) {
   .ed-pestanas { display: none; }
-  .ed-cuerpo { grid-template-columns: 1fr 1fr; }
+  .ed-cuerpo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .ed-cuerpo[data-ver] .ed-form, .ed-cuerpo[data-ver] .ed-previa { display: grid; align-content: start; }
   .ed-previa { border-left: 1px solid var(--borde); }
   .ed-form, .ed-previa { padding: 22px 24px 32px; }
