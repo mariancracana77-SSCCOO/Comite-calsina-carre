@@ -157,7 +157,8 @@ fs.mkdirSync(OUT, { recursive: true });
             if (!r.accesos || !r.botonesHero || !r.barra || r.banda) fallos.push(`390: en el móvil se ha movido algo (${JSON.stringify({ a: r.accesos, h: r.botonesHero, b: r.barra, banda: r.banda })})`);
             if (!r.lupa) fallos.push("390: en el móvil falta la lupa de la cabecera");
             await px.goto(BASE + "#reuniones"); await px.waitForTimeout(400);
-            if (!(await px.evaluate(() => { const a = document.querySelector("#reunion-arriba .destacado.cita"), m = document.getElementById("mes-calendario"); return a && a.getClientRects().length && a.getBoundingClientRect().bottom <= m.getBoundingClientRect().top; }))) fallos.push("390: la próxima reunión no sale arriba del calendario");
+            if (!(await px.evaluate(() => { const a = document.querySelector("#reunion-arriba .tarjeta.reunion"), m = document.getElementById("mes-calendario"); return a && a.getClientRects().length && a.getBoundingClientRect().bottom <= m.getBoundingClientRect().top; }))) fallos.push("390: la próxima reunión no sale arriba del calendario");
+            if (!(await px.evaluate(() => { const t = [...document.querySelectorAll("#reunion-arriba h3, #lista-proximas h3")].map((h) => h.textContent.trim()); return t.length && new Set(t).size === t.length && !document.querySelector("#v-reuniones .destacado.cita"); }))) fallos.push("390: la próxima reunión sale repetida en Reuniones");
           }
           // Actas: tabla en el PC (Fecha · Título · Tipo · Ver/Descargar) con buscador; tarjetas en el móvil
           await px.goto(BASE + "#actas"); await px.waitForTimeout(400);
@@ -189,7 +190,36 @@ fs.mkdirSync(OUT, { recursive: true });
             miga: [...document.querySelectorAll("#v-avisos .miga li")].map((l) => l.textContent.trim()).join(" › ") }));
           if (av.urg !== 1 || av.norm !== 1 || !av.orden || !av.fecha) fallos.push(`${w}: avisos sin separar por importancia (${JSON.stringify(av)})`);
           if (av.miga !== "Inicio › Avisos") fallos.push(`${w}: miga de Avisos mal (${av.miga})`);
+          // Señales de los avisos normales: el mismo tamaño que en la v24 (52 × 65)
+          const sz = await px.evaluate(() => { const e = document.querySelector(".avisos-normales .aviso .senal"); if (!e) return null; const r = e.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; });
+          if (!sz || sz[0] !== 52 || sz[1] !== 65) fallos.push(`${w}: la señal de los avisos normales ha cambiado de tamaño (${sz})`);
+          // En el PC, sin iconos decorativos en ninguna página (las señales de tráfico sí); en el móvil, como siempre
+          if (pcV) {
+            for (const h of ["#avisos", "#reuniones", "#actas", "#documentos", "#buzon", "#nosotros", "#seccion-1", "#buscar"]) {
+              await px.goto(BASE + h); await px.waitForTimeout(300);
+              if (h === "#buscar") { await px.fill("#buscar-todo", "reunión"); await px.waitForTimeout(400); }
+              const ic = await px.evaluate(() => [...document.querySelectorAll("main section:not([hidden]) svg.ico, main section:not([hidden]) .ic")].filter((e) => e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden" && !e.closest(".senal, .mes-btn")).map((e) => e.parentElement.className || e.parentElement.tagName).slice(0, 6));
+              if (ic.length) fallos.push(`${w}: hay iconos decorativos en ${h} en el PC (${ic.join(", ")})`);
+            }
+          }
           await cx.close();
+        }
+        // Segunda visita en el PC (con la copia guardada y luego la red): el enlace directo sigue abierto,
+        // y la fila abierta con «Ver» no se cierra al llegar la red
+        if (pcV) {
+          for (const id of ["acta-2", "documento-1"]) {
+            const [cx, p1] = await nuevoCtx("window.__TARDA = 400;", { w: 1280, h: 900 });
+            await p1.goto(BASE + "#actualidad"); await p1.waitForTimeout(1200);
+            const p2 = await cx.newPage(); await p2.goto(BASE + "#" + id); await p2.waitForTimeout(1600);
+            const st = await p2.evaluate((id) => { const e = document.getElementById(id), tr = e && e.closest("tr"); return { copia: !!localStorage.getItem("comite-copia"), abierta: !!tr && !tr.hidden && e.getBoundingClientRect().height > 0 }; }, id);
+            if (!st.copia || !st.abierta) fallos.push(`1280: en la segunda visita el enlace directo #${id} sale cerrado (${JSON.stringify(st)})`);
+            if (id === "acta-2") {
+              const p3 = await cx.newPage(); await p3.goto(BASE + "#actas"); await p3.waitForTimeout(150);
+              await p3.click('[data-ver-fila="acta-1"]').catch(() => {}); await p3.waitForTimeout(1200);
+              if (!(await p3.evaluate(() => { const tr = document.getElementById("det-acta-1"); return !!tr && !tr.hidden; }))) fallos.push("1280: la fila abierta con «Ver» se cierra al llegar la red");
+            }
+            await cx.close();
+          }
         }
       }
       if (c.nombre === "320" || c.nombre === "390-letra") {

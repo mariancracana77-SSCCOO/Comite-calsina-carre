@@ -588,13 +588,20 @@ const jpegConExif = (jpg) => {
         const d = new Date(Date.now() + 86400000), man = new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
         DB.avisos.push({ id: 50, titulo: "Aviso que sale hoy", contenido: "", urgente: false, fecha: en(2), publicar_en: en(2), adjuntos: [], actualizado: en(0) });
         DB.reuniones.push({ id: 50, titulo: "Reunión de mañana", descripcion: "", tipo: "Reunión del comité", fecha: man, hora: "10:00", hora_fin: null, lugar: "Sala", creado: en(0), actualizado: en(0) });
+        // Pasadas: una del comité sin acta (sale), otra con su acta redactada 3 días después (no sale)
+        // y la «Asamblea de octubre» de los datos de prueba (las asambleas no llevan acta: no sale)
+        const dd = (n) => { const x = new Date(Date.now() + n * 86400000); return new Date(x - x.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+        DB.reuniones.push({ id: 51, titulo: "Comité sin acta", descripcion: "", tipo: "Reunión del comité", fecha: dd(-8), hora: "10:00", hora_fin: null, lugar: "Sala", creado: en(0), actualizado: en(0) });
+        DB.reuniones.push({ id: 52, titulo: "Comité con acta", descripcion: "", tipo: "Reunión del comité", fecha: dd(-12), hora: "10:00", hora_fin: null, lugar: "Sala", creado: en(0), actualizado: en(0) });
+        DB.actas.push({ id: 52, titulo: "Acta del comité", tipo: "Reunión del comité", fecha: dd(-9), resumen: "", acuerdos: "", adjuntos: [], creado: en(0), actualizado: en(0) });
       }]; });
       const q = await pagina(c11, "pendiente");
       await ve(q, "inicio", 800);
       const lp = await q.evaluate(() => { const e = document.getElementById("lo-pendiente"); return e ? { txt: e.textContent, primero: document.getElementById("zona").firstElementChild === e, buzon: !!e.querySelector('a[href="#buzon"]'), acta: !!e.querySelector('[data-nuevo="actas"]'), aviso: !!e.querySelector('[data-editar-en="avisos:50"]'), reu: !!e.querySelector('[data-editar-en="reuniones:50"]'), hola: !!document.querySelector("#zona .hola-bloque"), acciones: document.querySelectorAll("#zona .accion-tarjeta").length } : null; });
       ok(lp && lp.primero, "v25: «Lo pendiente» sale arriba del todo en el Inicio");
       ok(lp && lp.buzon && /1 mensaje del buzón sin leer/.test(lp.txt), `v25: «Lo pendiente» cuenta el buzón sin leer (${lp && lp.txt})`);
-      ok(lp && lp.acta && /Asamblea de octubre/.test(lp.txt), "v25: «Lo pendiente» avisa de la reunión pasada sin acta");
+      ok(lp && lp.acta && /Falta el acta de «Comité sin acta»/.test(lp.txt), `v25: «Lo pendiente» avisa de la reunión pasada sin acta (${lp && lp.txt})`);
+      ok(lp && !/Comité con acta|Asamblea de octubre/.test(lp.txt), "v25: «Lo pendiente» no pide acta de una reunión que ya la tiene (unos días después) ni de una asamblea");
       ok(lp && lp.aviso && /Aviso que sale hoy/.test(lp.txt), "v25: «Lo pendiente» avisa del aviso programado para hoy");
       ok(lp && lp.reu, "v25: «Lo pendiente» avisa de la reunión de mañana");
       ok(lp && lp.hola && lp.acciones >= 5, "v25: el resto del Inicio sigue igual (bloque azul y botones)");

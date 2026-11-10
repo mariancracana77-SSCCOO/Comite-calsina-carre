@@ -744,7 +744,7 @@ main:focus, main:focus-visible { outline: none; }
 .cab-busca, .banda-contacto, .portada-lead, .agenda, .solo-pc { display: none; }
 .reunion-arriba:empty { display: none; }
 .reunion-arriba { margin: 0 0 14px; }
-.pie-secciones { display: contents; }
+.pie-secciones { display: none; } /* en el móvil el pie no cambia; en el PC entran las secciones en el mapa */
 
 /* 7. Miga de pan en las páginas interiores (todas las medidas) */
 .cab-apartado .miga { margin: -6px 0 2px; font-size: .88rem; }
@@ -775,7 +775,6 @@ main:focus, main:focus-visible { outline: none; }
 @media (min-width: 760px) { .avisos-normales { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
 .avisos-normales .aviso { padding: 12px 14px 20px 16px; }
 .avisos-normales .aviso-cuerpo { gap: 12px; }
-.avisos-normales .aviso .senal { width: 34px; height: 43px; margin: 0; }
 .avisos-normales .aviso:not(.urgente) .meta > .etq.azul { display: none; }
 .avisos-normales .aviso .meta > span:not([class]) { order: -1; font-weight: 700; color: var(--azul-osc); }
 .avisos-normales .aviso h3 { font-size: 1rem; margin: 2px 0 4px; }
@@ -799,23 +798,20 @@ main:focus, main:focus-visible { outline: none; }
 .tabla .fila-detalle > td { padding: 0 16px 16px; border-top: 0; }
 .tabla .fila-detalle .tarjeta { box-shadow: none; }
 
-/* 10. Modo oscuro más fino: azul noche con profundidad, paneles oscuros con borde fino brillante.
+/* 10. Modo oscuro más fino (solo la web: body.web; el panel queda como en la v24): azul noche con profundidad
+   y paneles oscuros con borde fino brillante a través de --borde (sin forzar border-color: cada tarjeta con color
+   propio, como la marca roja de lo urgente o el borde azul de la consulta, lo conserva).
    Y sin la manchita gris de la señal de peligro (el brillo de la señal cuadrada no va en el triángulo). */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --fondo: #08142a; --tarjeta: #0f2038; --azul-claro: #16304f; --borde: #23395a; }
-  :root:not([data-theme="light"]) body { background: radial-gradient(130% 55% at 50% -8%, rgba(14, 95, 174, .28), transparent 60%) no-repeat, var(--fondo); }
-  :root:not([data-theme="light"]) .tarjeta, :root:not([data-theme="light"]) .destacado, :root:not([data-theme="light"]) .mes { border-color: rgba(0, 198, 255, .22); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05); }
-  :root:not([data-theme="light"]) .tarjeta.acta { --barra: #E6EEF7; }
-  :root:not([data-theme="light"]) .senal.roja .senal-brillo { display: none; }
+  :root:not([data-theme="light"]) body.web { --fondo: #08142a; --tarjeta: #0f2038; --azul-claro: #16304f; --borde: rgba(0, 198, 255, .22); background: radial-gradient(130% 55% at 50% -8%, rgba(14, 95, 174, .28), transparent 60%) no-repeat, var(--fondo); }
+  :root:not([data-theme="light"]) .web .tarjeta, :root:not([data-theme="light"]) .web .destacado, :root:not([data-theme="light"]) .web .mes { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05); }
+  :root:not([data-theme="light"]) .web .tarjeta.acta { --barra: #E6EEF7; }
+  :root:not([data-theme="light"]) .web .senal.roja .senal-brillo { display: none; }
 }
-:root[data-theme="dark"] { --fondo: #08142a; --tarjeta: #0f2038; --azul-claro: #16304f; --borde: #23395a; }
-:root[data-theme="dark"] body { background: radial-gradient(130% 55% at 50% -8%, rgba(14, 95, 174, .28), transparent 60%) no-repeat, var(--fondo); }
-:root[data-theme="dark"] .tarjeta, :root[data-theme="dark"] .destacado, :root[data-theme="dark"] .mes { border-color: rgba(0, 198, 255, .22); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05); }
-:root[data-theme="dark"] .tarjeta.acta { --barra: #E6EEF7; }
-:root[data-theme="dark"] .senal.roja .senal-brillo { display: none; }
-/* Lo urgente sigue con su borde rojo también en oscuro */
-:root[data-theme="dark"] .tarjeta.aviso.urgente, :root[data-theme="dark"] .destacado.urgente { border-color: var(--rojo); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tarjeta.aviso.urgente, :root:not([data-theme="light"]) .destacado.urgente { border-color: var(--rojo); } }
+:root[data-theme="dark"] body.web { --fondo: #08142a; --tarjeta: #0f2038; --azul-claro: #16304f; --borde: rgba(0, 198, 255, .22); background: radial-gradient(130% 55% at 50% -8%, rgba(14, 95, 174, .28), transparent 60%) no-repeat, var(--fondo); }
+:root[data-theme="dark"] .web .tarjeta, :root[data-theme="dark"] .web .destacado, :root[data-theme="dark"] .web .mes { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05); }
+:root[data-theme="dark"] .web .tarjeta.acta { --barra: #E6EEF7; }
+:root[data-theme="dark"] .web .senal.roja .senal-brillo { display: none; }
 
 /* 3. En el móvil y la tableta, la próxima reunión arriba del calendario; en el PC ya sale al lado */
 @media (min-width: 900px) { #v-reuniones .reunion-arriba { display: none; } }
@@ -825,6 +821,8 @@ main:focus, main:focus-visible { outline: none; }
   .web { --ancho: 1180px; }
   .solo-movil { display: none !important; }
   .solo-pc { display: revert; }
+  .web .pie-secciones { display: contents; }
+  .web .buscador.solo-pc { display: block; margin-bottom: 16px; }
   .web .cab-fila, .web .pestanas, .web .caja, .web .hero-in, .web .pie-in, .web .pie-legal { max-width: var(--ancho); }
   .web .cab-apartado-in, .web .sin-red, .web .instalar { max-width: calc(var(--ancho) - 32px); }
   /* Cabecera: marca, buscador escrito y los dos botones (letra y tema); el menú debajo */
@@ -871,6 +869,10 @@ main:focus, main:focus-visible { outline: none; }
   .web #lista-actualidad > .ver-mas, .web #lista-actualidad > .vacio-caja { grid-column: 1 / -1; }
   .web #v-actualidad .meta .etq { padding: 0; background: none; color: var(--azul); }
   .web #v-actualidad .ico, .web #v-actualidad .vacio-ic { display: none; }
+  /* Y en todas las demás páginas del PC tampoco (revisión de la v25): fuera los iconos de botones, datos, tarjetas y
+     resultados. Se quedan las señales de tráfico de los avisos y las flechas del calendario (son botones sin texto). */
+  .web main .ico:not(.mes-btn .ico), .web main .ic:not(.mes-btn .ic), .web main .vacio-ic { display: none; }
+  .web main .dato { gap: 0; }
   .web #v-actualidad .leer-mas, .web #v-actualidad .acciones .btn-linea, .web #v-actualidad .vacio-caja .btn-linea {
     min-height: 44px; padding: 0; border: 0; border-radius: 0; background: none; color: var(--azul); font-size: 1rem; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
   .web #v-actualidad .acciones { margin-top: 4px; gap: 4px 22px; }

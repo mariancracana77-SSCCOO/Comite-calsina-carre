@@ -382,12 +382,19 @@
   $("mes-ant").addEventListener("click", () => { if (vistaCal === "ano") mesVisto.setFullYear(mesVisto.getFullYear() - 1); else mesVisto.setMonth(mesVisto.getMonth() - 1); pintaMes(); });
   $("mes-sig").addEventListener("click", () => { if (vistaCal === "ano") mesVisto.setFullYear(mesVisto.getFullYear() + 1); else mesVisto.setMonth(mesVisto.getMonth() + 1); pintaMes(); });
 
+  const anchoPC900 = matchMedia("(min-width: 900px)");
+  anchoPC900.addEventListener("change", () => pintaReuniones());
   const pintaReuniones = () => {
     const hoy = hoyISO();
     const prox = D.reuniones.filter((r) => r.fecha >= hoy);
     const pas = D.reuniones.filter((r) => r.fecha < hoy).reverse();
-    $("reunion-arriba").innerHTML = prox[0] ? citaHTML(prox[0]) : "";
-    $("lista-proximas").innerHTML = prox.map(tarjetaReunion).join("") || vacio("No hay reuniones previstas", "Cuando se convoque una reunión o una asamblea, saldrá aquí con el día, la hora y el lugar.", "calendario", ["#actas", "Ver las actas de las reuniones pasadas"]);
+    // v25: en el móvil y la tableta, la próxima reunión (su tarjeta entera, con su enlace #reunion-N) va arriba del
+    // calendario y sale UNA sola vez: la lista de abajo sigue con las demás. En el PC, todas abajo.
+    const arriba = !anchoPC900.matches && prox.length ? prox[0] : null;
+    $("reunion-arriba").innerHTML = arriba ? tarjetaReunion(arriba) : "";
+    const resto = arriba ? prox.slice(1) : prox;
+    $("titulo-proximas").hidden = !!arriba && !resto.length;
+    $("lista-proximas").innerHTML = arriba ? resto.map(tarjetaReunion).join("") : prox.map(tarjetaReunion).join("") || vacio("No hay reuniones previstas", "Cuando se convoque una reunión o una asamblea, saldrá aquí con el día, la hora y el lugar.", "calendario", ["#actas", "Ver las actas de las reuniones pasadas"]);
     $("lista-pasadas").innerHTML = pas.map(tarjetaReunion).join("");
     $("pasadas-caja").hidden = !pas.length;
     pintaMes();
@@ -415,23 +422,27 @@
       <td class="t-fecha">${fecha ? `<time datetime="${esc(fecha)}">${esc(fechaTabla(fecha))}</time>` : "—"}</td>
       <td class="t-tit">${esc(titulo || "Sin título")}</td>
       <td class="t-tipo">${esc(tipo || "—")}</td>
-      <td class="t-acc"><button type="button" class="enlace-txt" data-ver-fila="${clave}" aria-expanded="false" aria-controls="det-${clave}">Ver<span class="sr-only">: ${esc(titulo || "")}</span></button>${archivo
+      <td class="t-acc"><button type="button" class="enlace-txt" data-ver-fila="${clave}" aria-expanded="false" aria-controls="det-${clave}">Ver<span class="sr-only">: ${esc(titulo || "")}</span></button>${archivo && urlSegura(archivo.url) !== "#"
         ? `<a class="enlace-txt" href="${esc(urlSegura(archivo.url))}" target="_blank" rel="noopener" download>Descargar<span class="sr-only">: ${esc(archivo.nombre || titulo || "")}</span></a>`
-        : enlace ? `<a class="enlace-txt" href="${esc(urlSegura(enlace))}" target="_blank" rel="noopener">Abrir<span class="sr-only">: ${esc(titulo || "")}</span></a>` : ""}</td>
+        : enlace && urlSegura(enlace) !== "#" ? `<a class="enlace-txt" href="${esc(urlSegura(enlace))}" target="_blank" rel="noopener">Abrir<span class="sr-only">: ${esc(titulo || "")}</span></a>` : ""}</td>
     </tr>
     <tr class="fila-detalle" id="det-${clave}" hidden><td colspan="4">${detalle}</td></tr>`;
-  const tablaHTML = (nombre, filas, conOrden) => `
+  const tablaHTML = (nombre, filas, conOrden, nombreFecha = "Fecha") => `
     <div class="tabla-caja"><table class="tabla">
       <caption class="sr-only">${esc(nombre)}</caption>
       <thead><tr>
-        <th scope="col"${conOrden ? ` aria-sort="${ordenActas === "desc" ? "descending" : "ascending"}"><button type="button" class="enlace-txt" data-orden-actas>Fecha<span aria-hidden="true">${ordenActas === "desc" ? " ↓" : " ↑"}</span><span class="sr-only">: cambiar el orden</span></button>` : ">Fecha"}</th>
+        <th scope="col"${conOrden ? ` aria-sort="${ordenActas === "desc" ? "descending" : "ascending"}"><button type="button" class="enlace-txt" data-orden-actas>Fecha<span aria-hidden="true">${ordenActas === "desc" ? " ↓" : " ↑"}</span><span class="sr-only">: cambiar el orden</span></button>` : `>${nombreFecha}`}</th>
         <th scope="col">Título</th><th scope="col">Tipo</th><th scope="col"><span class="sr-only">Abrir o descargar</span></th>
       </tr></thead>
       <tbody>${filas}</tbody>
     </table></div>`;
+  // Filas abiertas con «Ver» o con un enlace directo: al volver a pintar la tabla (copia guardada y luego la red,
+  // «Reintentar», vuelve la conexión) se abren otra vez, para que un enlace #acta-N no salga cerrado
+  const filasAbiertas = new Set();
   const abreFila = (el, abre = true) => {
     const tr = el && el.closest ? el.closest("tr.fila-detalle") : null; if (!tr) return;
     tr.hidden = !abre;
+    if (abre) filasAbiertas.add(tr.id.slice(4)); else filasAbiertas.delete(tr.id.slice(4));
     const b = document.querySelector(`[data-ver-fila="${tr.id.slice(4)}"]`);
     if (b) { b.setAttribute("aria-expanded", String(abre)); b.firstChild.textContent = abre ? "Ocultar" : "Ver"; }
   };
@@ -440,6 +451,9 @@
     if (b) { const tr = $("det-" + b.dataset.verFila); if (tr) abreFila(tr, tr.hidden); return; }
     if (e.target.closest("[data-orden-actas]")) { ordenActas = ordenActas === "desc" ? "asc" : "desc"; pintaActas(); document.querySelector("[data-orden-actas]")?.focus(); }
   });
+  const reabreFilas = (caja) => {
+    filasAbiertas.forEach((k) => { const tr = caja.querySelector("#det-" + k); if (tr) abreFila(tr); });
+  };
   esPC.addEventListener("change", () => { pintaActas(); pintaDocumentos(); });
 
   const pintaActas = () => {
@@ -452,6 +466,7 @@
     if (esPC.matches && lista.length) {
       const orden = [...lista].sort((a, b) => ordenActas === "desc" ? b.fecha.localeCompare(a.fecha) : a.fecha.localeCompare(b.fecha));
       $("lista-actas").innerHTML = tablaHTML("Actas", orden.map((a) => filaTabla("acta-" + a.id, a.fecha, a.titulo, a.tipo, primerArchivo(a), null, tarjetaActa(a))).join(""), true);
+      reabreFilas($("lista-actas"));
       return;
     }
     $("lista-actas").innerHTML = lista.map(tarjetaActa).join("")
@@ -468,8 +483,9 @@
     if (esPC.matches && D.documentos.length) {
       const lista = D.documentos.filter((d) => !q || sinAcentos([d.titulo, d.categoria, d.descripcion, (d.adjuntos || []).map((a) => a.nombre).join(" ")].join(" ")).includes(q));
       $("lista-documentos").innerHTML = lista.length
-        ? tablaHTML("Documentos útiles", lista.map((d) => filaTabla("documento-" + d.id, dia10(d.actualizado || d.creado), d.titulo, d.categoria, primerArchivo(d), d.enlace, tarjetaDocumento(d))).join(""), false)
+        ? tablaHTML("Documentos útiles", lista.map((d) => filaTabla("documento-" + d.id, dia10(d.actualizado || d.creado), d.titulo, d.categoria, primerArchivo(d), d.enlace, tarjetaDocumento(d))).join(""), false, "Actualizado")
         : vacio("No hay documentos con esas palabras", "Prueba con otras palabras o pídelo por el buzón.", "buscar");
+      reabreFilas($("lista-documentos"));
       return;
     }
     const grupos = {};

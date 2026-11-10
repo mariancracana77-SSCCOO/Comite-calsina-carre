@@ -616,15 +616,15 @@
   // ================== INICIO ==================
   const pintaInicio = async () => {
     const hoy = hoyISO(), en14 = diaLocal(14);
-    // v25: para «Lo pendiente», las reuniones de los últimos 60 días y las actas de esas fechas (para ver cuáles no tienen acta)
+    // v25: para «Lo pendiente», las reuniones de los últimos 30 días y las actas desde entonces (para ver cuáles no tienen acta)
     const [reu, prog, ult, buz, pasadas, actasRec] = await Promise.all([
       sb.from("reuniones").select("*").gte("fecha", hoy).lte("fecha", en14).order("fecha"),
       sb.from("avisos").select("*").gt("publicar_en", ahoraISO()).order("publicar_en"),
       Promise.all(["avisos", "actualidad", "reuniones", "actas", "encuestas", "documentos", "publicaciones"].map((t) =>
         sb.from(t).select("*").order(t === "avisos" ? "fecha" : "creado", { ascending: false }).limit(4).then((r) => ({ error: r.error, filas: (r.data || []).map((x) => ({ ...x, _t: t })) })))),
       sb.from("buzon").select("id", { count: "exact", head: true }).eq("leido", false).eq("archivado", false),
-      sb.from("reuniones").select("id,titulo,fecha").gte("fecha", diaLocal(-60)).lt("fecha", hoy).order("fecha", { ascending: false }),
-      sb.from("actas").select("id,fecha").gte("fecha", diaLocal(-60)),
+      sb.from("reuniones").select("id,titulo,fecha,tipo").gte("fecha", diaLocal(-30)).lt("fecha", hoy).order("fecha", { ascending: false }),
+      sb.from("actas").select("id,fecha").gte("fecha", diaLocal(-30)),
       cargaAps().catch(() => {}),
     ]);
     if (actual !== "inicio") return;
@@ -641,14 +641,18 @@
     const pend = [];
     if (!buz.error && PEND_BUZON) pend.push(`<a href="#buzon">${PEND_BUZON === 1 ? "1 mensaje del buzón sin leer" : PEND_BUZON + " mensajes del buzón sin leer"}</a>`);
     if (!pasadas.error && !actasRec.error) {
-      const conActa = new Set((actasRec.data || []).map((a) => a.fecha));
-      const sinActa = (pasadas.data || []).filter((r) => !conActa.has(r.fecha));
+      // Solo las reuniones de las que se hace acta (del comité y con la empresa; las asambleas y «Otra», no).
+      // Vale un acta con la fecha de la reunión o de hasta 7 días después (el día en que se redactó).
+      const fechasActa = (actasRec.data || []).map((a) => String(a.fecha || "").slice(0, 10));
+      const masDias = (f, n) => { const d = fechaDia(f); d.setDate(d.getDate() + n); return diaMadrid(d); };
+      const sinActa = (pasadas.data || []).filter((r) => [TIPOS_REUNION[0], TIPOS_REUNION[1]].includes(r.tipo || TIPOS_REUNION[0])
+        && !fechasActa.some((f) => f >= r.fecha && f <= masDias(r.fecha, 7)));
       if (sinActa.length === 1) pend.push(`<button type="button" class="btn-texto" data-nuevo="actas">Falta el acta de «${esc(sinActa[0].titulo || "la reunión")}» (${esc(fechaLarga(sinActa[0].fecha))})</button>`);
       else if (sinActa.length) pend.push(`<button type="button" class="btn-texto" data-nuevo="actas">Faltan las actas de ${sinActa.length} reuniones pasadas</button>`);
     }
     const progHoy = (prog.data || []).filter((a) => diaMadrid(new Date(a.publicar_en)) === hoy);
     if (progHoy.length === 1) pend.push(`<button type="button" class="btn-texto" data-editar-en="avisos:${progHoy[0].id}">Hoy se publica solo «${esc(progHoy[0].titulo)}»</button>`);
-    else if (progHoy.length) pend.push(`<span>Hoy se publican solos ${progHoy.length} avisos</span>`);
+    else if (progHoy.length) pend.push(`<a href="#avisos">Hoy se publican solos ${progHoy.length} avisos</a>`);
     const manana = (reu.data || []).find((r) => r.fecha === diaLocal(1));
     if (manana) pend.push(`<button type="button" class="btn-texto" data-editar-en="reuniones:${manana.id}">Mañana hay reunión: «${esc(manana.titulo)}»</button>`);
     const sinDatosPend = buz.error || pasadas.error || actasRec.error || prog.error || reu.error;
