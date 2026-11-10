@@ -617,7 +617,24 @@ Es técnico, son preferencias tuyas o una medición propia sin datos personales,
     caja.hidden = false;
     try {
       const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.getSubscription();
+      let sub = await reg.pushManager.getSubscription();
+      // Petición n.º 10 (v23): si este móvil ya los había activado (comite-push) y sigue con permiso, no se pide otra vez:
+      // si el móvil perdió la dirección (cambio de dirección de la web, el panel creó otra, limpieza del navegador…)
+      // se vuelve a apuntar solo, sin tocar nada; y si la tiene, se renueva en Supabase (suscribir_push no duplica).
+      // «Desactivar» y «Borrar mis datos» quitan comite-push, así que después no se vuelve a apuntar solo.
+      if (TEMA.lee("comite-push") && Notification.permission === "granted") {
+        try {
+          if (!sub) {
+            const { data: clave } = await sb.rpc("clave_push_publica");
+            if (clave) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: claveBytes(clave) });
+          }
+          if (sub) {
+            const j = sub.toJSON();
+            const r = await sb.rpc("suscribir_push", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
+            if (!r.error) { TEMA.guarda("comite-push", j.endpoint); return pintaPush(true); }
+          }
+        } catch (_) { /* sin conexión: se intenta la próxima vez */ }
+      }
       // Si este móvil solo tiene los avisos del panel (comite-push-panel) y no los de la web, la web no los da por activados
       const soloPanel = !!sub && !TEMA.lee("comite-push") && TEMA.lee("comite-push-panel") === sub.endpoint;
       pintaPush(sub && !soloPanel && Notification.permission === "granted");

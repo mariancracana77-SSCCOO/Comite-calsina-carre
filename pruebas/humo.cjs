@@ -199,6 +199,22 @@ fs.mkdirSync(OUT, { recursive: true });
         await pz.goto(BASE + "#avisos"); await pz.waitForTimeout(500);
         if (await pz.evaluate(() => getComputedStyle(document.querySelector(".cabecera")).position !== "static" || getComputedStyle(document.querySelector(".barra-fija")).position !== "static")) fallos.push("320×256: la cabecera o la barra de abajo siguen fijas y tapan la pantalla");
         await cz.close();
+        // m) Petición n.º 10: si ya se activaron (comite-push) y hay permiso, no se piden otra vez; si el móvil perdió
+        //    la dirección, se vuelve a apuntar solo. Sin comite-push (desactivados o «Borrar mis datos»), no.
+        //    El service worker está bloqueado en esta prueba: se simulan «ready» y pushManager.
+        const FALSO_PUSH = (activado) => `${activado ? 'localStorage.setItem("comite-push","https://push.example/viejo");' : ""}
+          Object.defineProperty(Notification, "permission", { get: () => "granted" });
+          const sub = { endpoint: "https://push.example/nuevo", toJSON: () => ({ endpoint: "https://push.example/nuevo", keys: { p256dh: "p", auth: "a" } }) };
+          const reg = { pushManager: { getSubscription: async () => null, subscribe: async () => { window.__SUBS = (window.__SUBS || 0) + 1; return sub; } } };
+          Object.defineProperty(navigator.serviceWorker, "ready", { get: () => Promise.resolve(reg) });`;
+        for (const activado of [true, false]) {
+          const [cp, pp] = await nuevoCtx(FALSO_PUSH(activado));
+          await pp.goto(BASE + "#avisos"); await pp.waitForTimeout(700);
+          const r = await pp.evaluate(() => ({ on: !document.getElementById("push-on").hidden, subs: window.__SUBS || 0, push: window.__PUSH || [], ls: localStorage.getItem("comite-push") }));
+          if (activado && !(r.on && r.subs === 1 && r.push.length === 1 && r.ls === "https://push.example/nuevo")) fallos.push("petición n.º 10: con los avisos ya activados, la web vuelve a pedirlos " + JSON.stringify(r));
+          if (!activado && (r.on || r.subs || r.push.length)) fallos.push("petición n.º 10: sin haberlos activado (o tras desactivarlos), se apuntan solos " + JSON.stringify(r));
+          await cp.close();
+        }
       }
 
       // Panel: pantalla de entrar y con sesión de prueba

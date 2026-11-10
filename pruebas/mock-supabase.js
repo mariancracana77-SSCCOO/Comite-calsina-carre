@@ -126,6 +126,7 @@
       if (n === "pedir_lorena") { const x = pet(a.p_id); if (!x) return { data: "no", error: null }; if (x.avisar_lorena) return { data: "ya", error: null }; x.avisar_lorena = new Date().toISOString(); (x.mensajes ||= []).push({ quien: "padre", cuando: x.avisar_lorena, texto: "Has pedido que lo mire Lorena.", aviso: true }); return { data: "ok", error: null }; }
       if (n === "deshacer_peticion") { const x = pet(a.p_id); if (!x || x.estado !== "publicada") return { data: "no_publicada", error: null }; if (x.deshacer) return { data: "ya", error: null }; x.deshacer = new Date().toISOString(); return { data: "ok", error: null }; }
       if (n === "decidir_peticion") { const x = pet(a.p_id); if (!x || x.estado !== "lista" || !x.propuesta || x.decision) return { data: "no_propuesta", error: null }; x.decision = a.p_decision; x.decision_el = new Date().toISOString(); if (a.p_decision === "descartar") x.estado = "descartada"; return { data: "ok", error: null }; }
+      if (n === "suscribir_push") { (window.__PUSH ||= []).push(a.p_endpoint); return { data: "ok", error: null }; }
       if (n === "suscribir_push_admin") { DB.push_admin.push({ endpoint: a.p_endpoint }); return { data: "ok", error: null }; }
       if (n === "desuscribir_push_admin") { DB.push_admin = DB.push_admin.filter((x) => x.endpoint !== a.p_endpoint); return { data: "ok", error: null }; }
       if (n === "push_admin_activo") return { data: DB.push_admin.some((x) => x.endpoint === a.p_endpoint), error: null };
