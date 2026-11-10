@@ -82,10 +82,17 @@ fs.mkdirSync(OUT, { recursive: true });
         for (const letra of [null, "muy-grande"]) for (const w of [320, 360]) {
           const [cx, px] = await nuevoCtx("", { w, h: 760, letra });
           await px.goto(BASE + "#actualidad"); await px.waitForTimeout(500);
-          const r = await px.evaluate(() => ({ marca: document.querySelector(".marca-txt").getBoundingClientRect().right, botones: document.querySelector(".cab-botones").getBoundingClientRect().left,
+          const r = await px.evaluate(() => ({ cortado: [...document.querySelectorAll(".marca-txt b, .marca-txt small")].some((e) => e.scrollWidth > e.clientWidth + 0.5), marca: document.querySelector(".marca-txt").getBoundingClientRect().right, botones: document.querySelector(".cab-botones").getBoundingClientRect().left,
             fuera: [...document.querySelectorAll(".accesos a")].filter((a) => a.getBoundingClientRect().right > innerWidth + 0.5 || a.scrollWidth > a.clientWidth + 1).map((a) => a.textContent.trim()) }));
           if (r.marca > r.botones + 0.5) fallos.push(`${w} ${letra || "normal"}: el nombre de la cabecera se mete debajo de los botones`);
           if (r.fuera.length) fallos.push(`${w} ${letra || "normal"}: accesos de la portada cortados (${r.fuera.join(", ")})`);
+          // Revisor M6: «Calsina Carré» y «Comité de empresa» se leen enteros (sin «…»)
+          if (r.cortado) fallos.push(`${w} ${letra || "normal"}: «Calsina Carré» o «Comité de empresa» sale cortado en la cabecera`);
+          // Revisor I5: el buzón no se sale de su tarjeta (html y body cortan lo que sobra, así que no hay scroll lateral que lo delate)
+          await px.goto(BASE + "#buzon"); await px.waitForTimeout(400);
+          const fb = await px.evaluate(() => { const f = document.getElementById("form-buzon"), d = f.getBoundingClientRect().right - parseFloat(getComputedStyle(f).paddingRight);
+            return [...f.querySelectorAll("button, textarea, .acepto, .nota-buzon, .cuenta-letras")].filter((e) => e.offsetParent && e.getBoundingClientRect().right > d + 1).map((e) => e.id || e.className || e.tagName); });
+          if (fb.length) fallos.push(`${w} ${letra || "normal"}: el buzón se sale de su tarjeta (${fb.join(", ")})`);
           await cx.close();
         }
       }
@@ -227,6 +234,45 @@ fs.mkdirSync(OUT, { recursive: true });
         if (!vn.act) fallos.push("360: las actas no dicen «Actualizado el …»");
         if (vn.peq) fallos.push(`360: ${vn.peq} botones o enlaces del pie miden menos de 44 px de alto`);
         await cn.close();
+        // o) Revisor I6: una copia guardada rara no deja la web en blanco: se tira y se pinta lo de la red
+        for (const rara of ['{"t":1,"D":{"avisos":null}}', '{"t":1,"D":{"avisos":[1,2],"votos":{},"paginas":{}}}', '"hola"', '{"D":7}']) {
+          const [co, po] = await nuevoCtx(`localStorage.setItem("comite-copia", ${JSON.stringify(rara)});`);
+          await po.goto(BASE + "#avisos"); await po.waitForTimeout(800);
+          const vo = await po.evaluate(() => { let c = null; try { c = JSON.parse(localStorage.getItem("comite-copia")); } catch (_) {} return { tarjetas: document.querySelectorAll("#lista-avisos .tarjeta").length, copiaBuena: !!(c && c.D && Array.isArray(c.D.avisos) && c.D.avisos.length) }; });
+          if (!vo.tarjetas || !vo.copiaBuena) fallos.push(`copia rara ${rara}: la web no pinta lo de la red ${JSON.stringify(vo)}`);
+          await co.close();
+        }
+        // p) Revisor M4: «Borrar mis datos» gana a la petición n.º 10 aunque el móvil se esté volviendo a apuntar justo entonces
+        {
+          const init = `localStorage.setItem("comite-push","https://push.example/viejo");
+            Object.defineProperty(Notification, "permission", { get: () => "granted" });
+            let cur = null; const sub = { endpoint: "https://push.example/nuevo", unsubscribe: async () => { cur = null; return true; }, toJSON: () => ({ endpoint: "https://push.example/nuevo", keys: { p256dh: "p", auth: "a" } }) };
+            const reg = { pushManager: { getSubscription: async () => cur, subscribe: () => new Promise((r) => setTimeout(() => { cur = sub; r(sub); }, 1500)) } };
+            Object.defineProperty(navigator.serviceWorker, "ready", { get: () => Promise.resolve(reg) });
+            navigator.serviceWorker.getRegistration = async () => reg;`;
+          const [cq, pq] = await nuevoCtx(init);
+          pq.on("dialog", (d) => d.accept());
+          await pq.goto(BASE + "#cookies"); await pq.waitForSelector("#b-borrar-datos", { state: "visible" });
+          await pq.click("#b-borrar-datos"); await pq.waitForTimeout(3500);
+          const vq = await pq.evaluate(() => localStorage.getItem("comite-push"));
+          if (vq) fallos.push("«Borrar mis datos» mientras se volvían a apuntar los avisos: comite-push ha vuelto (" + vq + ")");
+          await cq.close();
+        }
+        // q) Revisor M8: con cientos de avisos se pintan de 30 en 30 («Ver más»); un enlace a uno antiguo lo enseña
+        {
+          const [cv, pv] = await nuevoCtx(`window.__PRE=[(DB)=>{for(let i=1;i<=200;i++)DB.avisos.push({id:1000+i,titulo:"Aviso viejo "+i,contenido:"x",urgente:false,fecha:new Date(Date.now()-(200+i)*864e5).toISOString(),publicar_en:null,adjuntos:[],actualizado:null});}];`);
+          await pv.goto(BASE + "#avisos"); await pv.waitForTimeout(700);
+          const n1 = await pv.$$eval("#lista-avisos .tarjeta", (x) => x.length);
+          if (n1 > 30 || !(await pv.$("#lista-avisos [data-ver-mas]"))) fallos.push(`avisos: con 203 se pintan ${n1} de golpe (deberían ser 30 con «Ver más»)`);
+          else {
+            await pv.click("#lista-avisos [data-ver-mas]"); await pv.waitForTimeout(200);
+            const n2 = await pv.$$eval("#lista-avisos .tarjeta", (x) => x.length);
+            if (n2 !== 60) fallos.push(`avisos: «Ver más» deja ${n2} (deberían ser 60)`);
+          }
+          await pv.goto(BASE + "#aviso-1200"); await pv.waitForTimeout(500);
+          if (!(await pv.$("#aviso-1200")) || (await pv.$(".aviso-falta"))) fallos.push("avisos: el enlace directo a un aviso antiguo no lo enseña");
+          await cv.close();
+        }
       }
 
       // Panel: pantalla de entrar y con sesión de prueba

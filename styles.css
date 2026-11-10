@@ -381,7 +381,7 @@ button.dia-mes { border: 0; font: inherit; cursor: pointer; width: 100%; padding
 #lista-actas { margin-top: 12px; }
 
 /* ---------- Buzón ---------- */
-.form-buzon { display: grid; gap: 10px; max-width: 680px; }
+.form-buzon { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; max-width: 680px; } /* v23 (revisor, I5): la columna no se hace más ancha que la tarjeta */
 .nota-buzon { margin: 0; color: var(--suave); font-size: .88rem; }
 .tipo-buzon { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .tipo-buzon legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
@@ -681,3 +681,16 @@ main:focus, main:focus-visible { outline: none; }
 }
 .legal-nav a { display: inline-flex; align-items: center; min-height: 44px; }
 .legal-nav { row-gap: 0; }
+.nota-buzon, .acepto span { overflow-wrap: anywhere; } /* v23 (revisor, I5): las direcciones largas no ensanchan el buzón */
+.ver-mas { justify-self: start; margin-top: 4px; }
+/* v23 (revisor, M6): a menos de 340 px «Calsina Carré» salía cortado («CALSINA C…»). Mismo diseño, un poco menos de aire
+   a los lados y entre el logo y el nombre, y la letra un pelo más pequeña: así se lee entero. Los botones no cambian. */
+@media (max-width: 359px) {
+  .cabecera:not(.cab-panel) .cab-fila { padding-left: 8px; padding-right: 8px; gap: 6px; }
+  .cabecera:not(.cab-panel) .marca { gap: 6px; }
+  .cabecera:not(.cab-panel) .marca-txt small, :root[data-letra] .cabecera:not(.cab-panel) .marca-txt small { font-size: 10px; letter-spacing: .06em; }
+}
+@media (max-width: 339px) {
+  .cabecera:not(.cab-panel) .marca-txt b, :root[data-letra] .cabecera:not(.cab-panel) .marca-txt b { font-size: 13px; letter-spacing: 0; }
+}
+@media (min-width: 360px) and (max-width: 380px) { .cabecera:not(.cab-panel) .marca-txt small { letter-spacing: .13em; } }

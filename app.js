@@ -61,6 +61,7 @@
     if (vista === "avisos") marcaAvisosVistos();
     if (vista === "buscar") setTimeout(() => $("buscar-todo").focus(), 50);
     if (destino) {
+      if (m && (m[1] === "aviso" || m[1] === "noticia")) { const k = m[1] === "aviso" ? "avisos" : "actualidad"; ampliaLista(k, D[k].findIndex((x) => String(x.id) === m[2]) + 1); }
       if (m && m[1] === "reunion") { const r = D.reuniones.find((x) => String(x.id) === m[2]); if (r && r.fecha < hoyISO()) $("pasadas-caja").open = true; }
       if (m && m[1] === "acta") { ponSegmento("actas"); filtroAno = "todos"; $("buscar-actas").value = ""; pintaActas(); }
       if (m && m[1] === "documento") ponSegmento("documentos");
@@ -219,12 +220,25 @@
     })() : "";
     pintaNovedades();
     pintaConsultas();
-    $("lista-actualidad").innerHTML = D.actualidad.map(tarjetaNoticia).join("") || vacio("Todavía no hay anuncios", "Aquí saldrá la información general del comité: acuerdos, cambios de turnos y pausas, convenio, nóminas y todo lo que te afecta.", "periodico", ["#avisos-movil", "Avisarme cuando haya novedades"]);
+    $("lista-actualidad").innerHTML = D.actualidad.slice(0, TOPE_LISTA.actualidad).map(tarjetaNoticia).join("") + verMas("actualidad") || vacio("Todavía no hay anuncios", "Aquí saldrá la información general del comité: acuerdos, cambios de turnos y pausas, convenio, nóminas y todo lo que te afecta.", "periodico", ["#avisos-movil", "Avisarme cuando haya novedades"]);
   };
 
   // ---------- Avisos ----------
+  // v23 (revisor, M8): con cientos de avisos o anuncios la portada tardaba segundos en pintarse. Se pintan de 30 en 30
+  // con «Ver más»; un enlace directo a uno más antiguo amplía la lista hasta él (irA).
+  const PASO_LISTA = 30, TOPE_LISTA = { actualidad: PASO_LISTA, avisos: PASO_LISTA };
+  const verMas = (k) => D[k].length > TOPE_LISTA[k] ? `<button type="button" class="btn-linea ver-mas" data-ver-mas="${k}">Ver más (quedan ${D[k].length - TOPE_LISTA[k]})</button>` : "";
+  const ampliaLista = (k, hasta) => { if (hasta <= TOPE_LISTA[k]) return false; TOPE_LISTA[k] = hasta; (k === "avisos" ? pintaAvisos : pintaActualidad)(); return true; };
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-ver-mas]"); if (!b) return;
+    const k = b.dataset.verMas, antes = TOPE_LISTA[k];
+    ampliaLista(k, antes + PASO_LISTA);
+    // el foco pasa al primero de los nuevos, para seguir leyendo desde ahí
+    const sig = D[k][antes], el = sig && $((k === "avisos" ? "aviso-" : "noticia-") + sig.id);
+    if (el) { el.tabIndex = -1; el.focus({ preventScroll: true }); }
+  });
   const pintaAvisos = () => {
-    $("lista-avisos").innerHTML = D.avisos.map(tarjetaAviso).join("") || vacio("No hay avisos por ahora", "Cuando el comité publique un aviso, saldrá aquí. Activa los avisos y te llegará al móvil.", "megafono");
+    $("lista-avisos").innerHTML = D.avisos.slice(0, TOPE_LISTA.avisos).map(tarjetaAviso).join("") + verMas("avisos") || vacio("No hay avisos por ahora", "Cuando el comité publique un aviso, saldrá aquí. Activa los avisos y te llegará al móvil.", "megafono");
     pintaCuenta();
   };
 
@@ -478,7 +492,16 @@ Es técnico, son preferencias tuyas o una medición propia sin datos personales,
   };
   // Si no cabe en el móvil (el navegador tiene un límite), se quita la copia vieja para no enseñar datos antiguos
   const guardaCopia = () => { try { localStorage.setItem("comite-copia", JSON.stringify({ t: Date.now(), D: { ...D, sinDatos: false } })); } catch (_) { try { localStorage.removeItem("comite-copia"); } catch (__) {} } };
-  const leeCopia = () => { try { const c = JSON.parse(TEMA.lee("comite-copia") || "null"); return c && c.D ? c : null; } catch (_) { return null; } };
+  // v23 (revisor, I6): una copia con forma rara (de otra versión, a medias…) no se usa: se borra y se pinta desde la red
+  const LISTAS_COPIA = ["actualidad", "avisos", "reuniones", "actas", "preguntas", "miembros", "encuestas", "documentos", "apartados", "publicaciones"];
+  const esObj = (x) => !!x && typeof x === "object" && !Array.isArray(x);
+  const copiaValida = (c) => esObj(c) && typeof c.t === "number" && esObj(c.D) && esObj(c.D.votos) && esObj(c.D.paginas)
+    && LISTAS_COPIA.every((k) => Array.isArray(c.D[k]) && c.D[k].every((x) => esObj(x) && x.id != null));
+  const tiraCopia = () => { try { localStorage.removeItem("comite-copia"); } catch (_) {} };
+  const leeCopia = () => { let c = null; try { c = JSON.parse(TEMA.lee("comite-copia") || "null"); } catch (_) {} if (c && copiaValida(c)) return c; if (c) tiraCopia(); return null; };
+  const D_VACIO = JSON.stringify(D);
+  const usaCopia = (c) => { const d = JSON.parse(D_VACIO); LISTAS_COPIA.concat(["votos", "paginas"]).forEach((k) => { d[k] = c.D[k]; }); Object.assign(D, d); D.sinDatos = false; };
+  const vaciaD = () => Object.assign(D, JSON.parse(D_VACIO));
   // supabase-js no tiene tiempo máximo: con cobertura mala esperaría para siempre (v23, N1)
   const ESPERA_DATOS = 12000;
   const conTope = (p, ms) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(Object.assign(new Error("Failed to fetch (tiempo)"), { tiempo: true })), ms))]);
@@ -537,6 +560,9 @@ Es técnico, son preferencias tuyas o una medición propia sin datos personales,
   const arranca = async () => {
     if (cargando) return;
     cargando = true;
+    try { await arrancaYa(); } finally { cargando = false; } // v23 (I6): pase lo que pase, «Reintentar» y la vuelta de la red siguen funcionando
+  };
+  const arrancaYa = async () => {
     // Primera visita: no avisar de avisos antiguos como "sin leer"
     const primera = !TEMA.lee("comite-avisos-vistos");
     const esPrimera = primeraCarga;
@@ -544,7 +570,11 @@ Es técnico, son preferencias tuyas o una medición propia sin datos personales,
       ultimaVisita = TEMA.lee("comite-ultima-visita");
       // v23 (N1): lo guardado se enseña ya, sin esperar a la red; luego se cambia por lo nuevo
       const c0 = leeCopia();
-      if (c0) { Object.assign(D, c0.D); D.sinDatos = false; hayDatos = true; pintaTodo(); irA(location.hash); marcaCopia = { hash: location.hash, y: scrollY }; }
+      // v23 (I6): si la copia no se puede pintar, se tira y se sigue con la red (nunca impide pintar lo nuevo)
+      if (c0) {
+        try { usaCopia(c0); hayDatos = true; pintaTodo(); irA(location.hash); marcaCopia = { hash: location.hash, y: scrollY }; }
+        catch (_) { tiraCopia(); vaciaD(); hayDatos = false; marcaCopia = null; }
+      }
     }
     primeraCarga = false;
     const pide = cargar();
@@ -555,7 +585,7 @@ Es técnico, son preferencias tuyas o una medición propia sin datos personales,
       if (!visitaApuntada) { TEMA.guarda("comite-ultima-visita", new Date().toISOString()); visitaApuntada = true; }
     } catch (e) {
       const red = esDeRed(e), c = leeCopia();
-      if (c) { Object.assign(D, c.D); D.sinDatos = false; hayDatos = true; }
+      if (c) { usaCopia(c); hayDatos = true; }
       else if (!hayDatos) D.sinDatos = red ? "red" : "error";
       if (e?.tiempo) {
         banda(c ? `La conexión va muy lenta. Estás viendo la información guardada el ${fechaCopia(c)}.` : "La conexión va muy lenta. Esperando la información…");
@@ -567,7 +597,6 @@ Es técnico, son preferencias tuyas o una medición propia sin datos personales,
     if (primera && D.avisos.length) TEMA.guarda("comite-avisos-vistos", D.avisos[0].fecha);
     pintaTodo();
     if (esPrimera && !marcaCopia) irA(location.hash); else tras();
-    cargando = false;
   };
   document.addEventListener("click", (e) => { if (e.target.closest("[data-reintentar]")) { $("sin-red").hidden = true; arranca(); } });
   window.addEventListener("online", arranca);
@@ -604,6 +633,8 @@ Es técnico, son preferencias tuyas o una medición propia sin datos personales,
     $("push-off").hidden = !!activo; $("push-on").hidden = !activo;
     $("barra-campana").classList.toggle("activo", !!activo);
   };
+  // v23 (revisor, M4): «Borrar mis datos» espera a que termine preparaPush y le gana siempre
+  let borrando = false, pushListo = Promise.resolve();
   const preparaPush = async () => {
     const caja = $("push-caja");
     if (!PUSH_OK) {
@@ -622,7 +653,7 @@ Es técnico, son preferencias tuyas o una medición propia sin datos personales,
       // si el móvil perdió la dirección (cambio de dirección de la web, el panel creó otra, limpieza del navegador…)
       // se vuelve a apuntar solo, sin tocar nada; y si la tiene, se renueva en Supabase (suscribir_push no duplica).
       // «Desactivar» y «Borrar mis datos» quitan comite-push, así que después no se vuelve a apuntar solo.
-      if (TEMA.lee("comite-push") && Notification.permission === "granted") {
+      if (TEMA.lee("comite-push") && Notification.permission === "granted" && !borrando) {
         try {
           if (!sub) {
             const { data: clave } = await sb.rpc("clave_push_publica");
@@ -631,7 +662,8 @@ Es técnico, son preferencias tuyas o una medición propia sin datos personales,
           if (sub) {
             const j = sub.toJSON();
             const r = await sb.rpc("suscribir_push", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
-            if (!r.error) { TEMA.guarda("comite-push", j.endpoint); return pintaPush(true); }
+            // v23 (revisor, M4): si mientras tanto se pulsó «Borrar mis datos», gana el borrado
+            if (!r.error && !borrando) { TEMA.guarda("comite-push", j.endpoint); return pintaPush(true); }
           }
         } catch (_) { /* sin conexión: se intenta la próxima vez */ }
       }
@@ -694,6 +726,8 @@ Es técnico, son preferencias tuyas o una medición propia sin datos personales,
     if (!confirm("¿Borrar lo que esta web guarda en este móvil? Olvidará tus preferencias, lo que has visto y lo que has votado, y dejarás de recibir los avisos al móvil.")) return;
     // v22: también se dan de baja los avisos al móvil (si el panel usa la misma dirección, solo se quita de los de la web)
     let avisoBaja = false;
+    borrando = true;
+    await Promise.race([pushListo.catch(() => {}), new Promise((r) => setTimeout(r, 3000))]);
     try {
       const reg = "serviceWorker" in navigator ? await navigator.serviceWorker.getRegistration() : null;
       const sub = reg && reg.pushManager ? await reg.pushManager.getSubscription() : null;
@@ -740,5 +774,5 @@ Es técnico, son preferencias tuyas o una medición propia sin datos personales,
   $("pie-ano").textContent = new Date().getFullYear();
   arranca();
   registraSW();
-  preparaPush();
+  pushListo = preparaPush();
 })();
