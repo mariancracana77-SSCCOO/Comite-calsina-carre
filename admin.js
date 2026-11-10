@@ -1577,7 +1577,7 @@
     $("filas").innerHTML = data.map((m) => `
       <div class="tarjeta mensaje${m.leido ? "" : " sin-leer"}">
         <div class="meta"><span class="etq ${m.tipo === "Pregunta" ? "azul" : ""}">${esc(m.tipo)}</span><span>${esc(fechaLarga(m.dia))}</span>${m.leido ? "" : '<span class="etq rojo">Sin leer</span>'}</div>
-        <div class="texto">${sinEnlaces(textoHTML(m.texto))}</div>
+        <div class="texto">${sinEnlaces(textoHTML(m.texto, { enlaces: false }))}</div>
         <div class="acciones">
           ${m.leido ? "" : `<button type="button" class="btn-linea" data-leido="${m.id}">${icono("check")}Marcar leído</button>`}
           ${m.tipo === "Pregunta" ? `<button type="button" class="btn-linea" data-responder="${m.id}">${icono("mensaje")}Responder en la web</button>` : ""}

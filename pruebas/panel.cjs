@@ -61,6 +61,9 @@ const jpegConExif = (jpg) => {
 (async () => {
   const srv = spawn("python3", ["-m", "http.server", String(PUERTO)], { cwd: RAIZ, stdio: "ignore" });
   await new Promise((r) => setTimeout(r, 900));
+  // El puerto tiene que servir ESTA carpeta (otra prueba podría estar usando el mismo puerto con otra copia)
+  const servido = await fetch(BASE + "pruebas/panel.cjs").then((r) => r.text()).catch(() => "");
+  if (servido !== fs.readFileSync(__filename, "utf8")) { console.error(`El puerto ${PUERTO} no sirve esta carpeta (${RAIZ}): usa otro con PUERTO=…`); srv.kill(); process.exit(2); }
   const b = await chromium.launch({ args: ["--lang=es-ES"], env: { ...process.env, LANG: "es_ES.UTF-8", LANGUAGE: "es_ES" } });
   const errores = [], fallos = [], bien = [];
   const ok = (cond, txt) => { (cond ? bien : fallos).push(txt); };
@@ -399,6 +402,9 @@ const jpegConExif = (jpg) => {
       await p.evaluate(() => { location.hash = "#preguntas"; }); await p.waitForTimeout(500);
       ok(await p.isVisible('#filas .vacio-caja [data-nuevo="preguntas"]'), "Lista vacía: explica y tiene el botón para añadir");
       await foto(p, "e1-lista-vacia");
+      // Buzón: los enlaces que escriben los trabajadores no se pueden pulsar
+      await p.evaluate(() => { __DB.buzon[0].texto = "Mirad esto https://ejemplo.invalid/premio y decidme"; }); await ve(p, "buzon");
+      ok(await p.evaluate(() => /ejemplo\.invalid/.test(document.getElementById("zona").textContent) && !document.querySelector('#zona a[href*="ejemplo.invalid"]')), "Buzón: los enlaces de los mensajes salen como texto, sin poder pulsarlos");
       // Auditoría visual: «Nuevo» solo donde se crea algo, pie en una fila, Borrar/Duplicar al final y correos sin partir
       const fabOculto = [];
       for (const h of ["accesos", "textos", "papelera", "cartel", "peticiones"]) { await ve(p, h); if (await p.evaluate(() => document.getElementById("fab").hidden)) fabOculto.push(h); }
