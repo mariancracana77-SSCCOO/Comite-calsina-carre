@@ -14,7 +14,8 @@
   $("b-instalar-no").innerHTML = icono("cerrar");
 
   // ---------- Cabecera: tema, letra y buscar ----------
-  const pintaTema = () => { $("b-tema").innerHTML = icono(TEMA.oscuro() ? "sol" : "luna"); };
+  // v23: la etiqueta dice lo que hace el botón (antes no se sabía en qué modo estaba)
+  const pintaTema = () => { const o = TEMA.oscuro(); $("b-tema").innerHTML = icono(o ? "sol" : "luna"); $("b-tema").setAttribute("aria-label", o ? "Poner modo claro" : "Poner modo oscuro"); };
   pintaTema();
   $("b-tema").addEventListener("click", () => { TEMA.cambiaTema(); pintaTema(); });
   $("b-letra").addEventListener("click", () => {
@@ -29,20 +30,23 @@
     // «Ir al contenido» o un enlace a #contenido: solo enfocar, sin cambiar de apartado
     if (h === "contenido" && VISTAS.some((v) => !$("v-" + v).hidden)) { $("contenido").focus(); return; }
     let vista = VISTAS.includes(h) ? h : "actualidad", destino = null;
+    quitaFalta();
     if (h === "documentos") { vista = "actas"; ponSegmento("documentos"); }
     if (h === "avisos-movil") { vista = "avisos"; }
+    if (h === "preguntas") { vista = "buzon"; destino = "preguntas"; }
     // v11: secciones propias (#seccion-N) y lo publicado en ellas (#publicacion-N)
     let pestSeccion = null;
     const ms = h.match(/^(seccion|publicacion)-(\d+)$/);
     if (ms) {
-      const pub = ms[1] === "publicacion" ? D.publicaciones.find((x) => String(x.id) === ms[2]) : null;
-      const idSec = pub ? pub.apartado_id : +ms[2];
-      vista = "seccion"; pestSeccion = pintaSeccion(idSec);
+      const esPub = ms[1] === "publicacion", pub = esPub ? D.publicaciones.find((x) => String(x.id) === ms[2]) : null;
+      // v23: una publicación que ya no está NO abre la sección con su mismo número (no tienen nada que ver)
+      const idSec = esPub ? pub?.apartado_id : +ms[2];
+      vista = "seccion"; pestSeccion = pintaSeccion(idSec, esPub);
       if (pub) destino = h;
     }
-    const m = ms ? null : h.match(/^(noticia|aviso|reunion|acta|consulta|documento)-(\d+)$/);
+    const m = ms ? null : h.match(/^(noticia|aviso|reunion|acta|consulta|documento|pregunta)-(\d+)$/);
     if (m) {
-      vista = { noticia: "actualidad", aviso: "avisos", reunion: "reuniones", acta: "actas", consulta: "actualidad", documento: "actas" }[m[1]];
+      vista = { noticia: "actualidad", aviso: "avisos", reunion: "reuniones", acta: "actas", consulta: "actualidad", documento: "actas", pregunta: "buzon" }[m[1]];
       destino = h;
     }
     VISTAS.forEach((v) => { $("v-" + v).hidden = v !== vista; });
@@ -50,7 +54,7 @@
     document.querySelectorAll("#pestanas a").forEach((a) => {
       const sel = a.dataset.vista === pest;
       a.classList.toggle("activa", sel);
-      if (sel) { a.setAttribute("aria-current", "page"); a.scrollIntoView({ block: "nearest", inline: "center" }); } else a.removeAttribute("aria-current");
+      if (sel) { a.setAttribute("aria-current", "page"); centraPestana(a); } else a.removeAttribute("aria-current");
     });
     // Instalada, la ventana ya pone el nombre de la app delante: no repetirlo
     document.title = $("v-" + vista).dataset.titulo + (instalada ? "" : " · Comité de Empresa Calsina Carré");
@@ -60,9 +64,14 @@
       if (m && m[1] === "reunion") { const r = D.reuniones.find((x) => String(x.id) === m[2]); if (r && r.fecha < hoyISO()) $("pasadas-caja").open = true; }
       if (m && m[1] === "acta") { ponSegmento("actas"); filtroAno = "todos"; $("buscar-actas").value = ""; pintaActas(); }
       if (m && m[1] === "documento") ponSegmento("documentos");
+      if (m && m[1] === "pregunta") { const q = $(destino); if (q) q.open = true; }
       requestAnimationFrame(() => {
         const el = $(destino);
-        if (el) { el.scrollIntoView({ block: "start" }); el.classList.add("resalta"); setTimeout(() => el.classList.remove("resalta"), 2200); }
+        if (el) {
+          // v23: un aviso o anuncio largo sale desplegado (antes dependía de que los datos llegaran en menos de 1 s)
+          R.abrePlegable(el);
+          el.scrollIntoView({ block: "start" }); el.classList.add("resalta"); setTimeout(() => el.classList.remove("resalta"), 2200);
+        } else if (m && hayDatos) ponFalta(vista, m[1]);
       });
     } else if (h === "avisos-movil" && !$("push-caja").hidden) {
       requestAnimationFrame(() => { $("push-caja").scrollIntoView({ block: "start" }); $("push-caja").classList.add("resalta"); setTimeout(() => $("push-caja").classList.remove("resalta"), 2200); });
@@ -72,6 +81,19 @@
   };
   window.addEventListener("hashchange", () => irA(location.hash, { foco: true }));
   document.querySelector(".saltar").addEventListener("click", (e) => { e.preventDefault(); $("contenido").focus(); });
+  // v23: centrar la pestaña activa moviendo solo la fila (scrollIntoView movía también el punto de partida del Tab:
+  // el primer Tab se saltaba «Ir al contenido», el logo y los botones de arriba)
+  const centraPestana = (a) => {
+    const f = $("pestanas"), rf = f.getBoundingClientRect(), ra = a.getBoundingClientRect();
+    if (f.scrollWidth > f.clientWidth) f.scrollLeft += (ra.left - rf.left) - (f.clientWidth - ra.width) / 2;
+  };
+  // Enlace directo a algo que ya no está (#aviso-999…): se dice, en vez de abrir la lista sin más
+  const FALTA = { noticia: "Ese anuncio", aviso: "Ese aviso", reunion: "Esa reunión", acta: "Esa acta", consulta: "Esa consulta", documento: "Ese documento", pregunta: "Esa pregunta" };
+  const quitaFalta = () => document.querySelectorAll(".aviso-falta").forEach((x) => x.remove());
+  const ponFalta = (vista, tipo) => {
+    const caja = $("v-" + vista).querySelector(".caja"); if (!caja) return;
+    caja.insertAdjacentHTML("afterbegin", `<p class="aviso-falta" role="status">${icono("alerta")}<span>${esc(FALTA[tipo])} ya no está en la web. Aquí tienes lo demás.</span></p>`);
+  };
 
   // ---------- Avisos sin leer (contador en la pestaña) ----------
   const marcaAvisosVistos = () => {
@@ -83,12 +105,21 @@
     const visto = TEMA.lee("comite-avisos-vistos");
     const n = visto ? D.avisos.filter((a) => a.fecha > visto).length : 0;
     const c = document.querySelector('[data-cuenta="avisos"]');
-    c.hidden = !n; c.textContent = n; c.setAttribute("aria-label", n + " sin leer");
+    c.hidden = !n; c.textContent = n;
+    // v23: el lector de pantalla decía «Avisos1»; ahora «Avisos (1 sin leer)»
+    const sr = document.querySelector('[data-cuenta-sr="avisos"]'); sr.textContent = n ? ` (${n} sin leer)` : "";
   };
 
   // ---------- Piezas (en render.js, compartidas con el panel) ----------
   // Apartado sin contenido: icono, título, explicación y, si toca, un enlace útil
-  const vacio = (titulo, txt = "", ic = "documento", enlace = null) => `
+  // v23: si no se ha podido cargar nada (sin conexión y sin copia guardada) no se dice «Todavía no hay…»: se explica y se puede reintentar
+  const vacio = (titulo, txt = "", ic = "documento", enlace = null) => D.sinDatos ? `
+    <div class="vacio-caja">
+      <span class="vacio-ic">${icono("sinred")}</span>
+      <b>No se ha podido cargar</b>
+      <p>${esc(D.sinDatos === "red" ? "Conéctate a internet y vuelve a intentarlo." : "Inténtalo de nuevo dentro de un rato.")}</p>
+      <button type="button" class="btn-linea" data-reintentar>Reintentar</button>
+    </div>` : `
     <div class="vacio-caja">
       <span class="vacio-ic">${icono(ic)}</span>
       <b>${esc(titulo)}</b>
@@ -103,7 +134,7 @@
   const consultaHTML = (e) => R.consulta(e, D.votos[e.id] || {}, misVotos()[e.id] || 0);
   const pintaConsultas = () => {
     // Abiertas siempre; cerradas solo las de los últimos 30 días
-    const lim = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+    const lim = diaMadrid(new Date(Date.now() - 30 * 86400000));
     const lista = D.encuestas.filter((e) => abierta(e) || e.cierra >= lim);
     $("consultas").innerHTML = lista.length ? `<div class="lista">${lista.map(consultaHTML).join("")}</div>` : "";
   };
@@ -125,27 +156,31 @@
     if (data) { D.votos[id] = {}; data.forEach((r) => { D.votos[id][r.opcion] = r.n; }); }
     else { (D.votos[id] ||= {})[op] = ((D.votos[id] || {})[op] || 0) + 1; }
     caja.outerHTML = consultaHTML(D.encuestas.find((e) => e.id === id));
+    // v23: el botón pulsado desaparece; el foco pasa a la consulta y se anuncia el voto
+    const nueva = $("consulta-" + id); if (nueva) { nueva.tabIndex = -1; nueva.focus(); }
+    $("consultas-estado").textContent = ""; setTimeout(() => { $("consultas-estado").textContent = "Voto registrado. Así va la consulta."; }, 50);
   });
 
   // ---------- Novedades desde tu última visita ----------
   let ultimaVisita = null;
+  // Último dato: a dónde lleva «Ver …» cuando hay varios (v23: antes llevaba al primero de ellos)
   const NOV = [
-    ["avisos", "fecha", "aviso", "avisos", "aviso"],
-    ["actualidad", "creado", "anuncio", "anuncios", "noticia"],
-    ["reuniones", "creado", "reunión", "reuniones", "reunion"],
-    ["actas", "creado", "acta", "actas", "acta"],
-    ["encuestas", "creado", "consulta", "consultas", "consulta"],
-    ["documentos", "creado", "documento", "documentos", "documento"],
-    ["publicaciones", "creado", "publicación", "publicaciones", "publicacion"],
+    ["avisos", "fecha", "aviso", "avisos", "aviso", "avisos"],
+    ["actualidad", "creado", "anuncio", "anuncios", "noticia", "actualidad"],
+    ["reuniones", "creado", "reunión", "reuniones", "reunion", "reuniones"],
+    ["actas", "creado", "acta", "actas", "acta", "actas"],
+    ["encuestas", "creado", "consulta", "consultas", "consulta", null],
+    ["documentos", "creado", "documento", "documentos", "documento", "documentos"],
+    ["publicaciones", "creado", "publicación", "publicaciones", "publicacion", null],
   ];
   const pintaNovedades = () => {
     if (!ultimaVisita) { $("novedades").innerHTML = ""; return; }
     const partes = [], enlaces = [];
-    NOV.forEach(([t, campo, uno, varios, ancla]) => {
+    NOV.forEach(([t, campo, uno, varios, ancla, lista]) => {
       const nuevos = D[t].filter((x) => x[campo] && x[campo] > ultimaVisita);
       if (!nuevos.length) return;
       partes.push(nuevos.length + " " + (nuevos.length === 1 ? uno : varios));
-      enlaces.push(`<a href="#${ancla}-${nuevos[0].id}">${esc(nuevos.length === 1 ? (nuevos[0].titulo || nuevos[0].pregunta) : "Ver " + varios)}</a>`);
+      enlaces.push(`<a href="#${nuevos.length > 1 && lista ? lista : ancla + "-" + nuevos[0].id}">${esc(nuevos.length === 1 ? (nuevos[0].titulo || nuevos[0].pregunta) : "Ver " + varios)}</a>`);
     });
     $("novedades").innerHTML = partes.length
       ? `<div class="novedades"><b>Novedades desde tu última visita:</b> ${esc(partes.join(", "))}<div class="nov-enlaces">${enlaces.join("")}</div></div>`
@@ -155,6 +190,7 @@
   // ---------- Actualidad (portada) ----------
   const pintaActualidad = () => {
     $("bienvenida").textContent = D.paginas.bienvenida || "";
+    $("bienvenida").classList.remove("cargando"); // tenía su hueco reservado mientras llegaban los datos (v23, para que no salte)
     $("bienvenida").hidden = !D.paginas.bienvenida;
     const hoyDest = D.avisos.find((a) => a.destacar_dia === hoyISO());
     const urg = hoyDest || D.avisos.find((a) => a.urgente && Date.now() - new Date(a.fecha) < 14 * 86400000);
@@ -183,7 +219,7 @@
     })() : "";
     pintaNovedades();
     pintaConsultas();
-    $("lista-actualidad").innerHTML = D.actualidad.map(tarjetaNoticia).join("") || vacio("Todavía no hay anuncios", "Aquí saldrá la información general del comité: acuerdos, cambios de turnos y pausas, convenio, nóminas y todo lo que os afecta.", "periodico", ["#avisos-movil", "Avisarme cuando haya novedades"]);
+    $("lista-actualidad").innerHTML = D.actualidad.map(tarjetaNoticia).join("") || vacio("Todavía no hay anuncios", "Aquí saldrá la información general del comité: acuerdos, cambios de turnos y pausas, convenio, nóminas y todo lo que te afecta.", "periodico", ["#avisos-movil", "Avisarme cuando haya novedades"]);
   };
 
   // ---------- Avisos ----------
@@ -214,7 +250,9 @@
   const mesVisto = (() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
   let vistaCal = "mes";
   const nombreMes = (a, m, conAno) => { const n = new Date(a, m, 1).toLocaleDateString("es-ES", conAno ? { month: "long", year: "numeric" } : { month: "long" }); return n.charAt(0).toUpperCase() + n.slice(1); };
-  const celdas = (a, m) => {
+  // pequeno = vista «Año entero»: los días no son botones ni enlaces (medían 15×14 px, por debajo de los 24×24 mínimos):
+  // se toca el mes entero y se abre (v23); si se toca un festivo, se abre el mes y sale su nombre.
+  const celdas = (a, m, pequeno = false) => {
     const primero = (new Date(a, m, 1).getDay() + 6) % 7, dias = new Date(a, m + 1, 0).getDate();
     const porDia = {};
     D.reuniones.forEach((r) => { (porDia[r.fecha] ||= []).push(r); });
@@ -226,9 +264,12 @@
       const emp = rs && rs.some((r) => r.tipo === "Reunión con la empresa"); // con la empresa en azul, las demás en verde (n.º 6)
       const cls = ["dia-mes", iso === hoy ? "hoy" : "", rs ? (emp ? "con empresa" : "con") : "", fe ? "fest-" + fe[0] : ""].join(" ");
       const nombres = [...(rs || []).map((r) => r.titulo), ...(fe ? ["Festivo: " + fe[1]] : [])].join(", ");
+      const hoyAttr = iso === hoy ? ' aria-current="date"' : "";
+      const txtFest = fe ? esc(d + " de " + mes + " de " + a + ": " + fe[1] + (fe[0] === "cat" ? " (festivo de Cataluña)" : " (festivo de España)")) : "";
+      if (pequeno) { h += `<span class="${cls}"${fe ? ` data-festivo-ano="${txtFest}"` : ""}>${fe && !rs ? `<b>${d}</b>` : d}</span>`; continue; }
       h += rs
-        ? `<a class="${cls}" href="#reunion-${rs[0].id}" aria-label="${d} de ${mes}: ${esc(nombres)}">${d}<i></i></a>`
-        : fe ? `<button type="button" class="${cls}" data-festivo="${esc(d + " de " + mes + " de " + a + ": " + fe[1] + (fe[0] === "cat" ? " (festivo de Cataluña)" : " (festivo de España)"))}" aria-label="${d} de ${mes}: ${esc(nombres)}"><b>${d}</b></button>` : `<span class="${cls}">${d}</span>`;
+        ? `<a class="${cls}" href="#reunion-${rs[0].id}" aria-label="${d} de ${mes}: ${esc(nombres)}"${hoyAttr}>${d}<i></i></a>`
+        : fe ? `<button type="button" class="${cls}" data-festivo="${txtFest}" aria-label="${d} de ${mes}: ${esc(nombres)}"${hoyAttr}><b>${d}</b></button>` : `<span class="${cls}"${hoyAttr}>${d}</span>`;
     }
     return h;
   };
@@ -242,7 +283,7 @@
     $("mes-calendario").classList.toggle("ano", ano);
     if (ano) {
       let h = "";
-      for (let i = 0; i < 12; i++) h += `<section class="ano-mes"><button type="button" class="ano-mes-nombre" data-mes="${i}" aria-label="Ver ${nombreMes(a, i, true)}">${nombreMes(a, i)}</button><div class="mes-dias" aria-hidden="true"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div><div class="mes-rejilla">${celdas(a, i)}</div></section>`;
+      for (let i = 0; i < 12; i++) h += `<section class="ano-mes"><button type="button" class="ano-mes-nombre" data-mes="${i}" aria-label="Ver ${nombreMes(a, i, true)}">${nombreMes(a, i)}</button><div class="mes-dias" aria-hidden="true"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div><div class="mes-rejilla" aria-hidden="true">${celdas(a, i, true)}</div></section>`;
       $("ano-rejilla").innerHTML = h; $("mes-rejilla").innerHTML = "";
     } else { $("mes-rejilla").innerHTML = celdas(a, m); $("ano-rejilla").innerHTML = ""; }
     $("mes-festivo").textContent = ""; $("mes-festivo").hidden = true;
@@ -251,8 +292,12 @@
   $("mes-calendario").addEventListener("click", (ev) => {
     const b = ev.target.closest("[data-festivo]");
     if (b) { $("mes-festivo").textContent = b.dataset.festivo; $("mes-festivo").hidden = false; return; }
-    const n = ev.target.closest("[data-mes]");
-    if (n) { mesVisto.setMonth(Number(n.dataset.mes)); vistaCal = "mes"; pintaMes(); $("mes-calendario").scrollIntoView({ block: "nearest" }); }
+    const n = ev.target.closest("[data-mes]") || ev.target.closest(".ano-mes")?.querySelector("[data-mes]");
+    if (n) {
+      const fa = ev.target.closest("[data-festivo-ano]")?.dataset.festivoAno;
+      mesVisto.setMonth(Number(n.dataset.mes)); vistaCal = "mes"; pintaMes(); $("mes-calendario").scrollIntoView({ block: "nearest" });
+      if (fa) { $("mes-festivo").textContent = fa; $("mes-festivo").hidden = false; }
+    }
   });
   $("ver-mes").addEventListener("click", () => { vistaCal = "mes"; pintaMes(); });
   $("ver-ano").addEventListener("click", () => { vistaCal = "ano"; pintaMes(); });
@@ -263,7 +308,7 @@
     const hoy = hoyISO();
     const prox = D.reuniones.filter((r) => r.fecha >= hoy);
     const pas = D.reuniones.filter((r) => r.fecha < hoy).reverse();
-    $("lista-proximas").innerHTML = prox.map(tarjetaReunion).join("") || vacio("No hay reuniones previstas", "Cuando se convoque una reunión o una asamblea, saldrá aquí con el día, la hora y el lugar.", "calendario");
+    $("lista-proximas").innerHTML = prox.map(tarjetaReunion).join("") || vacio("No hay reuniones previstas", "Cuando se convoque una reunión o una asamblea, saldrá aquí con el día, la hora y el lugar.", "calendario", ["#actas", "Ver las actas de las reuniones pasadas"]);
     $("lista-pasadas").innerHTML = pas.map(tarjetaReunion).join("");
     $("pasadas-caja").hidden = !pas.length;
     pintaMes();
@@ -288,7 +333,7 @@
     const lista = D.actas.filter((a) => (filtroAno === "todos" || a.fecha.startsWith(filtroAno))
       && (!q || [a.titulo, a.tipo, a.resumen, a.acuerdos].join(" ").toLowerCase().includes(q)));
     $("lista-actas").innerHTML = lista.map(tarjetaActa).join("")
-      || (q ? vacio("No hay actas con esas palabras", "Prueba con otras palabras o mira todas las actas.", "buscar") : vacio("Todavía no hay actas", "Aquí saldrán el resumen y los acuerdos de cada reunión.", "acta"));
+      || (q ? vacio("No hay actas con esas palabras", "Prueba con otras palabras o mira todas las actas.", "buscar") : vacio("Todavía no hay actas", "Aquí saldrán el resumen y los acuerdos de cada reunión.", "acta", ["#reuniones", "Ver el calendario de reuniones"]));
   };
   $("buscar-actas").addEventListener("input", pintaActas);
   $("anos-actas").addEventListener("click", (e) => {
@@ -301,7 +346,7 @@
     const nombres = Object.keys(grupos);
     $("lista-documentos").innerHTML = nombres.map((g) =>
       `${nombres.length > 1 ? `<h2 class="titulo-bloque">${esc(g)}</h2>` : ""}<div class="lista">${grupos[g].map(tarjetaDocumento).join("")}</div>`).join("")
-      || vacio("Todavía no hay documentos", "Aquí estarán el convenio, el calendario laboral, las tablas salariales y otros documentos útiles.", "documento");
+      || vacio("Todavía no hay documentos", "Aquí estarán el convenio, el calendario laboral, las tablas salariales y otros documentos útiles. Si buscas uno en concreto, pídelo por el buzón.", "documento", ["#buzon", "Pedir un documento"]);
   };
 
   // ---------- Sugerencias y preguntas ----------
@@ -313,8 +358,11 @@
     e.preventDefault();
     const est = $("buzon-estado"), txt = $("buzon-texto").value.trim();
     est.className = "estado";
-    if (txt.length < 5) { est.textContent = "Escribe un poco más (mínimo 5 letras)."; est.classList.add("mal"); return; }
-    if (!$("buzon-acepto").checked) { est.textContent = "Marca la casilla para poder enviarlo."; est.classList.add("mal"); return; }
+    $("buzon-texto").removeAttribute("aria-invalid"); $("buzon-acepto").removeAttribute("aria-invalid");
+    // v23: el campo que falta queda marcado y recibe el foco
+    const marca = (campo, msg) => { est.textContent = msg; est.classList.add("mal"); campo.setAttribute("aria-invalid", "true"); campo.focus(); };
+    if (txt.length < 5) return marca($("buzon-texto"), "Escribe un poco más (mínimo 5 letras).");
+    if (!$("buzon-acepto").checked) return marca($("buzon-acepto"), "Marca la casilla para poder enviarlo.");
     const tipo = e.target.querySelector("[name=tipo]:checked").value;
     const b = $("buzon-enviar"); b.disabled = true; est.textContent = "Enviando…";
     try {
@@ -331,22 +379,23 @@
 
   // ---------- Nosotros y privacidad ----------
   // Lo que se guarda en el móvil (si en el panel no se ha escrito otro texto). Si se añade una clave «comite-…», ponerla aquí.
-  const COOKIES_POR_DEFECTO = `Esta web no usa cookies. Solo guarda en tu propio móvil lo necesario para funcionar, y nada de esto sale de él:
+  // v23: texto de la revisión legal (textos-finales, apartado 8), con la sesión del panel y cuánto dura cada cosa
+  const COOKIES_POR_DEFECTO = `Esta web no usa cookies. Solo guarda en tu propio móvil lo necesario para funcionar; el comité no lo puede ver y no sirve para saber quién eres:
 
-- **comite-tema** y **comite-letra**: modo claro u oscuro y tamaño de letra.
-- **comite-avisos-vistos** y **comite-ultima-visita**: hasta dónde has visto, para marcar lo nuevo.
-- **comite-votos**: en qué consultas ya has votado.
-- **comite-copia**: una copia de lo publicado, para verlo sin conexión (también las copias de la app, «comite-v…»).
-- **comite-aviso-privacidad** y **comite-no-instalar**: que ya has visto el aviso de privacidad o no quieres instalar la app.
-- **comite-push**: que has activado los avisos al móvil en esta web.
-- **comite-visita-dia** y **comite-vista-…** (esta última solo mientras la pestaña está abierta): para contar visitas una vez al día y por apartado, sin saber quién eres. Solo se guardan números.
-- Solo en el móvil de quien gestiona la web: **comite-admin-email**, **comite-push-panel**, **comite-ia-tapar** y **comite-adm-…** (cosas del panel).
+- **comite-tema** y **comite-letra**: modo claro u oscuro y tamaño de letra. Hasta que lo borres.
+- **comite-avisos-vistos** y **comite-ultima-visita**: hasta dónde has visto, para marcar lo nuevo. Hasta que lo borres.
+- **comite-votos**: en qué consultas ya has votado. Hasta que lo borres.
+- **comite-copia**: una copia de lo publicado, para verlo sin conexión (también la caché de la app, «comite-v…»). Hasta que lo borres.
+- **comite-aviso-privacidad** y **comite-no-instalar**: que ya viste el aviso de privacidad o no quieres instalar la app. Hasta que lo borres.
+- **comite-push**: que has activado los avisos al móvil. Hasta que los desactives.
+- **comite-visita-dia** (solo la fecha de hoy) y **comite-vista-…** (se borra al cerrar la pestaña): para contar visitas una vez al día y por apartado, sin saber quién eres.
+- Solo en el móvil de quien gestiona la web: **sb-…-auth-token** (sesión del panel), **comite-admin-email**, **comite-push-panel**, **comite-ia-tapar** y **comite-adm-…**.
 
-Puedes borrarlo todo con el botón de abajo.`;
+Es técnico, son preferencias tuyas o una medición propia sin datos personales, así que la ley no exige pedir permiso (artículo 22.2 de la LSSI). Puedes borrarlo todo con el botón de abajo.`;
   const pintaNosotros = () => {
     $("nosotros-texto").innerHTML = textoHTML(D.paginas.nosotros) || "<p>Información del comité próximamente.</p>";
-    $("privacidad-texto").innerHTML = textoHTML(D.paginas.privacidad) || "<p>Esta web es informativa. Solo recoge lo que tú decidas enviar: los mensajes del buzón (sin tu nombre) y, si los activas, los avisos al móvil.</p>";
-    $("aviso-legal-texto").innerHTML = textoHTML(D.paginas.aviso_legal) || "<p>Web informativa del Comité de Empresa de Calsina Carré.</p>";
+    $("privacidad-texto").innerHTML = textoHTML(D.paginas.privacidad) || "<p>Esta web es informativa. Solo recoge lo que tú decidas enviar: los mensajes del buzón (sin tu nombre) y, si los activas, los avisos al móvil. Contacto: ssccoo.calsinacarre@gmail.com.</p>";
+    $("aviso-legal-texto").innerHTML = textoHTML(D.paginas.aviso_legal) || "<p>Web informativa del Comité de Empresa de Calsina Carré. No es una web oficial de la empresa. Contacto: ssccoo.calsinacarre@gmail.com.</p>";
     $("cookies-texto").innerHTML = textoHTML(D.paginas.cookies) || textoHTML(COOKIES_POR_DEFECTO);
     $("lista-miembros").innerHTML = D.miembros.map(R.miembro).join("") || vacio("Pronto pondremos aquí quién forma el comité", "Mientras tanto, puedes escribirnos de forma anónima.", "personas", ["#buzon", "Ir al buzón anónimo"]);
   };
@@ -361,11 +410,12 @@ Puedes borrarlo todo con el botón de abajo.`;
     $("accesos-secciones").innerHTML = principales().map((a) => `<a href="#seccion-${a.id}"><span class="ic">${icono(a.icono || "carpeta")}</span><span>${esc(a.titulo)}</span></a>`).join("");
   };
   // Pinta la sección y devuelve la pestaña que hay que marcar (la de la sección principal)
-  const pintaSeccion = (id) => {
+  const pintaSeccion = (id, esPub = false) => {
     const a = D.apartados.find((x) => x.id === id), v = $("v-seccion");
     if (!a) {
-      $("seccion-ic").innerHTML = icono("carpeta"); $("seccion-titulo").textContent = "Sección no disponible"; $("seccion-miga").hidden = true;
-      $("seccion-desc").textContent = "Esta sección ya no está en la web o se ha ocultado.";
+      $("seccion-ic").innerHTML = icono("carpeta"); $("seccion-titulo").textContent = esPub ? "Publicación no disponible" : "Sección no disponible"; $("seccion-miga").hidden = true;
+      $("seccion-desc").hidden = false;
+      $("seccion-desc").textContent = esPub ? "Esta publicación ya no está en la web o se ha ocultado." : "Esta sección ya no está en la web o se ha ocultado.";
       $("seccion-hijas").innerHTML = ""; $("seccion-pubs").innerHTML = vacio("No hay nada aquí", "Vuelve a la portada para ver lo último del comité.", "carpeta", ["#actualidad", "Ir a Info general"]);
       v.dataset.titulo = "Sección"; return null;
     }
@@ -386,7 +436,6 @@ Puedes borrarlo todo con el botón de abajo.`;
   };
 
   // ---------- Buscar en toda la web ----------
-  const sinAcentos = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   const buscar = () => {
     const q = sinAcentos($("buscar-todo").value.trim());
     if (q.length < 2) { $("buscar-info").textContent = "Escribe al menos 2 letras."; $("lista-buscar").innerHTML = ""; return; }
@@ -400,7 +449,7 @@ Puedes borrarlo todo con el botón de abajo.`;
       ...D.reuniones.filter((x) => casa(x.titulo, x.descripcion, x.lugar, x.tipo)).map((x) => ["Reunión", x.titulo, "reunion-" + x.id, x.fecha]),
       ...D.actas.filter((x) => casa(x.titulo, x.resumen, x.acuerdos, x.tipo)).map((x) => ["Acta", x.titulo, "acta-" + x.id, x.fecha]),
       ...D.documentos.filter((x) => casa(x.titulo, x.descripcion, x.categoria, (x.adjuntos || []).map((a) => a.nombre).join(" "))).map((x) => ["Documento", x.titulo, "documento-" + x.id, null]),
-      ...D.preguntas.filter((x) => casa(x.pregunta, x.respuesta)).map((x) => ["Pregunta frecuente", x.pregunta, "buzon", null]),
+      ...D.preguntas.filter((x) => casa(x.pregunta, x.respuesta)).map((x) => ["Pregunta frecuente", x.pregunta, "pregunta-" + x.id, null]),
       ...D.encuestas.filter((x) => casa(x.pregunta, x.explicacion, x.opciones)).map((x) => ["Consulta", x.pregunta, "consulta-" + x.id, x.creado]),
     ];
     $("buscar-info").textContent = res.length ? res.length + (res.length === 1 ? " resultado" : " resultados") : "No hay nada con esas palabras. Prueba con otras, o pregúntanos en el buzón.";
@@ -421,9 +470,19 @@ Puedes borrarlo todo con el botón de abajo.`;
   });
 
   // ---------- Carga de datos ----------
-  const pintaTodo = () => { pintaPestanasSecciones(); pintaActualidad(); pintaAvisos(); pintaReuniones(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaNosotros(); };
-  const guardaCopia = () => TEMA.guarda("comite-copia", JSON.stringify({ t: Date.now(), D }));
-  const leeCopia = () => { try { return JSON.parse(TEMA.lee("comite-copia") || "null"); } catch (_) { return null; } };
+  // v23: al volver a pintar se conservan los «Leer más» que la persona había abierto
+  const pintaTodo = () => {
+    const abiertos = [...document.querySelectorAll(".texto.plegable.abierto")].map((d) => d.closest("[id^='aviso-'],[id^='noticia-']")?.id).filter(Boolean);
+    pintaPestanasSecciones(); pintaActualidad(); pintaAvisos(); pintaReuniones(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaNosotros();
+    abiertos.forEach((id) => R.abrePlegable($(id)));
+  };
+  // Si no cabe en el móvil (el navegador tiene un límite), se quita la copia vieja para no enseñar datos antiguos
+  const guardaCopia = () => { try { localStorage.setItem("comite-copia", JSON.stringify({ t: Date.now(), D: { ...D, sinDatos: false } })); } catch (_) { try { localStorage.removeItem("comite-copia"); } catch (__) {} } };
+  const leeCopia = () => { try { const c = JSON.parse(TEMA.lee("comite-copia") || "null"); return c && c.D ? c : null; } catch (_) { return null; } };
+  // supabase-js no tiene tiempo máximo: con cobertura mala esperaría para siempre (v23, N1)
+  const ESPERA_DATOS = 12000;
+  const conTope = (p, ms) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(Object.assign(new Error("Failed to fetch (tiempo)"), { tiempo: true })), ms))]);
+  const esDeRed = (e) => !!e?.tiempo || /fetch|network|load failed|tiempo/i.test(String(e?.message || e || ""));
 
   const cargar = async () => {
     const r = await Promise.all([
@@ -454,33 +513,63 @@ Puedes borrarlo todo con el botón de abajo.`;
     D.apartados = (r[10].data || []).filter((a) => !a.padre_id || vis.has(a.padre_id));
     const ok = new Set(D.apartados.map((a) => a.id));
     D.publicaciones = (r[11].data || []).filter((p) => ok.has(p.apartado_id));
+    D.sinDatos = false;
   };
 
-  let primeraCarga = true;
+  const banda = (html) => { $("sin-red").innerHTML = icono("sinred") + "<span>" + html + "</span>"; $("sin-red").hidden = false; };
+  const fechaCopia = (c) => esc(new Date(c.t).toLocaleString("es-ES", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }));
+  // Vuelve a pintar la sección abierta con los datos nuevos
+  const refrescaSeccion = () => {
+    if ($("v-seccion").hidden) return;
+    const mm = location.hash.match(/^#(seccion|publicacion)-(\d+)$/);
+    if (mm) pintaSeccion(mm[1] === "seccion" ? +mm[2] : D.publicaciones.find((p) => String(p.id) === mm[2])?.apartado_id, mm[1] === "publicacion");
+  };
+  // Con datos nuevos: si la persona no se ha movido desde que se pintó la copia, se vuelve a situar el enlace directo
+  let marcaCopia = null;
+  const tras = () => {
+    if (!$("v-buscar").hidden) buscar();
+    if (marcaCopia && marcaCopia.hash === location.hash && Math.abs(scrollY - marcaCopia.y) < 4) irA(location.hash);
+    else { refrescaSeccion(); if (location.hash.length > 1 && $(location.hash.slice(1))) quitaFalta(); }
+    marcaCopia = null;
+  };
+
+  let primeraCarga = true, hayDatos = false, cargando = false, visitaApuntada = false;
   const arranca = async () => {
+    if (cargando) return;
+    cargando = true;
     // Primera visita: no avisar de avisos antiguos como "sin leer"
     const primera = !TEMA.lee("comite-avisos-vistos");
-    if (primeraCarga) { ultimaVisita = TEMA.lee("comite-ultima-visita"); }
+    const esPrimera = primeraCarga;
+    if (esPrimera) {
+      ultimaVisita = TEMA.lee("comite-ultima-visita");
+      // v23 (N1): lo guardado se enseña ya, sin esperar a la red; luego se cambia por lo nuevo
+      const c0 = leeCopia();
+      if (c0) { Object.assign(D, c0.D); D.sinDatos = false; hayDatos = true; pintaTodo(); irA(location.hash); marcaCopia = { hash: location.hash, y: scrollY }; }
+    }
+    primeraCarga = false;
+    const pide = cargar();
     try {
-      await cargar();
-      guardaCopia();
+      await conTope(pide, ESPERA_DATOS);
+      guardaCopia(); hayDatos = true;
       $("sin-red").hidden = true;
-      if (primeraCarga) TEMA.guarda("comite-ultima-visita", new Date().toISOString());
-    } catch (_) {
-      const c = leeCopia();
-      if (c) Object.assign(D, c.D);
-      $("sin-red").innerHTML = icono("sinred") + (c
-        ? `<span>Sin conexión. Estás viendo la información guardada el ${esc(new Date(c.t).toLocaleString("es-ES", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }))}.</span>`
-        : "<span>Sin conexión. Conéctate a internet para ver la información.</span>");
-      $("sin-red").hidden = false;
+      if (!visitaApuntada) { TEMA.guarda("comite-ultima-visita", new Date().toISOString()); visitaApuntada = true; }
+    } catch (e) {
+      const red = esDeRed(e), c = leeCopia();
+      if (c) { Object.assign(D, c.D); D.sinDatos = false; hayDatos = true; }
+      else if (!hayDatos) D.sinDatos = red ? "red" : "error";
+      if (e?.tiempo) {
+        banda(c ? `La conexión va muy lenta. Estás viendo la información guardada el ${fechaCopia(c)}.` : "La conexión va muy lenta. Esperando la información…");
+        // Si al final llega, se enseña
+        pide.then(() => { guardaCopia(); hayDatos = true; $("sin-red").hidden = true; pintaTodo(); tras(); }, () => {});
+      } else if (red) banda(c ? `Sin conexión. Estás viendo la información guardada el ${fechaCopia(c)}.` : "Sin conexión. Conéctate a internet para ver la información.");
+      else banda(c ? `No se ha podido actualizar. Estás viendo la información guardada el ${fechaCopia(c)}.` : "No se ha podido cargar la información. Inténtalo dentro de un rato.");
     }
     if (primera && D.avisos.length) TEMA.guarda("comite-avisos-vistos", D.avisos[0].fecha);
     pintaTodo();
-    if (primeraCarga) irA(location.hash);
-    if (!$("v-buscar").hidden) buscar();
-    if (!primeraCarga && !$("v-seccion").hidden) { const mm = location.hash.match(/^#(seccion|publicacion)-(\d+)$/); if (mm) pintaSeccion(mm[1] === "seccion" ? +mm[2] : D.publicaciones.find((p) => String(p.id) === mm[2])?.apartado_id); }
-    primeraCarga = false;
+    if (esPrimera && !marcaCopia) irA(location.hash); else tras();
+    cargando = false;
   };
+  document.addEventListener("click", (e) => { if (e.target.closest("[data-reintentar]")) { $("sin-red").hidden = true; arranca(); } });
   window.addEventListener("online", arranca);
   // Al volver a la app después de un rato, se actualiza sola
   let oculta = 0;
@@ -510,7 +599,6 @@ Puedes borrarlo todo con el botón de abajo.`;
 
   // ---------- Avisos al móvil (notificaciones) ----------
   const PUSH_OK = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
-  const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const claveBytes = (b64) => { const p = "=".repeat((4 - (b64.length % 4)) % 4), s = atob((b64 + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(s, (c) => c.charCodeAt(0)); };
   const pintaPush = (activo) => {
     $("push-off").hidden = !!activo; $("push-on").hidden = !activo;
@@ -529,7 +617,24 @@ Puedes borrarlo todo con el botón de abajo.`;
     caja.hidden = false;
     try {
       const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.getSubscription();
+      let sub = await reg.pushManager.getSubscription();
+      // Petición n.º 10 (v23): si este móvil ya los había activado (comite-push) y sigue con permiso, no se pide otra vez:
+      // si el móvil perdió la dirección (cambio de dirección de la web, el panel creó otra, limpieza del navegador…)
+      // se vuelve a apuntar solo, sin tocar nada; y si la tiene, se renueva en Supabase (suscribir_push no duplica).
+      // «Desactivar» y «Borrar mis datos» quitan comite-push, así que después no se vuelve a apuntar solo.
+      if (TEMA.lee("comite-push") && Notification.permission === "granted") {
+        try {
+          if (!sub) {
+            const { data: clave } = await sb.rpc("clave_push_publica");
+            if (clave) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: claveBytes(clave) });
+          }
+          if (sub) {
+            const j = sub.toJSON();
+            const r = await sb.rpc("suscribir_push", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
+            if (!r.error) { TEMA.guarda("comite-push", j.endpoint); return pintaPush(true); }
+          }
+        } catch (_) { /* sin conexión: se intenta la próxima vez */ }
+      }
       // Si este móvil solo tiene los avisos del panel (comite-push-panel) y no los de la web, la web no los da por activados
       const soloPanel = !!sub && !TEMA.lee("comite-push") && TEMA.lee("comite-push-panel") === sub.endpoint;
       pintaPush(sub && !soloPanel && Notification.permission === "granted");
@@ -564,11 +669,17 @@ Puedes borrarlo todo con el botón de abajo.`;
       const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
       // Si el panel usa esta misma dirección para sus avisos (comite-push-panel), se quita de los de la web sin apagarla en el móvil
       const delPanel = !!sub && TEMA.lee("comite-push-panel") === sub.endpoint;
-      if (sub) { await sb.rpc("desuscribir_push", { p_endpoint: sub.endpoint }); if (!delPanel) await sub.unsubscribe(); }
+      if (sub) {
+        const { error } = await sb.rpc("desuscribir_push", { p_endpoint: sub.endpoint });
+        // v23: si el panel usa la misma dirección, solo el servidor puede quitarla de los avisos de la web: si falla, se dice.
+        // Si no, al darse de baja en el móvil la dirección deja de valer y el servidor la borra solo en el siguiente envío.
+        if (error && delPanel) throw error;
+        if (!delPanel) await sub.unsubscribe();
+      }
       try { localStorage.removeItem("comite-push"); } catch (_) {}
       pintaPush(false); $("push-acepto").checked = false;
       estado(est, "Avisos desactivados en este móvil.", "bien");
-    } catch (e) { estado(est, "No se han podido desactivar. Prueba de nuevo.", "mal"); }
+    } catch (e) { estado(est, /fetch|network/i.test(String(e?.message)) ? "No hay conexión. Prueba de nuevo cuando tengas internet." : "No se han podido desactivar. Prueba de nuevo.", "mal"); }
   });
   const estado = (el, txt, tipo = "") => { el.textContent = txt; el.className = "estado" + (tipo ? " " + tipo : ""); };
 
@@ -582,12 +693,14 @@ Puedes borrarlo todo con el botón de abajo.`;
   $("b-borrar-datos").addEventListener("click", async () => {
     if (!confirm("¿Borrar lo que esta web guarda en este móvil? Olvidará tus preferencias, lo que has visto y lo que has votado, y dejarás de recibir los avisos al móvil.")) return;
     // v22: también se dan de baja los avisos al móvil (si el panel usa la misma dirección, solo se quita de los de la web)
+    let avisoBaja = false;
     try {
       const reg = "serviceWorker" in navigator ? await navigator.serviceWorker.getRegistration() : null;
       const sub = reg && reg.pushManager ? await reg.pushManager.getSubscription() : null;
       if (sub) {
         const delPanel = TEMA.lee("comite-push-panel") === sub.endpoint;
-        await sb.rpc("desuscribir_push", { p_endpoint: sub.endpoint });
+        const { error } = await sb.rpc("desuscribir_push", { p_endpoint: sub.endpoint });
+        if (error && delPanel) avisoBaja = true; // el resto se borra igual; se avisa al final
         if (!delPanel) await sub.unsubscribe();
       }
       if (PUSH_OK) { pintaPush(false); $("push-acepto").checked = false; }
@@ -598,7 +711,11 @@ Puedes borrarlo todo con el botón de abajo.`;
     try { Object.keys(sessionStorage).filter((k) => k.startsWith("comite-")).forEach((k) => sessionStorage.removeItem(k)); } catch (_) {}
     try { const ks = await caches.keys(); await Promise.all(ks.filter((k) => k.startsWith("comite-")).map((k) => caches.delete(k))); } catch (_) {}
     TEMA.aplica();
-    $("borrar-estado").textContent = "Hecho. Se ha borrado todo lo que esta web guardaba en este móvil."; $("borrar-estado").className = "estado bien";
+    pintaTema();
+    $("borrar-estado").textContent = avisoBaja
+      ? "Se ha borrado lo que esta web guardaba en este móvil, pero no se han podido quitar los avisos al móvil: desactívalos en «Avisos» cuando tengas internet."
+      : "Hecho. Se ha borrado todo lo que esta web guardaba en este móvil.";
+    $("borrar-estado").className = "estado " + (avisoBaja ? "mal" : "bien");
   });
 
   // ---------- Instalar como app ----------
@@ -614,7 +731,7 @@ Puedes borrarlo todo con el botón de abajo.`;
   });
   $("b-instalar-no").addEventListener("click", () => { $("instalar").hidden = true; TEMA.guarda("comite-no-instalar", "1"); });
   window.addEventListener("appinstalled", () => { $("instalar").hidden = true; });
-  if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !instalada && !noQuiere()) {
+  if (esIOS && !instalada && !noQuiere()) {
     $("instalar-txt").textContent = "En Safari, pulsa el botón Compartir y luego «Añadir a pantalla de inicio».";
     $("b-instalar").hidden = true;
     $("instalar").hidden = false;

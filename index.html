@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://ytxpubqyhnohhugpukdm.supabase.co; connect-src 'self' https://ytxpubqyhnohhugpukdm.supabase.co wss://ytxpubqyhnohhugpukdm.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>Comité de Empresa Calsina Carré</title>
-<meta name="description" content="Información del comité de empresa para la plantilla de Calsina Carré: actualidad, avisos, reuniones, actas, buzón de sugerencias y preguntas.">
+<meta name="description" content="Información del comité de empresa para la plantilla de Calsina Carré: info general, avisos, reuniones, actas, buzón de sugerencias y preguntas.">
 <meta name="theme-color" content="#0B1E3C">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="img/favicon-32.png" sizes="32x32" type="image/png">
@@ -33,7 +33,7 @@
 
 <header class="cabecera">
   <div class="cab-fila">
-    <a class="marca" href="#actualidad" aria-label="Ir a Info general">
+    <a class="marca" href="#actualidad" aria-label="Calsina Carré, comité de empresa: ir a Info general">
       <span class="marca-logo"><img src="img/logo-96.webp" alt="" width="48" height="48"></span>
       <span class="marca-txt"><b>Calsina Carré</b><small>Comité de empresa</small></span>
     </a>
@@ -46,7 +46,7 @@
   <nav class="pestanas" aria-label="Apartados">
     <div class="pestanas-fila" id="pestanas">
       <a href="#actualidad" data-vista="actualidad">Info general</a>
-      <a href="#avisos" data-vista="avisos">Avisos<span class="cuenta" data-cuenta="avisos" hidden></span></a>
+      <a href="#avisos" data-vista="avisos">Avisos<span class="cuenta" data-cuenta="avisos" aria-hidden="true" hidden></span><span class="sr-only" data-cuenta-sr="avisos"></span></a>
       <a href="#reuniones" data-vista="reuniones">Calendario de reuniones</a>
       <a href="#actas" data-vista="actas">Actas</a>
       <a href="#buzon" data-vista="buzon">Sugerencias y preguntas</a>
@@ -55,7 +55,7 @@
   </nav>
 </header>
 
-<div id="sin-red" class="sin-red" hidden></div>
+<div id="sin-red" class="sin-red" role="status" hidden></div>
 <div id="instalar" class="instalar" hidden>
   <div><b>Instala la app</b><small id="instalar-txt">Tenla siempre a mano en tu móvil, como una aplicación más.</small></div>
   <button type="button" id="b-instalar" class="btn">Instalar</button>
@@ -71,7 +71,7 @@
         <div class="hero-txt">
           <p class="hero-eyebrow">Comité de empresa · Calsina Carré</p>
           <h1 class="hero-titulo">Tu comité de empresa, siempre a mano</h1>
-          <p class="hero-sub" id="bienvenida"></p>
+          <p class="hero-sub cargando" id="bienvenida"></p>
           <div class="hero-btns">
             <a class="btn hero-btn" href="#avisos"><span class="ic" data-ic="megafono"></span>Ver los avisos</a>
             <a class="btn hero-btn-sec" href="#buzon"><span class="ic" data-ic="mensaje"></span>Buzón anónimo</a>
@@ -95,6 +95,7 @@
           <div id="urgente"></div>
           <div id="proxima"></div>
           <div id="consultas"></div>
+          <p id="consultas-estado" class="sr-only" role="status"></p>
           <div class="tarjeta contacto-card">
             <span class="ic" data-ic="personas"></span>
             <h2>¿Necesitas al comité?</h2>
@@ -125,7 +126,7 @@
       <div id="push-caja" class="tarjeta push-caja" hidden>
         <div class="push-cab"><span class="ic" data-ic="campana"></span><div><h2>Recibe los avisos en tu móvil</h2><p id="push-txt">Te llega una notificación cada vez que el comité publica algo, aunque tengas la web cerrada.</p></div></div>
         <div id="push-off">
-          <label class="acepto"><input type="checkbox" id="push-acepto"><span>Acepto que este móvil quede apuntado para recibir los avisos. Solo se guarda una dirección técnica anónima (no tu nombre ni tu número) y puedo quitarlo cuando quiera.</span></label>
+          <label class="acepto"><input type="checkbox" id="push-acepto"><span>Acepto que este móvil quede apuntado para recibir los avisos. Solo se guarda una dirección técnica anónima (no tu nombre ni tu número) y puedo quitarlo cuando quiera. Más información en «<a href="#privacidad">Privacidad</a>».</span></label>
           <button type="button" class="btn grande" id="push-activar"><span class="ic" data-ic="campana"></span>Activar los avisos</button>
         </div>
         <div id="push-on" hidden>
@@ -208,7 +209,7 @@
     <div class="cab-apartado">
       <div class="cab-apartado-in">
         <span class="ic" data-ic="mensaje"></span>
-        <div><h1>Sugerencias y preguntas</h1><p>Escríbenos lo que quieras proponer o preguntar. Es anónimo: no guardamos tu nombre, ni tu teléfono, ni desde dónde lo envías.</p></div>
+        <div><h1>Sugerencias y preguntas</h1><p>Escríbenos lo que quieras proponer o preguntar. Es anónimo: el comité no guarda tu nombre, ni tu teléfono, ni desde dónde lo envías.</p></div>
       </div>
     </div>
     <div class="caja">
@@ -221,12 +222,12 @@
         <label for="buzon-texto" class="etq-campo">Tu mensaje</label>
         <textarea id="buzon-texto" rows="5" maxlength="1000" placeholder="Escribe aquí. No pongas tu nombre, email ni teléfono." required></textarea>
         <div class="cuenta-letras"><span id="buzon-cuenta">0</span> / 1000</div>
-        <label class="acepto"><input type="checkbox" id="buzon-acepto"><span>Entiendo que el mensaje es anónimo y que el comité puede publicar la respuesta en «Preguntas frecuentes» sin decir quién preguntó.</span></label>
+        <label class="acepto"><input type="checkbox" id="buzon-acepto"><span>Entiendo que el mensaje es anónimo, que no debo poner datos de otras personas y que el comité puede publicar la respuesta en «Preguntas frecuentes» sin decir quién preguntó.</span></label>
         <button type="submit" class="btn grande" id="buzon-enviar">Enviar al comité</button>
         <p id="buzon-estado" class="estado" role="status"></p>
-        <p class="nota-buzon">Si quieres seguir en el anonimato, no pongas nada que te identifique (ni siquiera tu puesto o tu turno). Este buzón no es el canal oficial de denuncias de la Ley 2/2023 (protección de quien informa de irregularidades).</p>
+        <p class="nota-buzon">Si quieres seguir en el anonimato, no pongas nada que te identifique (ni siquiera tu puesto o tu turno). Este buzón no es el canal de denuncias de la Ley 2/2023 (protección de quien informa de irregularidades): para eso está el canal interno de la empresa o, fuera de ella, la Autoridad Independiente de Protección del Informante (<a href="https://www.proteccioninformante.gob.es/" target="_blank" rel="noopener">proteccioninformante.gob.es</a>) y, si el asunto es solo de Cataluña, la Oficina Antifrau de Catalunya (<a href="https://www.antifrau.cat/" target="_blank" rel="noopener">antifrau.cat</a>). Más información en «<a href="#privacidad">Privacidad</a>».</p>
       </form>
-      <h2 class="titulo-bloque">Preguntas frecuentes</h2>
+      <h2 class="titulo-bloque" id="preguntas" tabindex="-1">Preguntas frecuentes</h2>
       <div id="lista-preguntas" class="faq"></div>
     </div>
   </section>
@@ -326,7 +327,7 @@
 </main>
 
 <div id="aviso-privacidad" class="aviso-privacidad" role="region" aria-label="Aviso de privacidad" hidden>
-  <p><b>Tu privacidad:</b> esta web no usa cookies ni te pide que te registres. Tus preferencias se guardan solo en tu móvil. Solo recoge lo que envíes al buzón y, si los activas, los avisos al móvil.</p>
+  <p><b>Tu privacidad:</b> esta web no usa cookies ni te pide que te registres. Guarda tus preferencias solo en tu móvil y cuenta las visitas sin saber quién eres. Solo recibe lo que envíes al buzón y, si los activas, los avisos al móvil.</p>
   <div><a class="btn-linea" href="#cookies">Más información</a><button type="button" class="btn" id="b-aviso-ok">Entendido</button></div>
 </div>
 
@@ -342,17 +343,18 @@
       <div class="pie-logo"><img src="img/logo-96.webp" alt="" width="48" height="48"><div><b>Calsina Carré</b><small>Comité de empresa</small></div></div>
       <p>La web del comité de empresa para toda la plantilla. Gratis, sin publicidad y sin registrarte.</p>
     </div>
-    <nav class="pie-col" aria-label="Apartados">
+    <nav class="pie-col" aria-label="Apartados de la web">
       <h2>Apartados</h2>
       <a href="#actualidad">Info general</a><a href="#avisos">Avisos</a><a href="#reuniones">Calendario de reuniones</a><a href="#actas">Actas</a><a href="#documentos">Documentos útiles</a>
     </nav>
     <nav class="pie-col" aria-label="El comité">
       <h2>El comité</h2>
-      <a href="#nosotros">Quiénes somos</a><a href="#buzon">Buzón anónimo</a><a href="#buzon">Preguntas frecuentes</a><a href="#avisos-movil">Avisos al móvil</a><a href="#buscar">Buscar</a>
+      <a href="#nosotros">Quiénes somos</a><a href="#buzon">Buzón anónimo</a><a href="#preguntas">Preguntas frecuentes</a><a href="#avisos-movil">Avisos al móvil</a><a href="mailto:ssccoo.calsinacarre@gmail.com">Escribir al comité (email)</a><a href="#buscar">Buscar</a>
     </nav>
   </div>
   <div class="pie-legal">
     <span>© <span id="pie-ano">2026</span> Comité de Empresa de Calsina Carré</span>
+    <span>Web del comité de empresa. No es una web oficial de Calsina Carré.</span>
     <span><a href="#aviso-legal">Aviso legal</a> · <a href="#privacidad">Privacidad</a> · <a href="#cookies">Cookies</a> · <a href="admin.html">Acceso del comité</a></span>
   </div>
 </footer>

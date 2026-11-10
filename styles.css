@@ -71,7 +71,9 @@ img { max-width: 100%; }
 .marca { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; min-width: 0; flex: 1; }
 .marca-logo { display: flex; flex: none; }
 .marca-logo img { width: 48px; height: 48px; border-radius: 12px; display: block; box-shadow: 0 0 0 1px rgba(0, 198, 255, .35); }
-.marca-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.1; }
+.marca-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.1; overflow: hidden; }
+/* v23: si no cabe, se corta con «…» en vez de meterse debajo de los botones */
+.marca-txt b, .marca-txt small { overflow: hidden; text-overflow: ellipsis; }
 .marca-txt b { font-family: "Montserrat", "Inter", sans-serif; font-weight: 800; font-size: 1.02rem; text-transform: uppercase; letter-spacing: .02em; }
 .marca-txt small { font-size: .72rem; text-transform: uppercase; letter-spacing: .22em; color: var(--celeste); margin-top: 3px; }
 .cab-botones { display: flex; gap: 8px; }
@@ -88,6 +90,12 @@ img { max-width: 100%; }
   mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 24px), transparent);
 }
 .pestanas-fila::-webkit-scrollbar { display: none; }
+/* v23: en el PC la fila no se podía mover con el ratón y «Nosotros» (y las secciones nuevas) quedaban escondidas:
+   si no caben, pasan a una segunda fila */
+@media (min-width: 1024px) {
+  .pestanas-fila { flex-wrap: wrap; overflow: visible; row-gap: 0; mask-image: none; }
+  .pestanas-fila a:last-child { margin-right: 0; }
+}
 .pestanas-fila a {
   flex: none; position: relative; color: rgba(255, 255, 255, .72); text-decoration: none;
   font-family: "Montserrat", "Inter", sans-serif; font-weight: 700; font-size: .8rem;
@@ -96,7 +104,7 @@ img { max-width: 100%; }
 .pestanas-fila a:last-child { margin-right: 14px; }
 .pestanas-fila a.activa { color: #fff; }
 .pestanas-fila a.activa::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: 0; height: 4px; border-radius: 4px 4px 0 0; background: var(--celeste); }
-.cuenta { display: inline-grid; place-items: center; min-width: 1.35em; height: 1.35em; margin-left: 5px; padding: 0 5px; border-radius: 99px; background: #e53935; color: #fff; font-size: .75rem; vertical-align: 1px; }
+.cuenta { display: inline-grid; place-items: center; min-width: 1.35em; height: 1.35em; margin-left: 5px; padding: 0 5px; border-radius: 99px; background: #c62828; color: #fff; font-size: .75rem; vertical-align: 1px; } /* v23: #c62828 (5,6:1 con blanco; #e53935 daba 4,2:1) */
 
 /* ---------- Bandas ---------- */
 .sin-red, .instalar, .banda-version {
@@ -144,7 +152,7 @@ main { outline: none; }
 .vacio-caja b { font-family: "Montserrat", sans-serif; font-size: 1rem; color: var(--azul-osc); }
 .vacio-caja p { margin: 0; max-width: 32em; color: var(--suave); font-size: .92rem; }
 .vacio-caja .btn-linea { margin-top: 6px; }
-.esq { height: 140px; border-radius: var(--radio); background: linear-gradient(90deg, var(--tarjeta), var(--azul-claro), var(--tarjeta)); background-size: 200% 100%; animation: esq 1.2s infinite linear; }
+.esq { height: 190px; border-radius: var(--radio); background: linear-gradient(90deg, var(--tarjeta), var(--azul-claro), var(--tarjeta)); background-size: 200% 100%; animation: esq 1.2s infinite linear; }
 @keyframes esq { to { background-position: -200% 0; } }
 
 /* ---------- Portada ---------- */
@@ -178,10 +186,13 @@ main { outline: none; }
   font-family: "Montserrat", sans-serif; font-weight: 800; font-size: .8rem; line-height: 1.35; letter-spacing: .06em; text-transform: uppercase; color: #BFF1FF; text-shadow: 0 1px 6px rgba(0, 0, 0, .45); }
 .hero-titulo { margin: 0; font-family: "Montserrat", sans-serif; font-weight: 800; font-size: 1.75rem; line-height: 1.12; letter-spacing: -.01em; text-wrap: balance; }
 .hero-sub { margin: 12px 0 0; font-size: 1rem; line-height: 1.55; color: rgba(255, 255, 255, .82); max-width: 34em; }
+.hero-sub.cargando { min-height: 3.1em; } /* v23: el hueco de 2 líneas mientras llega el texto, para que los botones no salten */
 .hero-btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
 .hero-btns .btn { min-height: 50px; }
 .hero-btns .ic { display: inline-grid; }
-.hero-btn { background: linear-gradient(135deg, #00C6FF, #0E5FAE); color: #fff !important; box-shadow: 0 6px 20px rgba(0, 198, 255, .3); }
+[data-ic]:empty { display: inline-block; min-width: 1.15em; min-height: 1.15em; } /* v23: el hueco del icono antes de que app.js lo pinte, para que los botones no salten */
+/* v23: degradado algo más oscuro (antes, en la parte cian, el blanco daba 2:1) */
+.hero-btn { background: linear-gradient(135deg, #0B7FC0, #0E5FAE); color: #fff !important; box-shadow: 0 6px 20px rgba(0, 198, 255, .3); }
 .hero-btn-sec { background: rgba(255, 255, 255, .08); color: #fff !important; border: 1px solid rgba(255, 255, 255, .3); }
 @media (min-width: 760px) {
   .hero { padding: 36px 24px 84px; }
@@ -224,7 +235,7 @@ main { outline: none; }
   .contacto-card > .ic { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: rgba(0, 198, 255, .15); color: var(--celeste); }
   .contacto-card h2 { margin: 6px 0 0; font-family: "Montserrat", sans-serif; font-size: 1.1rem; }
   .contacto-card p { margin: 0; color: rgba(255, 255, 255, .8); font-size: .92rem; }
-  .contacto-card .btn { background: linear-gradient(135deg, #00C6FF, #0E5FAE); color: #fff; }
+  .contacto-card .btn { background: linear-gradient(135deg, #0B7FC0, #0E5FAE); color: #fff !important; }
   .contacto-card .btn-linea { color: #fff; border-color: rgba(255, 255, 255, .3); }
 }
 
@@ -285,7 +296,7 @@ main { outline: none; }
 .galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 6px; margin-top: 10px; }
 .galeria.una { grid-template-columns: 1fr; }
 .galeria img { width: 100%; height: 100%; max-height: 360px; object-fit: cover; border-radius: 10px; display: block; aspect-ratio: 4 / 3; }
-.galeria.una img { object-fit: contain; aspect-ratio: auto; background: var(--azul-claro); }
+.galeria.una img { object-fit: contain; aspect-ratio: 4 / 3; height: auto; background: var(--azul-claro); } /* v23: con su hueco desde el principio (antes la página saltaba al cargar la foto) */
 .adjuntos { display: grid; gap: 8px; margin-top: 10px; }
 .adjunto { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 10px; background: var(--azul-claro); text-decoration: none; color: var(--texto); }
 .adjunto .ico { color: var(--azul); width: 26px; height: 26px; }
@@ -341,7 +352,7 @@ button.dia-mes { border: 0; font: inherit; cursor: pointer; width: 100%; padding
 @media (min-width: 600px) { .ano-rejilla { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 10px; } }
 @media (min-width: 1100px) { .ano-rejilla { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px 12px; } }
 .ano-rejilla[hidden], #mes-cuerpo[hidden] { display: none; }
-.ano-mes { min-width: 0; }
+.ano-mes { min-width: 0; cursor: pointer; } /* v23: se toca el mes entero (los días ya no son botones) */
 .ano-mes .mes-dias { margin: 2px 0 0; font-size: .55rem; }
 .ano-mes .mes-dias, .ano-mes .mes-rejilla { gap: 1px; }
 .ano-mes .dia-mes { aspect-ratio: auto; height: 1.3em; font-size: .6rem; line-height: 1; border-radius: 3px; overflow: hidden; }
@@ -446,11 +457,16 @@ textarea, .campo input, .campo select, .campo textarea {
 .novedades.al-dia .ico { color: var(--verde); }
 .nov-enlaces { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 6px; }
 .nov-enlaces a { font-weight: 700; }
-.accesos { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: -44px 0 6px; }
-@media (min-width: 760px) { .accesos { grid-template-columns: repeat(6, 1fr); gap: 12px; margin-top: -52px; } }
+/* v23: minmax(0, 1fr): con letra muy grande a 320 px las tarjetas se salían por la derecha */
+.accesos { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: -44px 0 6px; }
+@media (min-width: 760px) { .accesos { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-top: -52px; } }
+/* v23: con una sección propia (7 accesos) van todos en una fila; con dos (8), en dos filas de 4 (antes quedaba uno solo abajo) */
+@media (min-width: 900px) { .accesos:has(.accesos-extra > a:only-child) { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
+@media (min-width: 760px) { .accesos:has(.accesos-extra > a:nth-child(2):last-child) { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .accesos a {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 92px; padding: 12px 4px; border-radius: var(--radio);
   background: var(--tarjeta); border: 1px solid var(--borde); color: var(--texto); text-decoration: none; font-weight: 700; font-size: .8rem; text-align: center;
+  overflow-wrap: anywhere; hyphens: auto; min-width: 0;
   box-shadow: 0 8px 24px rgba(11, 30, 60, .12); transition: transform .15s ease, box-shadow .15s ease;
 }
 .accesos a:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(11, 30, 60, .18); }
@@ -530,6 +546,15 @@ textarea, .campo input, .campo select, .campo textarea {
   .cabecera:not(.cab-panel) .marca-txt b { font-size: .86rem; white-space: nowrap; }
   .cabecera:not(.cab-panel) .marca-txt small { font-size: .62rem; letter-spacing: .16em; white-space: nowrap; }
 }
+/* v23: a 320 px el nombre se metía debajo de la lupa; con letra grande en el móvil, la marca no crece con la letra */
+@media (max-width: 359px) {
+  .cabecera:not(.cab-panel) .marca-txt b { font-size: .78rem; }
+  .cabecera:not(.cab-panel) .marca-txt small { letter-spacing: .08em; }
+}
+@media (max-width: 399px) {
+  :root[data-letra] .cabecera:not(.cab-panel) .marca-txt b { font-size: 14px; }
+  :root[data-letra] .cabecera:not(.cab-panel) .marca-txt small { font-size: 10px; letter-spacing: .08em; }
+}
 
 /* Calendario de reuniones en PC: el mes a la izquierda y las próximas al lado */
 @media (min-width: 900px) {
@@ -577,7 +602,7 @@ img.inicial.foto { object-fit: cover; padding: 0; box-shadow: 0 0 0 2px var(--ta
 .aviso-privacidad b { color: #fff; }
 .aviso-privacidad > div { display: flex; gap: 8px; }
 .aviso-privacidad .btn-linea { color: #fff; border-color: rgba(255, 255, 255, .35); }
-.aviso-privacidad .btn { background: linear-gradient(135deg, #00C6FF, #0E5FAE); color: #fff; min-height: 42px; }
+.aviso-privacidad .btn { background: linear-gradient(135deg, #0B7FC0, #0E5FAE); color: #fff !important; min-height: 42px; }
 @media (min-width: 980px) { .aviso-privacidad { left: 50%; right: auto; width: 720px; transform: translateX(-50%); } }
 .destacado.con-senal { padding-bottom: 22px; }
 .destacado.con-senal::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 7px; background: linear-gradient(90deg, #ffcc33 0 16px, transparent 16px 30px) 8px 50% / 30px 2px repeat-x, #2a3442; }
@@ -612,3 +637,46 @@ html.visor-abierto, html.visor-abierto body { overflow: hidden; }
 .visor-pag { flex: none; max-width: 100%; height: auto; background: #fff; border-radius: 4px; box-shadow: 0 2px 12px rgba(0, 0, 0, .5); }
 .visor-msg { margin: auto; color: #fff; text-align: center; padding: 20px; font-size: 1.05rem; }
 .visor-msg a { color: #00C6FF; }
+
+/* v23: enlace directo a algo que ya no está */
+.aviso-falta { display: flex; gap: 10px; align-items: center; margin: 4px 0 14px; padding: 12px 14px; border-radius: 12px; background: #fff4d6; color: #5b4300; font-weight: 600; }
+/* Visor: «Abrir aparte» en los PDF */
+.visor-aparte { display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, .4); color: #fff; text-decoration: none; font-weight: 700; flex: none; }
+@media (max-width: 400px) { .visor-aparte span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } .visor-aparte { padding: 0 12px; } }
+/* v23: pantallas muy bajas (zoom al 400 % o el móvil tumbado): la cabecera y la barra de abajo dejan de ir fijas,
+   porque tapaban casi toda la pantalla */
+@media (max-height: 480px) {
+  .cabecera { position: static; }
+  .barra-fija { position: static; transform: none; width: auto; border-radius: 0; }
+  .pie-legal { padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+  .aviso-privacidad { bottom: calc(12px + env(safe-area-inset-bottom)); }
+  :target, .tarjeta[id] { scroll-margin-top: 12px; }
+  .col-lateral { position: static; }
+}
+
+/* ---------- v23: comodidad (zonas táctiles de 44 px, sin cambiar el diseño) ---------- */
+.btn-linea { min-height: 44px; }
+.chip { min-height: 44px; }
+.cab-btn { position: relative; }
+.cab-btn::after { content: ""; position: absolute; inset: -3px; } /* el botón se ve igual, pero se acierta mejor con el dedo */
+.pie-col a, .pie-legal a { display: inline-flex; align-items: center; min-height: 44px; padding: 0; }
+.pie-legal { row-gap: 0; }
+.pie-col { gap: 0; }
+.acepto { cursor: pointer; }
+.acepto input { width: 24px; height: 24px; margin-top: 0; }
+.btn, .btn-linea, .chip, .cab-btn { transition: background-color .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease; }
+@media (prefers-reduced-motion: no-preference) {
+  .vista:not([hidden]) { animation: vista-entra .2s ease-out; }
+  @keyframes vista-entra { from { opacity: .4; } to { opacity: 1; } }
+}
+.meta .actualizado { color: var(--texto); font-weight: 600; } /* v23: «Actualizado el …» bien visible */
+/* v23 (auditoría visual): a 360 px con letra normal ponía «Contac…»; con menos relleno se lee entero */
+@media (max-width: 400px) { .barra-fija { gap: 6px; } .barra-fija .btn { padding-left: 10px; padding-right: 10px; } }
+/* v23 (auditoría visual): al cambiar de vista el foco va a <main> (para el lector de pantalla) y su borde de foco
+   salía como una segunda línea azul antes del pie. <main> no se puede tocar ni se enfoca con Tab: sin borde. */
+main:focus, main:focus-visible { outline: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .btn:active, .btn-linea:active, .chip:active { transform: scale(.98); transition: transform 80ms ease; }
+}
+.legal-nav a { display: inline-flex; align-items: center; min-height: 44px; }
+.legal-nav { row-gap: 0; }

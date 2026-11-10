@@ -19,12 +19,15 @@ window.urlSegura = (u) => {
   return /^(https?:|mailto:|tel:)/i.test(s) ? s : "#";
 };
 
-// Texto sencillo a HTML: párrafos, listas con "- ", **negrita** y enlaces
-window.textoHTML = (s) => {
+// Texto sencillo a HTML: párrafos, listas con "- ", **negrita** y enlaces.
+// v23: la puntuación del final («.», «,», «)», comillas…) se queda fuera del enlace.
+// Con { enlaces: false } las direcciones salen como texto (para lo que escribe gente anónima, como el buzón).
+window.textoHTML = (s, { enlaces = true } = {}) => {
   if (!String(s ?? "").trim()) return "";
-  const linea = (t) => esc(t)
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  const linea = (t) => {
+    const h = esc(t).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    return enlaces ? h.replace(/(https?:\/\/[^\s<]+?)((?:[.,;:!?)\]]|&quot;|&#39;)*)(?=\s|<|$)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>$2') : h;
+  };
   const esLista = (l) => /^\s*[-•*]\s+/.test(l);
   return String(s ?? "").trim().split(/\n\s*\n/).map((bloque) => {
     const out = []; let lista = [], texto = [];
@@ -43,7 +46,16 @@ window.fechaSemana = (iso) => {
   const t = fechaDia(iso).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
   return t.charAt(0).toUpperCase() + t.slice(1);
 };
-window.hoyISO = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+// Día (AAAA-MM-DD) en la hora de Madrid, como la tarea «notificar» del servidor, aunque el móvil tenga otra zona (v23)
+window.diaMadrid = (d = new Date()) => {
+  try { return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" }).format(d); }
+  catch (_) { return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); }
+};
+window.hoyISO = () => diaMadrid();
+// Sin acentos y en minúsculas, para buscar (v23: en un solo sitio; antes estaba repetida)
+window.sinAcentos = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+// iPhone y iPad (el iPad moderno se presenta como un Mac con pantalla táctil)
+window.esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 window.esNuevo = (d) => d && Date.now() - new Date(d) < 7 * 86400000;
 window.horario = (r) => r.hora ? (r.hora + (r.hora_fin ? " a " + r.hora_fin : "")) : "";
 
@@ -58,12 +70,14 @@ window.tipoTxt = (a) => {
   if (/excel|spreadsheet|csv/.test(t)) return "Excel";
   return e || "Archivo";
 };
-window.adjuntosHTML = (lista) => {
+// titulo (v23): el de la tarjeta, para que el visor diga «Foto 1 de 2: …» y el lector de pantalla sepa qué foto es
+window.adjuntosHTML = (lista, titulo = "") => {
   lista = lista || [];
   if (!lista.length) return "";
   const fotos = lista.filter(esImagen), docs = lista.filter((a) => !esImagen(a));
-  return (fotos.length ? `<div class="galeria${fotos.length === 1 ? " una" : ""}">${fotos.map((f) =>
-      `<a href="${esc(urlSegura(f.url))}" target="_blank" rel="noopener" aria-label="Ver la foto en grande"><img src="${esc(urlSegura(f.url))}" alt="" loading="lazy"></a>`).join("")}</div>` : "")
+  const nombreFoto = (i) => (fotos.length > 1 ? `Foto ${i + 1} de ${fotos.length}` : "Foto") + (titulo ? ": " + titulo : "");
+  return (fotos.length ? `<div class="galeria${fotos.length === 1 ? " una" : ""}">${fotos.map((f, i) =>
+      `<a href="${esc(urlSegura(f.url))}" target="_blank" rel="noopener" data-titulo="${esc(nombreFoto(i))}" aria-label="Ver en grande: ${esc(nombreFoto(i))}"><img src="${esc(urlSegura(f.url))}" alt="" loading="lazy" decoding="async" width="400" height="300"></a>`).join("")}</div>` : "")
     + (docs.length ? `<div class="adjuntos">${docs.map((a) =>
       `<a class="adjunto" href="${esc(urlSegura(a.url))}" target="_blank" rel="noopener"${a.tipo === "application/pdf" ? ` data-visor="pdf" data-titulo="${esc(a.nombre || "PDF")}"` : ""}>${icono("documento")}
         <span><b>${esc(a.nombre || "Archivo")}</b><small>${tipoTxt(a)}${a.tamano ? " · " + tamanoTxt(a.tamano) : ""}</small></span></a>`).join("")}</div>` : "");
@@ -159,19 +173,32 @@ TEMA.aplica();
 window.descargaICS = (r) => {
   const d = String(r.fecha).replace(/-/g, "");
   const hm = (h) => (String(h || "").match(/^(\d{1,2}):(\d{2})/) || []).slice(1).map((x) => x.padStart(2, "0")).join("") + "00";
-  const limpia = (t) => String(t || "").replace(/[\\;,]/g, (c) => "\\" + c).replace(/\n/g, "\\n");
+  const limpia = (t) => String(t || "").replace(/[\\;,]/g, (c) => "\\" + c).replace(/\r?\n/g, "\\n");
   let ini, fin;
   if (r.hora && /^\d{1,2}:\d{2}/.test(r.hora)) {
     ini = `DTSTART;TZID=Europe/Madrid:${d}T${hm(r.hora)}`;
-    fin = r.hora_fin && /^\d{1,2}:\d{2}/.test(r.hora_fin) ? `DTEND;TZID=Europe/Madrid:${d}T${hm(r.hora_fin)}` : "";
+    // v23: sin hora de fin, una hora (algunos calendarios la creaban de 0 minutos)
+    let hf = r.hora_fin && /^\d{1,2}:\d{2}/.test(r.hora_fin) ? hm(r.hora_fin) : null, df = d;
+    if (!hf) { const [h, m] = hm(r.hora).match(/\d\d/g).map(Number), t = fechaDia(r.fecha); t.setHours(h + 1, m, 0, 0);
+      df = `${t.getFullYear()}${String(t.getMonth() + 1).padStart(2, "0")}${String(t.getDate()).padStart(2, "0")}`; hf = String(t.getHours()).padStart(2, "0") + String(t.getMinutes()).padStart(2, "0") + "00"; }
+    fin = `DTEND;TZID=Europe/Madrid:${df}T${hf}`;
   } else {
     const s = fechaDia(r.fecha); s.setDate(s.getDate() + 1);
     ini = `DTSTART;VALUE=DATE:${d}`; fin = `DTEND;VALUE=DATE:${s.toISOString().slice(0, 10).replace(/-/g, "")}`;
   }
-  const txt = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Comite Calsina Carre//ES", "BEGIN:VEVENT",
+  // Zona horaria de Madrid escrita dentro (la norma la pide cuando se usa TZID)
+  const ZONA = ["BEGIN:VTIMEZONE", "TZID:Europe/Madrid",
+    "BEGIN:DAYLIGHT", "TZOFFSETFROM:+0100", "TZOFFSETTO:+0200", "TZNAME:CEST", "DTSTART:19700329T020000", "RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU", "END:DAYLIGHT",
+    "BEGIN:STANDARD", "TZOFFSETFROM:+0200", "TZOFFSETTO:+0100", "TZNAME:CET", "DTSTART:19701025T030000", "RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU", "END:STANDARD",
+    "END:VTIMEZONE"];
+  // Líneas de 75 bytes como mucho: las largas siguen en la siguiente con un espacio delante (sin partir una letra)
+  const dobla = (l) => { const out = []; let cur = "", n = 0;
+    for (const ch of l) { const b = new TextEncoder().encode(ch).length; if (n + b > (out.length ? 74 : 75)) { out.push(cur); cur = ""; n = 0; } cur += ch; n += b; }
+    out.push(cur); return out.join("\r\n "); };
+  const txt = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Comite Calsina Carre//ES", "CALSCALE:GREGORIAN", ...(r.hora ? ZONA : []), "BEGIN:VEVENT",
     `UID:reunion-${r.id}@comite-calsina-carre`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`,
     ini, fin, `SUMMARY:${limpia(r.titulo)}`, r.lugar ? `LOCATION:${limpia(r.lugar)}` : "", r.descripcion ? `DESCRIPTION:${limpia(r.descripcion)}` : "",
-    "END:VEVENT", "END:VCALENDAR"].filter(Boolean).join("\r\n");
+    "END:VEVENT", "END:VCALENDAR"].filter(Boolean).map(dobla).join("\r\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([txt], { type: "text/calendar" }));
   a.download = "reunion-comite.ics";
@@ -197,7 +224,7 @@ window.registraSW = () => {
   navigator.serviceWorker.addEventListener("controllerchange", () => {
     if (!habia || document.getElementById("banda-version")) return;
     const b = document.createElement("div");
-    b.id = "banda-version"; b.className = "banda-version";
+    b.id = "banda-version"; b.className = "banda-version"; b.setAttribute("role", "status");
     b.innerHTML = `<span>Hay una versión nueva</span><button type="button" class="btn claro">Actualizar</button>`;
     b.querySelector("button").addEventListener("click", () => location.reload());
     document.body.appendChild(b);

@@ -2,6 +2,10 @@
 // para que el panel enseñe exactamente lo que verán los trabajadores.
 (function () {
   const nuevo = (d) => esNuevo(d) ? '<span class="etq nuevo">Nuevo</span>' : "";
+  // v23 (lo pidió Lorena, 10/11/2026): «Actualizado el …» bien visible en avisos y actas, con la fecha de
+  // actualizado (o la de creado si no hay). En los avisos solo sale si es otro día que la fecha del aviso.
+  const dia = (d) => { try { const x = typeof d === "string" && d.length === 10 ? d : diaMadrid(new Date(d)); return /^\d{4}-\d{2}-\d{2}$/.test(x) ? x : ""; } catch (_) { return ""; } };
+  const actualizadoEl = (x, distintoDe) => { const f = dia(x.actualizado || x.creado || ""); return f && f !== distintoDe ? `<span class="actualizado">Actualizado el ${esc(fechaLarga(f))}</span>` : ""; };
   const botonCompartir = (ancla, titulo, texto) =>
     `<button type="button" class="btn-linea" data-compartir="${ancla}" data-t="${esc(titulo)}" data-x="${esc(texto)}">${icono("compartir")}Compartir</button>`;
 
@@ -11,7 +15,7 @@
       <div class="meta">${nuevo(p.creado)}<span>${esc(fechaLarga(p.fecha || hoyISO()))}</span></div>
       <h3>${esc(p.titulo || "Sin título")}</h3>
       <div class="texto">${textoHTML(p.contenido)}</div>
-      ${adjuntosHTML(p.adjuntos)}
+      ${adjuntosHTML(p.adjuntos, p.titulo)}
       <div class="acciones">${botonCompartir("publicacion-" + p.id, p.titulo, p.contenido)}</div>
     </article>`;
   const seccion = (a, n = null) => `
@@ -23,7 +27,8 @@
 
   // «Leer más» (petición n.º 4 del panel): el texto largo de anuncios y avisos sale plegado (unas 5 líneas)
   // y se despliega con el botón. Si el texto cabe, el botón no sale (lo decide revisaPlegables al pintarse).
-  const plegable = (t) => `<div class="texto plegable">${textoHTML(t)}</div><button type="button" class="leer-mas" aria-expanded="false" hidden>Leer más</button>`;
+  // clave: el id de la tarjeta (aviso-N, noticia-N), para que el botón diga qué texto despliega (aria-controls)
+  const plegable = (t, clave) => `<div class="texto plegable" id="txt-${esc(clave)}">${textoHTML(t)}</div><button type="button" class="leer-mas" aria-expanded="false" aria-controls="txt-${esc(clave)}" hidden>Leer más</button>`;
   const revisaPlegables = () => document.querySelectorAll(".texto.plegable").forEach((d) => {
     const b = d.nextElementSibling; if (!b || !b.classList.contains("leer-mas")) return;
     if (!d.getClientRects().length) return; // pestaña oculta: se mira al enseñarla (hashchange)
@@ -34,27 +39,34 @@
   });
   let espera = 0;
   const pronto = () => { clearTimeout(espera); espera = setTimeout(revisaPlegables, 60); };
-  new MutationObserver(pronto).observe(document.documentElement, { childList: true, subtree: true });
+  // v23: solo se vuelve a medir cuando lo que se ha pintado trae algún texto plegable (antes, con cada cambio de la página)
+  const traePlegable = (n) => n.nodeType === 1 && (n.classList.contains("plegable") || !!n.querySelector?.(".plegable"));
+  new MutationObserver((ms) => { if (ms.some((m) => [...m.addedNodes].some(traePlegable))) pronto(); })
+    .observe(document.documentElement, { childList: true, subtree: true });
   window.addEventListener("resize", pronto);
   window.addEventListener("hashchange", pronto);
+  const ponAbierto = (d, abre) => {
+    const b = d.nextElementSibling; d.classList.toggle("abierto", abre);
+    if (b && b.classList.contains("leer-mas")) { b.setAttribute("aria-expanded", String(abre)); b.textContent = abre ? "Leer menos" : "Leer más"; }
+  };
   document.addEventListener("click", (ev) => {
     const b = ev.target.closest(".leer-mas"); if (!b) return;
     const d = b.previousElementSibling, abre = !d.classList.contains("abierto");
-    d.classList.toggle("abierto", abre); b.setAttribute("aria-expanded", String(abre)); b.textContent = abre ? "Leer menos" : "Leer más";
+    ponAbierto(d, abre);
     if (!abre) b.closest("article")?.scrollIntoView({ block: "nearest" });
   });
-  // Si se entra con un enlace directo a un aviso o anuncio (#aviso-N, #noticia-N), sale ya desplegado
-  const abreDelEnlace = () => { const m = /^#((aviso|noticia)-\d+)$/.exec(location.hash); const d = m && document.getElementById(m[1])?.querySelector(".texto.plegable");
-    if (d && !d.classList.contains("abierto")) d.nextElementSibling?.click(); };
-  window.addEventListener("hashchange", () => setTimeout(abreDelEnlace, 150));
-  window.addEventListener("load", () => setTimeout(abreDelEnlace, 900));
+  // Con el teclado, si se llega a un enlace que está dentro de la parte plegada, el texto se despliega (v23)
+  document.addEventListener("focusin", (ev) => { const d = ev.target.closest?.(".texto.plegable:not(.abierto):not(.corto)"); if (d) ponAbierto(d, true); });
+  // v23: el enlace directo (#aviso-N, #noticia-N) lo despliega app.js (irA) cuando ya ha pintado los datos,
+  // y al volver a pintar se conservan los que la persona había abierto
+  const abrePlegable = (tarjeta) => { const d = tarjeta?.querySelector(".texto.plegable"); if (d && !d.classList.contains("abierto")) ponAbierto(d, true); };
 
   const noticia = (n) => `
     <article class="tarjeta" id="noticia-${n.id}">
       <div class="meta">${n.categoria && n.categoria !== "General" ? `<span class="etq">${esc(n.categoria)}</span>` : ""}${nuevo(n.creado)}<span>${esc(fechaLarga(n.fecha || hoyISO()))}</span></div>
       <h3>${esc(n.titulo || "Sin título")}</h3>
-      ${plegable(n.contenido)}
-      ${adjuntosHTML(n.adjuntos)}
+      ${plegable(n.contenido, "noticia-" + n.id)}
+      ${adjuntosHTML(n.adjuntos, n.titulo)}
       <div class="acciones">${botonCompartir("noticia-" + n.id, n.titulo, n.contenido)}</div>
     </article>`;
 
@@ -78,10 +90,10 @@
       <div class="aviso-cuerpo">
         ${senal(rojo)}
         <div class="aviso-txt">
-          <div class="meta">${hoy ? '<span class="etq rojo">Destacado hoy</span>' : a.urgente ? '<span class="etq rojo">Urgente</span>' : '<span class="etq azul">Aviso</span>'}${nuevo(a.fecha)}<span>${esc(fechaLarga(a.fecha || new Date()))}</span></div>
+          <div class="meta">${hoy ? '<span class="etq rojo">Destacado hoy</span>' : a.urgente ? '<span class="etq rojo">Urgente</span>' : '<span class="etq azul">Aviso</span>'}${nuevo(a.fecha)}<span>${esc(fechaLarga(a.fecha || new Date()))}</span>${actualizadoEl(a, dia(a.fecha || new Date()))}</div>
           <h3>${esc(a.titulo || "Sin título")}</h3>
-          ${plegable(a.contenido)}
-          ${adjuntosHTML(a.adjuntos)}
+          ${plegable(a.contenido, "aviso-" + a.id)}
+          ${adjuntosHTML(a.adjuntos, a.titulo)}
           <div class="acciones">${botonCompartir("aviso-" + a.id, a.titulo, a.contenido)}</div>
         </div>
       </div>
@@ -93,7 +105,7 @@
     <article class="tarjeta reunion${pasada ? " pasada" : ""}" id="reunion-${r.id}">
       <div class="dia" aria-hidden="true"><b>${d.getDate()}</b><span>${d.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}</span></div>
       <div class="reunion-cuerpo">
-        <div class="meta"><span class="etq azul">${esc(r.tipo)}</span>${f === hoyISO() ? '<span class="etq rojo">Hoy</span>' : ""}</div>
+        <div class="meta">${r.tipo ? `<span class="etq azul">${esc(r.tipo)}</span>` : ""}${f === hoyISO() ? '<span class="etq rojo">Hoy</span>' : ""}</div>
         <h3>${esc(r.titulo || "Sin título")}</h3>
         <p class="dato">${icono("calendario")}${esc(fechaSemana(f))}${r.hora ? " · " + esc(horario(r)) : ""}</p>
         ${r.lugar ? `<p class="dato">${icono("lugar")}${esc(r.lugar)}</p>` : ""}
@@ -108,11 +120,11 @@
 
   const acta = (a) => `
     <article class="tarjeta acta" id="acta-${a.id}">
-      <div class="meta"><span class="etq azul">${esc(a.tipo)}</span>${nuevo(a.creado)}<span>${esc(fechaLarga(a.fecha || hoyISO()))}</span></div>
+      <div class="meta">${a.tipo ? `<span class="etq azul">${esc(a.tipo)}</span>` : ""}${nuevo(a.creado)}<span>Reunión del ${esc(fechaLarga(a.fecha || hoyISO()))}</span>${actualizadoEl(a, "")}</div>
       <h3>${esc(a.titulo || "Sin título")}</h3>
       ${a.resumen ? `<h4>Resumen</h4><div class="texto">${textoHTML(a.resumen)}</div>` : ""}
       ${a.acuerdos ? `<h4>Acuerdos</h4><div class="texto acuerdos">${textoHTML(a.acuerdos)}</div>` : ""}
-      ${adjuntosHTML(a.adjuntos)}
+      ${adjuntosHTML(a.adjuntos, a.titulo)}
       <div class="acciones">${botonCompartir("acta-" + a.id, "Acta: " + a.titulo, a.acuerdos ? "Acuerdos:\n" + a.acuerdos : a.resumen)}</div>
     </article>`;
 
@@ -121,7 +133,7 @@
       <div class="meta">${d.categoria ? `<span class="etq">${esc(d.categoria)}</span>` : ""}${nuevo(d.creado)}${d.actualizado && d.creado && d.actualizado.slice(0, 10) !== d.creado.slice(0, 10) ? `<span>Actualizado el ${esc(fechaLarga(d.actualizado))}</span>` : ""}</div>
       <h3>${esc(d.titulo || "Sin título")}</h3>
       ${d.descripcion ? `<div class="texto">${textoHTML(d.descripcion)}</div>` : ""}
-      ${adjuntosHTML(d.adjuntos)}
+      ${adjuntosHTML(d.adjuntos, d.titulo)}
       ${d.enlace ? `<div class="acciones"><a class="btn-linea" href="${esc(urlSegura(d.enlace))}" target="_blank" rel="noopener">${icono("flecha")}Abrir el enlace</a></div>` : ""}
     </article>`;
 
@@ -162,7 +174,7 @@
     const wa = tel.replace(/^\+/, "").replace(/^(?=[67]\d{8}$)/, "34");
     return `
     <article class="tarjeta miembro">
-      ${m.foto && m.foto.url ? `<img class="inicial foto" src="${esc(urlSegura(m.foto.url))}" alt="" loading="lazy" width="54" height="54">` : `<div class="inicial" aria-hidden="true">${esc(ini)}</div>`}
+      ${m.foto && m.foto.url ? `<img class="inicial foto" src="${esc(urlSegura(m.foto.url))}" alt="" loading="lazy" decoding="async" width="54" height="54">` : `<div class="inicial" aria-hidden="true">${esc(ini)}</div>`}
       <div>
         <h3>${esc(m.nombre || "Nombre")}</h3>
         <p class="cargo">${esc(m.cargo)}${m.sindicato ? " · " + esc(m.sindicato) : ""}</p>
@@ -176,5 +188,5 @@
     </article>`;
   };
 
-  window.R = { senal, publicacion, seccion, noticia, aviso, reunion, acta, documento, consulta, pregunta, miembro, opciones, abierta };
+  window.R = { abrePlegable, senal, publicacion, seccion, noticia, aviso, reunion, acta, documento, consulta, pregunta, miembro, opciones, abierta };
 })();
