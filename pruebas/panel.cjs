@@ -334,6 +334,74 @@ const jpegConExif = (jpg) => {
       }
     })().catch((e) => fallos.push("Bloque 8 no ha podido acabar: " + e.message.split("\n")[0]));
 
+    // ---- 9. Lo que pidió Lorena el 10/11: borrador guardado solo, Deshacer, plantillas, vista previa y listas vacías ----
+    await (async () => {
+      p = await pagina(ctx, "comodo");
+      // Borrador: se escribe, se recarga la página sin guardar y al volver a abrir se ofrece
+      await nuevo(p, "avisos");
+      await p.fill("#f-titulo", "Aviso que se queda a medias");
+      await p.fill("#f-contenido", "Texto que no quiero perder");
+      await p.waitForTimeout(800);
+      const clave = await p.evaluate(() => Object.keys(localStorage).find((k) => k.startsWith("comite-adm-borrador-avisos-nuevo")));
+      ok(clave === "comite-adm-borrador-avisos-nuevo", `Borrador: se guarda solo mientras se escribe (${clave})`);
+      p.respuesta = true;
+      await p.reload(); await p.waitForTimeout(600);
+      await nuevo(p, "avisos");
+      ok(await p.isVisible("#borrador-aviso"), "Borrador: al volver a abrir, sale «Tienes un borrador sin guardar»");
+      await foto(p, "b1-borrador-ofrece");
+      await p.click('[data-borrador="si"]'); await p.waitForTimeout(250);
+      ok((await p.inputValue("#f-titulo")) === "Aviso que se queda a medias" && (await p.inputValue("#f-contenido")) === "Texto que no quiero perder" && !(await p.isVisible("#borrador-aviso")), "Borrador: «Recuperarlo» pone lo escrito");
+      await p.click("#ed-guardar"); await p.waitForTimeout(700);
+      ok(await p.evaluate(() => !Object.keys(localStorage).some((k) => k.startsWith("comite-adm-borrador-"))), "Borrador: al publicar bien se borra");
+      // «Descartarlo»
+      await nuevo(p, "reuniones"); await p.fill("#f-titulo", "Reunión a medias"); await p.waitForTimeout(700);
+      await p.reload(); await p.waitForTimeout(600); await nuevo(p, "reuniones");
+      await p.click('[data-borrador="no"]'); await p.waitForTimeout(200);
+      ok((await p.inputValue("#f-titulo")) === "" && await p.evaluate(() => !localStorage.getItem("comite-adm-borrador-reuniones-nuevo")), "Borrador: «Descartarlo» lo quita");
+      // Plantilla: rellena y no deja publicar con los corchetes sin cambiar
+      await p.click("[data-plantilla]"); await p.waitForTimeout(200);
+      ok(/Convocatoria/.test(await p.inputValue("#f-titulo")) && /Orden del día/.test(await p.inputValue("#f-descripcion")), "Plantilla: «Empezar con una plantilla» rellena la convocatoria");
+      await p.fill("#f-fecha", "2026-12-03");
+      await p.click("#ed-guardar"); await p.waitForTimeout(300);
+      ok(/corchetes/.test(await p.textContent("#ed-msg")) && !(await p.evaluate(() => document.getElementById("editor").hidden)), "Plantilla: no se publica con texto de ejemplo [ ] sin cambiar");
+      await foto(p, "p1-plantilla");
+      await p.fill("#f-lugar", "Sala de reuniones");
+      await p.fill("#f-descripcion", "Orden del día:\n- Turnos de Navidad");
+      await p.click("#ed-guardar"); await p.waitForTimeout(700);
+      ok(await p.evaluate(() => __DB.reuniones.some((r) => r.titulo === "Convocatoria: reunión del comité")), "Plantilla: cambiado lo de los corchetes, se publica");
+      // Vista previa en el móvil: botón grande al final
+      await nuevo(p, "avisos"); await p.click('[data-borrador="no"]').catch(() => {});
+      await p.fill("#f-titulo", "Prueba de vista previa");
+      await p.click("[data-ver-previa]"); await p.waitForTimeout(250);
+      ok(await p.evaluate(() => document.querySelector(".ed-cuerpo").dataset.ver === "previa" && /Prueba de vista previa/.test(document.getElementById("ed-previa").textContent)), "Vista previa: «Ver cómo quedará en la web» la enseña");
+      await foto(p, "v1-vista-previa");
+      await p.click("#ed-volver-form"); await p.waitForTimeout(200);
+      ok(await p.evaluate(() => document.querySelector(".ed-cuerpo").dataset.ver === "form"), "Vista previa: «Volver a escribir» vuelve al formulario");
+      p.respuesta = true; await p.click("#ed-cancelar"); await p.waitForTimeout(300);
+      // Deshacer un cambio
+      await ve(p, "avisos"); await p.click('[data-editar-en="avisos:2"]'); await p.waitForTimeout(300);
+      await p.fill("#f-titulo", "Título cambiado por error");
+      await p.click("#ed-guardar"); await p.waitForTimeout(600);
+      ok(await p.isVisible("#toast .toast-btn"), "Deshacer: al guardar un cambio sale «Deshacer»");
+      await foto(p, "d1-deshacer-cambio");
+      await p.click("#toast .toast-btn"); await p.waitForTimeout(600);
+      ok(await p.evaluate(() => __DB.avisos.find((a) => a.id === 2).titulo === "Recordatorio: ropa de trabajo"), "Deshacer: el cambio vuelve a como estaba");
+      // Deshacer un borrado (el servidor lo guarda en la papelera; aquí se simula)
+      await p.evaluate(() => { const a = __DB.avisos.find((x) => x.id === 2); __DB.papelera.push({ id: 77, tabla: "avisos", datos: JSON.parse(JSON.stringify(a)), borrado: new Date().toISOString(), por: "prueba@example.com" }); });
+      await ve(p, "avisos"); await p.click('[data-editar-en="avisos:2"]'); await p.waitForTimeout(300);
+      p.respuesta = true; await p.click("#ed-borrar"); await p.waitForTimeout(700);
+      ok(await p.evaluate(() => !__DB.avisos.some((a) => a.id === 2)) && await p.isVisible("#toast .toast-btn"), "Deshacer: al borrar sale «Deshacer»");
+      await foto(p, "d2-deshacer-borrado");
+      await p.click("#toast .toast-btn"); await p.waitForTimeout(700);
+      ok(await p.evaluate(() => __DB.avisos.some((a) => a.id === 2) && !__DB.papelera.some((x) => x.id === 77)), "Deshacer: lo borrado vuelve a su sitio");
+      // Lista vacía con ayuda y botón
+      await p.evaluate(() => { __DB.preguntas = []; }); await p.evaluate(() => { location.hash = "#inicio"; }); await p.waitForTimeout(300);
+      await p.evaluate(() => { location.hash = "#preguntas"; }); await p.waitForTimeout(500);
+      ok(await p.isVisible('#filas .vacio-caja [data-nuevo="preguntas"]'), "Lista vacía: explica y tiene el botón para añadir");
+      await foto(p, "e1-lista-vacia");
+      await p.close();
+    })().catch((e) => fallos.push("Bloque 9 no ha podido acabar: " + e.message.split("\n")[0]));
+
     await ctx.close();
   } finally {
     await b.close(); srv.kill();

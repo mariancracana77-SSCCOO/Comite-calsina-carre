@@ -247,10 +247,17 @@
   const resumen = (t, n = 110) => { t = String(t || "").replace(/\*\*/g, "").replace(/\s+/g, " ").trim(); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
   let toastT;
   // Los avisos en rojo (algo ha fallado) se quedan más tiempo, para que dé tiempo a leerlos
-  const avisa = (txt, mal = false) => {
+  // boton: [texto, función] para «Deshacer»: entonces el aviso se queda 10 segundos
+  const avisa = (txt, mal = false, boton = null) => {
     const a = $("toast");
-    a.textContent = txt; a.className = "toast" + (mal ? " mal" : ""); a.hidden = false;
-    clearTimeout(toastT); toastT = setTimeout(() => { a.hidden = true; }, mal ? 8000 : 3800);
+    a.textContent = txt; a.className = "toast" + (mal ? " mal" : "") + (boton ? " con-boton" : ""); a.hidden = false;
+    if (boton) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "toast-btn"; b.textContent = boton[0];
+      b.addEventListener("click", () => { clearTimeout(toastT); a.hidden = true; boton[1](); }, { once: true });
+      a.append(" ", b);
+    }
+    clearTimeout(toastT); toastT = setTimeout(() => { a.hidden = true; }, boton ? 10000 : mal ? 8000 : 3800);
   };
   const CADUCADA = "Tu sesión ha caducado. Vuelve a entrar: lo que has escrito no se pierde si no cierras esta ventana.";
   const errTxt = (e) => {
@@ -513,6 +520,7 @@
     ED_HIST = false;
     if (!ED || ED.pausado) return;
     if (ED.guardando || (ED.sucio && !confirm("¿Salir sin guardar? Se perderá lo que has escrito."))) { historiaAbre(); return; }
+    if (ED.sucio) quitaBorrador(claveBorrador());
     cerrarEditor(true, { borrarSubidos: true });
   });
   document.addEventListener("click", (e) => {
@@ -744,7 +752,7 @@
       const t = $("filtro").value.trim().toLowerCase();
       const lista = t ? FILAS.filter((x) => JSON.stringify(x).toLowerCase().includes(t)) : FILAS;
       $("filas").innerHTML = lista.map((x) => filaHTML(k, x)).join("")
-        || (t ? '<p class="vacio">No hay nada con esas palabras.</p>' : `<p class="vacio">Todavía no hay nada. Pulsa «${esc(S.nuevo)}».</p>`);
+        || (t ? '<p class="vacio">No hay nada con esas palabras.</p>' : `<div class="vacio-caja"><span class="vacio-ic">${icono(S.ic || "documento")}</span><b>Todavía no hay nada aquí</b><p>Lo que añadas saldrá en esta lista y en la web.</p><button type="button" class="btn" data-nuevo="${k}">${icono("mas")}${esc(S.nuevo)}</button></div>`);
     };
     $("filtro").addEventListener("input", pinta);
     pinta();
@@ -913,6 +921,8 @@
       else if (!val && ["hora", "fecha", "tel", "email", "url"].includes(tipo)) val = null;
       v[col] = val;
     }
+    if (comprobar && ED?.plantilla && Object.values(v).some((t) => typeof t === "string" && QUEDA_PLANTILLA.test(t)))
+      return [v, "Todavía queda texto de la plantilla entre corchetes [ ]. Cámbialo por lo de verdad o bórralo."];
     if (comprobar && S.validar) { const m = S.validar(v); if (m) return [v, m]; }
     return [v, ""];
   };
@@ -922,11 +932,61 @@
     const x = { ...(ED.orig || {}), ...v, id: ED.orig?.id || 0, creado: ED.orig?.creado || ahoraISO() };
     if (ED.k === "avisos") x.fecha = v.publicar_en || ED.orig?.fecha || ahoraISO();
     $("ed-previa").innerHTML = S.previa(x, ED.orig);
+    if (ED.sucio) guardaBorrador();
     $("ed-titulo").textContent = tituloDe(S, v) === "Sin título" ? "Sin título todavía" : tituloDe(S, v);
     // El botón dice lo que va a pasar
     const programado = ED.k === "avisos" && v.publicar_en && v.publicar_en > ahoraISO();
     const oculto = v.publicado === false || v.publicada === false;
     $("ed-guardar").innerHTML = icono(programado ? "reloj" : "check") + (programado ? "Programar" : ED.orig ? "Guardar cambios" : oculto ? "Guardar sin publicar" : "Publicar");
+  };
+  // ---- v23: borrador guardado solo (en este móvil), por si se cierra la ventana, se acaba la batería o caduca la sesión ----
+  const claveBorrador = (E = ED) => E ? `comite-adm-borrador-${SECCIONES[E.k].tabla}-${E.orig ? E.orig.id : "nuevo"}` : "";
+  const valoresForm = () => {
+    const o = {};
+    $("ed-form").querySelectorAll("input[id^='f-'], textarea[id^='f-'], select[id^='f-']").forEach((el) => {
+      if (el.type !== "file") o[el.id] = el.type === "checkbox" ? el.checked : el.value;
+    });
+    return o;
+  };
+  let borradorT;
+  const guardaBorrador = (ya = false) => {
+    clearTimeout(borradorT);
+    const hazlo = () => {
+      if (!ED || !ED.sucio || ED.guardando) return;
+      try { localStorage.setItem(claveBorrador(), JSON.stringify({ t: Date.now(), v: valoresForm(), adj: ED.adj, foto: ED.foto })); } catch (_) { /* sin sitio o bloqueado: no pasa nada */ }
+    };
+    if (ya) hazlo(); else borradorT = setTimeout(hazlo, 500);
+  };
+  const quitaBorrador = (clave) => { clearTimeout(borradorT); try { if (clave) localStorage.removeItem(clave); } catch (_) { /* nada */ } };
+  const leeBorrador = (clave) => { try { const b = JSON.parse(localStorage.getItem(clave) || "null"); return b && b.v ? b : null; } catch (_) { return null; } };
+  const ponBorrador = (b) => {
+    Object.entries(b.v).forEach(([id, val]) => {
+      const el = $(id); if (!el || !$("ed-form").contains(el)) return;
+      if (el.type === "checkbox") el.checked = !!val; else el.value = val;
+    });
+    document.querySelectorAll("#ed-form [data-vaciar]").forEach((q) => { q.hidden = !$("f-" + q.dataset.vaciar)?.value; });
+    ED.adj = Array.isArray(b.adj) ? b.adj : ED.adj;
+    if (SECCIONES[ED.k].campos.some((c) => c[2] === "foto")) ED.foto = b.foto || null;
+    ED.sucio = true; pintaAdj(); pintaFoto(); previa();
+  };
+  window.addEventListener("pagehide", () => guardaBorrador(true));
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") guardaBorrador(true); });
+
+  // ---- v23: plantillas para empezar (texto de ejemplo que se cambia; nada de datos de nadie) ----
+  const PLANTILLAS = {
+    avisos: { "f-titulo": "Aviso: [qué pasa]", "f-contenido": "**Qué pasa:** [explícalo en una frase]\n**Cuándo:** el [día] a las [hora]\n**A quién afecta:** [a toda la plantilla / al turno…]\n**Qué hay que hacer:** [lo que tiene que hacer cada uno]\n\nSi tienes dudas, pregunta a cualquier miembro del comité." },
+    reuniones: { "f-titulo": "Convocatoria: reunión del comité", "f-lugar": "[sala o nave]", "f-descripcion": "Orden del día:\n- Lectura del acta anterior\n- [Tema 1]\n- [Tema 2]\n- Ruegos y preguntas\n\nSi quieres que se hable de algún tema, díselo a un miembro del comité o escríbelo en el buzón anónimo." },
+    actas: { "f-titulo": "Acta de la reunión del [día]", "f-resumen": "Asisten [número] miembros del comité[ y representantes de la empresa].\n\nSe han tratado estos temas:\n- [Tema 1]\n- [Tema 2]", "f-acuerdos": "- [Primer acuerdo]\n- [Segundo acuerdo]" },
+  };
+  const QUEDA_PLANTILLA = /\[[^\]\n]{1,40}\]/;
+  const ponPlantilla = () => {
+    const P = PLANTILLAS[ED.k]; if (!P) return;
+    const escrito = Object.keys(P).some((id) => $(id)?.value.trim());
+    if (escrito && !confirm("Se cambiará lo que has escrito por la plantilla. ¿Seguir?")) return;
+    Object.entries(P).forEach(([id, t]) => { if ($(id)) $(id).value = t; });
+    ED.plantilla = true; ED.sucio = true; previa();
+    avisa("Cambia lo que está entre corchetes [ ].");
+    $("f-titulo")?.focus();
   };
   // Campos que se enseñan: unos solo al crear (avisar al publicar) y otros solo al editar (avisar del cambio)
   const camposDe = (S) => S.campos.filter(([, , , o = {}]) => ED.orig ? !o.soloNuevo : !o.soloEditar);
@@ -940,6 +1000,24 @@
     $("ed-form").innerHTML = (x && S.avisoEditar ? `<p class="nota-campo">${icono("alerta")}${esc(S.avisoEditar)}</p>` : "")
       + camposDe(S).map((c) => campoHTML(c, x && !c[0].startsWith("_") && c[0] in x ? x[c[0]] : (typeof c[3]?.def === "function" ? c[3].def() : c[3]?.def))).join("");
     if (S.asistente && !ED.orig) { $("ed-form").insertAdjacentHTML("afterbegin", asistenteHTML()); prepararAsistente(); }
+    if (PLANTILLAS[k] && !x) {
+      const h = `<div class="plantilla-fila"><button type="button" class="btn-linea" data-plantilla>${icono("documento")}Empezar con una plantilla</button><small>Rellena un ejemplo que tú cambias.</small></div>`;
+      const asis = $("ed-form").querySelector(".asistente");
+      if (asis) asis.insertAdjacentHTML("afterend", h); else $("ed-form").insertAdjacentHTML("afterbegin", h);
+    }
+    // En el móvil la vista previa está en otra pestaña: un botón grande al final para verla antes de publicar
+    $("ed-form").insertAdjacentHTML("beforeend", `<button type="button" class="btn sec ver-previa" data-ver-previa>${icono("ojo")}Ver cómo quedará en la web</button>`);
+    // ¿Quedó un borrador sin guardar de la otra vez?
+    const bo = duplicando ? null : leeBorrador(claveBorrador());
+    if (bo) {
+      if (JSON.stringify(bo.v) === JSON.stringify(valoresForm()) && JSON.stringify(bo.adj || []) === JSON.stringify(ED.adj)) quitaBorrador(claveBorrador());
+      else {
+        const cuando = new Date(bo.t || Date.now()).toLocaleString("es-ES", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+        $("ed-form").insertAdjacentHTML("afterbegin", `<div class="borrador-aviso" id="borrador-aviso" role="alert"><p>${icono("alerta")}<span><b>Tienes un borrador sin guardar</b> (del ${esc(cuando)}).</span></p>
+          <div class="borrador-btns"><button type="button" class="btn" data-borrador="si">Recuperarlo</button><button type="button" class="btn-linea" data-borrador="no">Descartarlo</button></div></div>`);
+        ED.borrador = bo;
+      }
+    }
     pintaAdj();
     $("ed-borrar").hidden = !ED.orig; $("ed-borrar").innerHTML = icono("borrar") + "Borrar";
     $("ed-duplicar").hidden = !ED.orig; $("ed-duplicar").innerHTML = icono("duplicar") + "Duplicar";
@@ -993,6 +1071,7 @@
     if (!ED) return;
     if (!forzar && ED.guardando) return; // mientras guarda no se cierra (si no, se quedaría a medias)
     if (!forzar && ED.sucio && !confirm("¿Salir sin guardar? Se perderá lo que has escrito.")) return;
+    if (!forzar && ED.sucio) quitaBorrador(claveBorrador());
     if (borrarSubidos) borraArchivos(ED.subidos);
     const vuelve = ED.vuelve;
     ED = null;
@@ -1009,6 +1088,7 @@
     document.querySelector(".ed-cuerpo").dataset.ver = p;
   };
   document.querySelector(".ed-pestanas").addEventListener("click", (e) => { const b = e.target.closest("[data-p]"); if (b) verPestana(b.dataset.p); });
+  $("ed-volver-form").addEventListener("click", () => { verPestana("form"); $("ed-form").querySelector("input:not([type=checkbox]), textarea")?.focus(); });
   $("ed-cerrar").addEventListener("click", () => cerrarEditor());
   $("ed-cancelar").addEventListener("click", () => cerrarEditor());
   $("velo-ed").addEventListener("click", () => cerrarEditor());
@@ -1041,6 +1121,16 @@
       t.focus(); ED.sucio = true; previa();
       return;
     }
+    const bb = e.target.closest("[data-borrador]");
+    if (bb) {
+      const b = ED.borrador; ED.borrador = null; $("borrador-aviso")?.remove();
+      if (bb.dataset.borrador === "si" && b) { ponBorrador(b); avisa("Recuperado. Revísalo y pulsa «" + $("ed-guardar").textContent.trim() + "»."); }
+      else { quitaBorrador(claveBorrador()); avisa("Borrador descartado."); }
+      $("ed-form").querySelector("input:not([type=checkbox]), textarea")?.focus();
+      return;
+    }
+    if (e.target.closest("[data-plantilla]")) { ponPlantilla(); return; }
+    if (e.target.closest("[data-ver-previa]")) { verPestana("previa"); document.querySelector(".ed-previa").scrollTop = 0; $("ed-volver-form")?.focus({ preventScroll: true }); return; }
     const vac = e.target.closest("[data-vaciar]");
     if (vac) { $("f-" + vac.dataset.vaciar).value = ""; vac.hidden = true; ED.sucio = true; previa(); avisa("Quitado. Pulsa «Guardar cambios» para que se aplique."); return; }
     if (e.target.closest("#foto-quitar")) { if (ED.foto) ED.quitados.push(ED.foto); ED.foto = null; ED.sucio = true; pintaFoto(); previa(); return; }
@@ -1084,16 +1174,19 @@
     catch (e) { return falla(errTxt(e)); }
     if (r.error) return falla(errTxt(r.error));
     if (noCambio(r)) return falla(await motivoNoCambio(NO_CAMBIO_TXT));
-    borraArchivos(E.quitados.filter((a) => !E.adj.some((x) => x.url === a.url) && !(E.foto && E.foto.url === a.url)));
+    quitaBorrador(claveBorrador(E));
+    const quitadosDeVerdad = E.quitados.filter((a) => !E.adj.some((x) => x.url === a.url) && !(E.foto && E.foto.url === a.url));
+    borraArchivos(quitadosDeVerdad);
     const programado = E.k === "avisos" && v.publicar_en && v.publicar_en > ahoraISO();
     // Un aviso programado al que se le quita la programación se publica ahora (y avisa a los móviles, si lo tenía marcado)
     const yaNoProgramado = E.k === "avisos" && E.orig?.publicar_en && E.orig.publicar_en > ahoraISO() && !programado;
     const oculto = v.publicado === false || v.publicada === false;
+    let avisoMovil = false;
     let txt = programado ? "Aviso programado" : yaNoProgramado ? "Publicado ahora" : E.orig ? "Cambios guardados" : oculto ? "Guardado (no se ve en la web)" : "Publicado", mal = false;
     // Avisar al móvil: al publicar algo nuevo (si la casilla está marcada), al pedir «volver a avisar» o al quitar la programación
     const id = E.orig ? E.orig.id : r.data?.id;
     if (AVISABLE.includes(E.k) && id && !programado && !oculto && ((!E.orig && v.notificar) || cambio || (yaNoProgramado && E.orig.notificar !== false))) {
-      estado(msg, "Avisando a los móviles…");
+      estado(msg, "Avisando a los móviles…"); avisoMovil = true;
       const n = await avisarMoviles(E.k, id, cambio);
       if (n == null) { txt += ", pero no se ha podido avisar a los móviles. Se intentará solo en unos minutos"; mal = true; }
       else txt += n ? ` y avisado a ${n} ${n === 1 ? "móvil" : "móviles"}` : " (todavía no hay móviles apuntados a los avisos)";
@@ -1101,10 +1194,24 @@
     if (programado && v.notificar !== false) txt += ": avisará a los móviles cuando se publique";
     if (E.k === "apartados") await cargaAps().catch(() => {});
     if (E.despues) await E.despues(id).catch(() => {});
-    avisa(txt + (mal ? "." : ""), mal);
+    // Deshacer un cambio: solo si no se ha avisado a los móviles ni se han quitado archivos (eso no tiene vuelta atrás)
+    const deshacible = E.orig && !avisoMovil && !quitadosDeVerdad.length && !E.subidos.length && E.k !== "apartados";
+    const antes = deshacible ? Object.fromEntries(Object.keys(v).map((c) => [c, E.orig[c] ?? null])) : null;
+    avisa(txt + (mal ? "." : ""), mal, deshacible ? ["Deshacer", () => deshacerCambio(S, E.orig.id, antes)] : null);
     cerrarEditor(true);
     irA(actual);
   });
+  const deshacerCambio = async (S, id, antes) => {
+    const r = await sb.from(S.tabla).update(antes).eq("id", id).select("id").then((x) => x, (e) => ({ error: e }));
+    if (r.error || noCambio(r)) return avisa(r.error ? errTxt(r.error) : await motivoNoCambio("No se ha podido deshacer. Ábrelo y cámbialo a mano."), true);
+    avisa("Deshecho: está como antes.");
+    irA(actual);
+  };
+  // Deshacer un borrado: se busca en la Papelera (lo guarda el servidor al borrar) y se recupera
+  const enPapelera = async (tabla, id) => {
+    const { data } = await sb.from("papelera").select("id, tabla, datos").eq("tabla", tabla).order("borrado", { ascending: false }).limit(20).then((x) => x, () => ({ data: null }));
+    return (data || []).find((p) => p.datos && p.datos.id === id)?.id || null;
+  };
   $("ed-borrar").addEventListener("click", async () => {
     if (!ED || ED.guardando || !ED.orig) return;
     const E = ED, S = SECCIONES[E.k];
@@ -1125,7 +1232,15 @@
     const r = await sb.from(S.tabla).delete().eq("id", E.orig.id).select("id").then((x) => x, (e) => ({ error: e }));
     if (r.error) { bloqueaPie(false); return estado($("ed-msg"), errTxt(r.error), "mal"); }
     if (noCambio(r)) { bloqueaPie(false); return estado($("ed-msg"), await motivoNoCambio(NO_CAMBIO_TXT.replace("No se ha guardado", "No se ha borrado")), "mal"); }
-    avisa("Borrado. Está en la Papelera por si lo necesitas.");
+    quitaBorrador(claveBorrador(E));
+    // Una sección con cosas dentro no se deshace de un toque (hay que recuperar cada cosa): eso, en la Papelera
+    const pid = extra ? null : await enPapelera(S.tabla, E.orig.id);
+    avisa("Borrado. Está en la Papelera por si lo necesitas.", false, pid ? ["Deshacer", async () => {
+      const { error } = await sb.rpc("recuperar_borrado", { p_id: pid }).then((x) => x, (e) => ({ error: e }));
+      if (error) return avisa(errTxt(error) + " Puedes recuperarlo en la Papelera.", true);
+      if (S.tabla === "apartados") await cargaAps().catch(() => {});
+      avisa("Recuperado: está otra vez como antes."); irA(actual);
+    }] : null);
     cerrarEditor(true); irA(actual);
   });
   $("ed-duplicar").addEventListener("click", () => {

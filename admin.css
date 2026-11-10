@@ -519,3 +519,23 @@ details.pet-mas-info ul { padding-left: 20px; display: grid; gap: 4px; }
 .ia-delicado { margin: 4px 0 8px; padding: 10px 12px; border-radius: 10px; border-left: 4px solid #b45309; background: color-mix(in srgb, #b45309 8%, transparent); color: var(--texto); font-size: .9rem; }
 /* Vista previa: una palabra larga sin espacios (una dirección web) no se sale de la tarjeta (en la web, pendiente en styles.css) */
 .ed-previa .tarjeta h3, .ed-previa .cargo, .ed-previa .cons-op, .ed-previa .tarjeta p { overflow-wrap: anywhere; }
+
+/* Borrador sin guardar, plantillas y vista previa (v23) */
+.borrador-aviso { display: grid; gap: 10px; margin: 0 0 16px; padding: 12px 14px; border-radius: 12px; border: 2px solid var(--azul); background: var(--azul-claro); color: var(--texto); }
+.borrador-aviso p { display: flex; gap: 8px; align-items: flex-start; margin: 0; }
+.borrador-aviso .ico { flex: none; color: var(--azul); }
+.borrador-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.borrador-btns .btn, .borrador-btns .btn-linea { min-height: 48px; flex: 1 1 9em; justify-content: center; }
+.plantilla-fila { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0 0 16px; }
+.plantilla-fila .btn-linea { min-height: 48px; }
+.plantilla-fila small { color: var(--suave); }
+.ver-previa, .volver-form { width: 100%; min-height: 52px; margin-top: 18px; justify-content: center; }
+.ed-pestanas button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.ed-pestanas button[data-p="previa"] { font-size: 1.02rem; }
+.previa-cab { font-size: .95rem; color: var(--azul); }
+@media (min-width: 900px) { .ver-previa, .volver-form { display: none; } }
+/* Aviso con «Deshacer» */
+.toast.con-boton { display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: left; width: min(420px, calc(100% - 32px)); }
+.toast-btn { flex: none; min-height: 44px; padding: 6px 14px; border-radius: 10px; border: 2px solid #fff; background: transparent; color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
+.toast-btn:focus-visible { outline: 3px solid #00C6FF; outline-offset: 2px; }
+.lista .vacio-caja .btn { margin-top: 6px; }
