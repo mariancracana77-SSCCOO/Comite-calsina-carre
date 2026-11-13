@@ -9,8 +9,8 @@ La gestiona desde el panel el padre de Lorena (usuario GitHub `mariancracana77-S
 
 - Web: https://mariancracana77-ssccoo.github.io/Comite-calsina-carre/ (GitHub Pages desde `main`, raíz)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **26**
-- **Nombre** (lo pidieron Lorena y su padre el 9/11/2026, al volver a la cuenta de siempre): se ve «Calsina Carré» en títulos, cabecera, pie, portada (también en el camión), manifest y cartel, como en la v20. Desde la v23 el camión de la portada va **sin** nombre (se veía borroso; lo pidió Lorena el 9/11/2026): imágenes de antes de la petición n.º 7. No volver a ponerle texto a la imagen. La v21 sin nombres quedó solo en local (rama `limpio`).
+- Versión actual: **27**
+- **Nombre** (lo pidieron Lorena y su padre el 9/11/2026, al volver a la cuenta de siempre): se ve «Calsina Carré» en títulos, cabecera, pie, portada (también en el camión), manifest y cartel, como en la v20. Desde la v23 el camión de la portada va **sin** nombre (se veía borroso; lo pidió Lorena el 9/11/2026): imágenes de antes de la petición n.º 7. No volver a ponerle texto **dentro** de la imagen. **v27 (petición n.º 11 del padre, Lorena: «Que lo publique», 13/11/2026)**: «CALSINA CARRÉ» vuelve a la lona y a la carretilla, pero como texto SVG encima del dibujo (`.rotulo`, `.rotulo-movil`/`.rotulo-pc` en `index.html`, con el viewBox de cada imagen y `slice` como el `cover` del fondo), sin lema ni flecha: así se ve nítido. Para quitarlo, borrar los dos `<svg class="rotulo">`; la imagen no lleva texto. La v21 sin nombres quedó solo en local (rama `limpio`).
 
 ## Reglas (las mismas que en CCOO)
 - No publicar en `main` sin que Lorena lo confirme (salvo lo que pide el padre con «Me gusta, adelante»: ver la decisión de Lorena del 6/11/2026 en «Pedir un cambio a Claude»). Trabajar en la rama indicada.
