@@ -149,6 +149,9 @@
 :root:root .web .cab-apartado h1 { font-size: 3.6rem; line-height: .98; font-weight: 800; letter-spacing: -.035em; color: var(--tinta); }
 :root:root .web .cab-apartado p { margin-top: 14px; font-size: 1.15rem; color: var(--suave); }
 :root:root .web .cab-apartado .miga { margin: 0 0 14px; }
+:root:root .web .cab-apartado .miga a { color: var(--azul); }
+:root:root .web .cab-apartado .miga li + li::before, :root:root .web .cab-apartado .miga [aria-current] { color: var(--suave); }
+:root:root .web .cab-apartado :focus-visible { outline-color: var(--foco); }
 
 :root:root .web .titulo-bloque { margin: 44px 0 16px; padding: 0 0 10px; border: 0; border-bottom: 1px solid var(--borde); font-family: var(--titulos); font-size: 1.75rem; font-weight: 750; text-transform: none; letter-spacing: -.015em; color: var(--tinta); }
 :root:root .web #lista-avisos > .titulo-bloque:first-child { margin-top: 10px; }
