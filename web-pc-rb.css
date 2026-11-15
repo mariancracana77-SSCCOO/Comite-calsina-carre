@@ -68,11 +68,11 @@
   min-height: clamp(520px, 72vh, 720px); display: flex; align-items: center; }
 :root:root .web .hero::before, :root:root .web .hero::after { display: none; }
 :root:root .web .hero-in { position: static; width: 100%; max-width: calc(var(--ancho) - 56px); display: block; padding: 72px 0 88px; }
-:root:root .web .hero-arte { position: absolute; z-index: 0; top: 0; right: 0; bottom: 0; width: min(64%, 1120px); max-width: none; height: auto;
-  aspect-ratio: auto; margin: 0; border-radius: 0; box-shadow: none;
-  background: url(img/portada-pc.webp) 100% 58% / 100% auto no-repeat;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6%), linear-gradient(180deg, transparent 8%, #000 26%, #000 82%, transparent 98%); -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(90deg, transparent 0, #000 6%), linear-gradient(180deg, transparent 8%, #000 26%, #000 82%, transparent 98%); mask-composite: intersect; }
+:root:root .web .hero-arte { position: absolute; z-index: 0; top: 0; bottom: 0; right: 0; width: min(64vw, 1120px); max-width: none;
+  height: calc(min(64vw, 1120px) * 590 / 1290); margin: auto 0; aspect-ratio: auto; border-radius: 0; box-shadow: none;
+  background: url(img/camion-padre-pc.webp) center / cover no-repeat;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16%), linear-gradient(180deg, transparent 0, #000 10%, #000 90%, transparent); -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 0, #000 16%), linear-gradient(180deg, transparent 0, #000 10%, #000 90%, transparent); mask-composite: intersect; }
 :root:root .web .hero-txt { position: relative; z-index: 1; max-width: min(470px, 36vw); }
 :root:root .web .hero-eyebrow { display: block; margin: 0 0 22px; padding: 0; border: 0; background: none; text-shadow: none;
   font-family: "Inter", sans-serif; font-size: .95rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #93BBDC; }
@@ -83,7 +83,7 @@
 
 /* Crédito de la foto real, abajo a la derecha (provisional hasta el sí por escrito de la empresa) */
 /* Con el dibujo no va crédito; con la foto real, cambiar a display: block !important */
-:root:root .web .hero-credito[hidden] { display: none; }
+:root:root .web .hero-credito[hidden] { display: block !important; }
 :root:root .web .hero-credito { position: absolute; z-index: 1; right: 16px; bottom: 12px; margin: 0; padding: 3px 9px; border-radius: 4px;
   background: rgba(1, 16, 42, .62); color: #E9F1F8; font-size: .78rem; line-height: 1.4; }
 
