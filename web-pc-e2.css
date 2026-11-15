@@ -13,12 +13,12 @@
 @media (prefers-color-scheme: dark) {
   :root:root:not([data-theme="light"]) body.web {
     --fondo: #08142a; --tarjeta: #0f2038; --texto: #E6EEF7; --suave: #a3b5ca; --borde: #23395a;
-    --azul: #6db8ff; --azul-osc: #f2f6fb; --azul-claro: #16304f; --tinta: #f2f6fb; --placa: #E6EEF7; --placa-txt: #0B1E3C; --muelle: #0B1E3C; --muelle-txt: #00C6FF; --franja: #0f2038;
+    --azul: #6db8ff; --azul-osc: #f2f6fb; --azul-claro: #16304f; --tinta: #f2f6fb; --placa: #0d2240; --placa-txt: #fff; --muelle: #00C6FF; --muelle-txt: #0B1E3C; --franja: #0f2038;
   }
 }
 :root:root[data-theme="dark"] body.web {
   --fondo: #08142a; --tarjeta: #0f2038; --texto: #E6EEF7; --suave: #a3b5ca; --borde: #23395a;
-  --azul: #6db8ff; --azul-osc: #f2f6fb; --azul-claro: #16304f; --tinta: #f2f6fb; --placa: #E6EEF7; --placa-txt: #0B1E3C; --muelle: #0B1E3C; --muelle-txt: #00C6FF; --franja: #0f2038;
+  --azul: #6db8ff; --azul-osc: #f2f6fb; --azul-claro: #16304f; --tinta: #f2f6fb; --placa: #0d2240; --placa-txt: #fff; --muelle: #00C6FF; --muelle-txt: #0B1E3C; --franja: #0f2038;
 }
 :root:root .web ::selection { background: #00C6FF; color: #0B1E3C; }
 
@@ -93,9 +93,9 @@ body[data-vista="buzon"] .cab-apartado-in::before { content: "05"; }
 :root:root .web .cab-apartado .miga { margin: -8px 0 0; }
 :root:root .web .cab-apartado .miga a { color: var(--muelle); }
 :root:root .web .cab-apartado .miga li + li::before, :root:root .web .cab-apartado .miga [aria-current] { color: inherit; opacity: .8; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .web .cab-apartado .miga a { color: #0E5FAE; } :root:not([data-theme="light"]) .web .cab-apartado :focus-visible { outline-color: #0E5FAE; } }
-:root[data-theme="dark"] .web .cab-apartado .miga a { color: #0E5FAE; }
-:root[data-theme="dark"] .web .cab-apartado :focus-visible { outline-color: #0E5FAE; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .web .cab-apartado .miga a { color: #00C6FF; } :root:not([data-theme="light"]) .web .cab-apartado :focus-visible { outline-color: #00C6FF; } }
+:root[data-theme="dark"] .web .cab-apartado .miga a { color: #00C6FF; }
+:root[data-theme="dark"] .web .cab-apartado :focus-visible { outline-color: #00C6FF; }
 
 /* Títulos de bloque: rótulo pequeño de nave, con un filete */
 :root:root .web .titulo-bloque, :root:root .web .agenda-tit, :root:root .web #v-actualidad .cab-bloque {
@@ -170,6 +170,55 @@ body[data-vista="buzon"] .cab-apartado-in::before { content: "05"; }
 /* La raya de encima de los textos legales, del mismo ancho que el contenido */
 :root:root .web .pie-legal { max-width: calc(var(--ancho) - 56px); padding-left: 0; padding-right: 0; }
 :root:root .web .pie-col h2 { text-transform: none; letter-spacing: 0; font-size: .95rem; color: #fff; }
+
+/* ---------- v31 (lo pidió Lorena): rótulo oscuro en modo oscuro, columnas alineadas y el buzón a todo el ancho ---------- */
+/* En oscuro, las placas (rótulo, cabeceras de tabla, segmentos…) son azul noche con un filo, no un recuadro claro */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .web .cab-apartado-in { box-shadow: inset 0 0 0 1px #23395a; } }
+:root[data-theme="dark"] .web .cab-apartado-in { box-shadow: inset 0 0 0 1px #23395a; }
+
+/* Portada: «Info general» y «Próximas reuniones» comparten la primera fila: las dos rayas a la misma altura
+   y lo de debajo (tarjetas y agenda) empieza a la vez. Las columnas se deshacen con display: contents para que
+   sus piezas caigan en la misma rejilla. */
+:root:root .web .portada-grid { grid-template-columns: minmax(0, 1fr) 300px; grid-template-rows: auto auto auto 1fr; column-gap: 32px; row-gap: 16px; align-items: start; }
+:root:root .web .portada-grid > .col-principal, :root:root .web .portada-grid > .col-lateral, :root:root .web .col-lateral > #agenda { display: contents; }
+:root:root .web #v-actualidad .cab-bloque { grid-column: 1; grid-row: 1; align-self: stretch; display: flex; flex-direction: column; justify-content: flex-end; margin: 0; }
+:root:root .web #lista-actualidad { grid-column: 1; grid-row: 2 / -1; }
+:root:root .web .col-lateral > * { grid-column: 2; }
+:root:root .web .agenda-tit { grid-column: 2; grid-row: 1; align-self: end; margin: 0; }
+:root:root .web .agenda-lista, :root:root .web .agenda-vacia { grid-column: 2; grid-row: 2; margin: 0; }
+:root:root .web .agenda-lista li:first-child .agenda-item { padding-top: 0; }
+:root:root .web .col-lateral > #consultas { grid-row: 3; margin-top: 10px; }
+
+/* Calendario: el calendario empieza a la altura de la primera reunión, debajo de la raya de «Próximas reuniones» */
+:root:root .web #v-reuniones .caja > .titulo-bloque:first-of-type { grid-row: 1; margin: 0 0 4px; }
+:root:root .web #v-reuniones .mes { grid-row: 2 / span 3; }
+
+/* Secciones propias: si solo hay una subsección, ocupa todo el ancho (sin hueco a la derecha) */
+:root:root .web .secciones-lista { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+
+/* Sugerencias y preguntas: el formulario a la izquierda y, a la derecha, «Cómo funciona» y las preguntas frecuentes */
+:root:root .web #v-buzon .caja { display: grid; grid-template-columns: minmax(0, 1fr) 380px; grid-template-rows: auto auto 1fr; column-gap: 32px; align-items: start; }
+:root:root .web #v-buzon .form-buzon { grid-column: 1; grid-row: 1 / -1; max-width: none; gap: 12px; padding: 24px 26px 22px; }
+/* La caja de ayuda viene con «hidden» para que el móvil y la app no la vean nunca; aquí, solo en el PC, se enseña */
+:root:root .web #v-buzon .buzon-ayuda[hidden] { display: block !important; }
+:root:root .web #v-buzon .buzon-ayuda { grid-column: 2; grid-row: 1; padding: 22px 24px 8px; background: var(--placa); color: var(--placa-txt); border-radius: 4px; }
+:root:root .web #v-buzon .buzon-ayuda h2 { margin: 0 0 12px; padding-bottom: 8px; border-bottom: 2px solid var(--muelle); font-family: "Montserrat", sans-serif; font-weight: 800; font-size: 1.15rem; color: inherit; }
+:root:root .web #v-buzon .buzon-ayuda ol { margin: 0; padding: 0; list-style: none; counter-reset: paso; }
+:root:root .web #v-buzon .buzon-ayuda li { counter-increment: paso; position: relative; padding: 0 0 14px 44px; font-size: .95rem; line-height: 1.5; }
+:root:root .web #v-buzon .buzon-ayuda li::before { content: counter(paso, decimal-leading-zero); position: absolute; left: 0; top: 1px; display: grid; place-items: center; width: 32px; height: 26px; border-radius: 2px; background: var(--muelle); color: var(--muelle-txt); font-family: "Montserrat", sans-serif; font-weight: 800; font-size: .8rem; font-variant-numeric: tabular-nums; }
+:root:root .web #v-buzon .buzon-ayuda b { display: block; }
+:root:root .web #v-buzon .caja > #preguntas { grid-column: 2; grid-row: 2; margin-top: 26px; }
+:root:root .web #v-buzon .caja > #lista-preguntas { grid-column: 2; grid-row: 3; }
+/* Selector, campo y botón con el estilo de la web: esquinas casi rectas y la elegida como la pestaña activa (raya celeste) */
+:root:root .web .tipo-buzon { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+:root:root .web .tipo-buzon legend { font-family: "Montserrat", sans-serif; font-weight: 800; color: var(--tinta); }
+:root:root .web .tipo-buzon label { min-width: 0; }
+:root:root .web .tipo-buzon span { padding: 13px 12px 11px; border: 1px solid var(--borde); border-radius: 3px; background: var(--tarjeta); color: var(--texto); }
+:root:root .web .tipo-buzon input:checked + span { border-color: #00C6FF; background: var(--placa); color: var(--placa-txt); box-shadow: inset 0 -4px 0 #00C6FF; }
+:root:root .web .form-buzon .etq-campo { font-family: "Montserrat", sans-serif; font-weight: 800; color: var(--tinta); }
+:root:root .web .form-buzon textarea { min-height: 180px; border: 1px solid var(--borde); border-radius: 3px; }
+:root:root .web .form-buzon #buzon-enviar { justify-self: start; width: auto; min-width: 240px; padding: 0 30px; border-radius: 3px; }
+:root:root .web .form-buzon .nota-buzon { margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--borde); }
 
 /* ---------- Movimiento (web-pc-anim.js lo activa solo en el PC y sin «reducir movimiento»; sin JS todo se ve quieto) ----------
    Solo opacity y transform: no mueve nada de sitio ni hace saltar la página. */
