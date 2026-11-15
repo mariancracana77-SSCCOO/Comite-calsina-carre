@@ -27,7 +27,7 @@
   var CARACTER = {
     e2: { x: 0, y: 22, dur: 0.7, imagen: { opacity: 0.35, scale: 1.02 }, parallax: 0.08 },
     ra: { x: 0, y: 28, dur: 0.8, imagen: { opacity: 0, scale: 1.04 }, parallax: 0.1 },
-    rb: { x: -24, y: 0, dur: 0.7, imagen: { opacity: 0, x: 28 }, parallax: 0.05 },
+    rb: { x: -24, y: 0, dur: 0.8, imagen: { opacity: 0, x: 110 }, parallax: 0.14 },
   }[estilo] || { x: 0, y: 14, dur: 0.6, imagen: { opacity: 0.4 }, parallax: 0.06 };
 
   var enPortada = !location.hash || location.hash === "#actualidad";
@@ -107,12 +107,12 @@
   var listo = function () { html.classList.add("pc-anim-listo"); };
   var seguro = setTimeout(listo, 1200); // si GSAP no llega a tiempo, se enseña todo tal cual
   var entrada = function () {
-    var g = window.gsap, txt = document.querySelectorAll("#v-actualidad .hero-titulo, #v-actualidad .hero-sub"), arte = document.querySelector("#v-actualidad .hero-arte");
+    var g = window.gsap, txt = document.querySelectorAll("#v-actualidad .hero-eyebrow, #v-actualidad .hero-titulo, #v-actualidad .hero-sub, #v-actualidad .hero-btns"), arte = document.querySelector("#v-actualidad .hero-arte");
     if (!g || !txt.length || html.classList.contains("pc-anim-listo")) { listo(); return; }
     clearTimeout(seguro);
     var tl = g.timeline({ defaults: { ease: "expo.out", duration: CARACTER.dur }, onComplete: function () { g.set(txt, { clearProps: "transform,opacity" }); if (arte) g.set(arte, { clearProps: "transform,opacity" }); } });
     tl.fromTo(txt, { opacity: 0, x: CARACTER.x, y: CARACTER.y }, { opacity: 1, x: 0, y: 0, stagger: 0.09, immediateRender: true }, 0);
-    if (arte) tl.fromTo(arte, CARACTER.imagen, { opacity: 1, x: 0, scale: 1, duration: CARACTER.dur + 0.2 }, 0.08);
+    if (arte) tl.fromTo(arte, CARACTER.imagen, { opacity: 1, x: 0, scale: 1, duration: CARACTER.dur + 0.6, ease: "power3.out" }, 0.05);
     listo();
   };
   var conGsap = carga("lib/gsap-3.15.1.min.js");
