@@ -62,27 +62,30 @@
 :root:root .web .pestanas-fila a.activa::after { left: 10px; right: 10px; height: 3px; border-radius: 3px 3px 0 0; background: var(--cab-txt); }
 
 /* ---------- Portada: imagen grande de lado a lado, como en las webs de transporte (lo pidió Lorena, 15/11/2026) ----------
-   El camión de Calsina (img/portada-pc.webp: recorte de img/portada.webp sin las CC) a la derecha, sobre su mismo azul noche,
+   Foto real del dúo tráiler de Calsina (img/camion-real-pc.webp: de calsina-carre.com, matrícula borrosa; pidió Lorena «imagen 100 de Calsina de verdad») a la derecha, sobre su mismo azul noche,
    y el titular en blanco a la izquierda. Va oscura también en modo claro: es una foto. */
 :root:root .web .hero { position: relative; overflow: hidden; background: #01102a; color: #fff; padding: 0 28px;
   min-height: clamp(520px, 72vh, 720px); display: flex; align-items: center; }
 :root:root .web .hero::before, :root:root .web .hero::after { display: none; }
 :root:root .web .hero-in { position: static; width: 100%; max-width: calc(var(--ancho) - 56px); display: block; padding: 72px 0 88px; }
-:root:root .web .hero-arte { position: absolute; z-index: 0; top: 0; right: 0; bottom: 0; width: min(64%, 1080px); max-width: none; height: auto;
+:root:root .web .hero-arte { position: absolute; z-index: 0; top: 0; right: 0; bottom: 0; width: min(64%, 1120px); max-width: none; height: auto;
   aspect-ratio: auto; margin: 0; border-radius: 0; box-shadow: none;
-  background: url(img/portada-pc.webp) 60% 62% / cover no-repeat;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, rgba(0,0,0,.35) 14%, #000 34%); mask-image: linear-gradient(90deg, transparent 0, rgba(0,0,0,.35) 14%, #000 34%); }
-:root:root .web .hero-txt { position: relative; z-index: 1; max-width: 560px; }
+  background: url(img/portada-pc.webp) 100% 58% / 100% auto no-repeat;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6%), linear-gradient(180deg, transparent 8%, #000 26%, #000 82%, transparent 98%); -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 0, #000 6%), linear-gradient(180deg, transparent 8%, #000 26%, #000 82%, transparent 98%); mask-composite: intersect; }
+:root:root .web .hero-txt { position: relative; z-index: 1; max-width: min(470px, 36vw); }
 :root:root .web .hero-eyebrow { display: block; margin: 0 0 22px; padding: 0; border: 0; background: none; text-shadow: none;
   font-family: "Inter", sans-serif; font-size: .95rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #93BBDC; }
-:root:root .web .hero-titulo { font-size: clamp(2.9rem, 4.8vw, 4.8rem); line-height: .95; font-weight: 800; letter-spacing: -.04em; color: #fff; text-shadow: 0 2px 24px rgba(1, 16, 42, .6); }
+:root:root .web .hero-titulo { font-size: clamp(2.6rem, 3.9vw, 4.2rem); line-height: .95; font-weight: 800; letter-spacing: -.04em; color: #fff; text-shadow: 0 2px 24px rgba(1, 16, 42, .6); }
 :root:root .web .hero-sub { max-width: 27em; margin-top: 26px; font-size: 1.25rem; line-height: 1.5; color: rgba(233, 241, 248, .86); }
-:root:root .web .hero-btns { display: flex; margin-top: 34px; gap: 14px; }
-:root:root .web .hero .btn.hero-btn { background: #fff; color: #203D7D !important; box-shadow: none; }
-:root:root .web .hero .btn.hero-btn:hover { background: #E9F1F8; }
-:root:root .web .hero .btn.hero-btn-sec { background: transparent; color: #fff !important; border: 1px solid rgba(255, 255, 255, .5); }
-:root:root .web .hero .btn.hero-btn-sec:hover { border-color: #fff; }
+/* Sin botones: en el PC ningún enlace se repite en la misma pantalla (regla de la v25; ya están en la banda de abajo) */
 :root:root .web .hero :focus-visible { outline-color: #93BBDC; }
+
+/* Crédito de la foto real, abajo a la derecha (provisional hasta el sí por escrito de la empresa) */
+/* Con el dibujo no va crédito; con la foto real, cambiar a display: block !important */
+:root:root .web .hero-credito[hidden] { display: none; }
+:root:root .web .hero-credito { position: absolute; z-index: 1; right: 16px; bottom: 12px; margin: 0; padding: 3px 9px; border-radius: 4px;
+  background: rgba(1, 16, 42, .62); color: #E9F1F8; font-size: .78rem; line-height: 1.4; }
 
 /* ---------- El aviso importante del momento, de lado a lado ---------- */
 :root:root .web .portada-caja { padding: 0 28px; }
