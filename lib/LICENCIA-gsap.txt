@@ -1,6 +1,9 @@
-GSAP 3.15.1 (https://gsap.com), archivo dist/gsap.min.js del paquete npm «gsap» 3.15.1, sin cambios.
+GSAP 3.15.1 (https://gsap.com): archivos dist/gsap.min.js (aquí gsap-3.15.1.min.js) y dist/ScrollTrigger.min.js
+(aquí ScrollTrigger-3.15.1.min.js) del paquete npm «gsap» 3.15.1, sin cambios.
 Copyright (c) 2008-2026, GreenSock. All rights reserved.
 Licencia: GreenSock «Standard 'no charge' license» (gratuita, también para uso comercial):
 https://gsap.com/standard-license
 (Texto de la licencia en el README del paquete: «GreenSock's standard "no charge" license can be viewed at https://gsap.com/standard-license».)
-La web del comité solo lo usa para la entrada de la portada en el ordenador; se carga desde aquí (sin CDN) y solo en el PC.
+La web del comité solo lo usa en el ordenador (web-pc-anim.js): la entrada de la portada, que las cosas aparezcan al llegar
+con el scroll, los números de «El comité, ahora mismo» y el parallax de la imagen. Se carga desde aquí (sin CDN), solo en el PC
+y nunca con «reducir movimiento». No está en la precarga de sw.js.

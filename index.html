@@ -27,13 +27,15 @@
 <link rel="preconnect" href="https://ytxpubqyhnohhugpukdm.supabase.co" crossorigin>
 <link rel="stylesheet" href="fuentes.css?v=31">
 <link rel="stylesheet" href="styles.css?v=31">
-<!-- Diseño del ordenador (maqueta E2): solo en el navegador del PC; el móvil, la app instalada y el panel no lo cargan -->
-<link rel="stylesheet" href="web-pc-e2.css?v=31" media="(min-width: 1000px) and (display-mode: browser)">
+<!-- Diseño del ordenador (rediseño B): solo en el navegador del PC; el móvil, la app instalada y el panel no lo cargan -->
+<link rel="stylesheet" href="web-pc-rb.css?v=31" media="(min-width: 1000px) and (display-mode: browser)">
 <!-- Movimiento del ordenador: no hace nada en el móvil, en la app instalada ni con «reducir movimiento» -->
 <script src="web-pc-anim.js?v=31"></script>
 </head>
 <body class="web">
 <a class="saltar" href="#contenido">Ir al contenido</a>
+<!-- Rediseño del PC: franja fina arriba (solo la enseña web-pc-r*.css; en el móvil y en la app sigue oculta) -->
+<p class="franja-oficial" hidden>Web informativa del Comité de empresa. No es la web oficial de Calsina Carré.</p>
 
 <header class="cabecera">
   <div class="cab-fila">
@@ -105,6 +107,12 @@
       <div id="novedades"></div>
       <!-- v25: en el PC (1000 px o más), el aviso importante del momento a lo ancho, con titular grande y entradilla -->
       <div id="portada-lead" class="portada-lead"></div>
+      <!-- Rediseño del PC: el comité en cifras, con datos que la web ya tiene (reuniones previstas, avisos publicados y miembros).
+           Lo rellena web-pc-anim.js solo en el PC; si no hay datos, sigue oculto. En el móvil y en la app no se ve nunca. -->
+      <section class="cifras" id="cifras" aria-labelledby="cifras-tit" hidden>
+        <h2 id="cifras-tit" class="cifras-tit">El comité, ahora mismo</h2>
+        <p class="cifras-frase" id="cifras-frase"></p>
+      </section>
       <div class="portada-grid">
         <aside class="col-lateral" aria-label="Lo más importante">
           <div id="urgente"></div>
@@ -127,6 +135,11 @@
           <div id="lista-actualidad" class="lista"><div class="esq"></div><div class="esq"></div></div>
         </div>
       </div>
+      <!-- Rediseño del PC: hueco para una foto real (provisional hasta que el comité tenga una con permiso). Solo en el PC. -->
+      <figure class="foto-pc" hidden>
+        <div class="foto-hueco" role="img" aria-label="Imagen provisional: aquí irá una foto real de la plantilla o de la nave, con permiso"><span>Imagen provisional</span></div>
+        <figcaption>Foto: origen · licencia</figcaption>
+      </figure>
     </div>
   </section>
 
@@ -249,7 +262,7 @@
         <p id="buzon-estado" class="estado" role="status"></p>
         <p class="nota-buzon">Si quieres seguir en el anonimato, no pongas nada que te identifique (ni siquiera tu puesto o tu turno). Este buzón no es el canal de denuncias de la Ley 2/2023 (protección de quien informa de irregularidades): para eso está el canal interno de la empresa o, fuera de ella, la Autoridad Independiente de Protección del Informante (<a href="https://www.proteccioninformante.gob.es/" target="_blank" rel="noopener">proteccioninformante.gob.es</a>) y, si el asunto es solo de Cataluña, la Oficina Antifrau de Catalunya (<a href="https://www.antifrau.cat/" target="_blank" rel="noopener">antifrau.cat</a>). Más información en «<a href="#privacidad">Privacidad</a>».</p>
       </form>
-      <!-- v31: solo en la web del navegador del PC (web-pc-e2.css lo enseña al lado del formulario); en el móvil y en la app sigue oculto -->
+      <!-- v31: solo en la web del navegador del PC (web-pc-rb.css lo enseña al lado del formulario); en el móvil y en la app sigue oculto -->
       <aside class="buzon-ayuda" aria-labelledby="buzon-ayuda-tit" hidden>
         <h2 id="buzon-ayuda-tit">Cómo funciona</h2>
         <ol>

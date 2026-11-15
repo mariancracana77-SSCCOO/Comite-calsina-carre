@@ -1,0 +1,255 @@
+/* Rediseño B «Hoja» — SOLO la web en el navegador del ordenador.
+   index.html lo carga con media="(min-width: 1000px) and (display-mode: browser)": el móvil, la app instalada y el panel no lo ven,
+   y por eso tampoco descargan la letra de aquí. Paleta provisional de Calsina Carré: azul #203D7D y azul claro #93BBDC
+   (el claro, nunca como letra sobre blanco: solo como relleno o como acento).
+   Idea: más claro y de periódico: cabecera blanca, titular muy grande en azul y la imagen grande a la derecha con una
+   «sombra» plana de azul claro; las cifras dentro de una frase, como se diría en voz alta; un bloque de color de verdad
+   (el del buzón y el contacto) antes del pie. Letra de títulos: Bricolage Grotesque (OFL); el texto sigue en Inter.
+   Las reglas llevan «:root:root» para ganar a styles.css sin !important. */
+
+@font-face {
+  font-family: "Bricolage Grotesque Variable"; font-style: normal; font-display: swap; font-weight: 200 800;
+  src: url(fuentes/bricolage-grotesque-latin-wght-normal.woff2) format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root:root body.web {
+  --fondo: #fff; --tarjeta: #fff; --texto: #16223d; --suave: #4a5873; --borde: #d6dfeb;
+  --azul: #203D7D; --azul-osc: #16223d; --azul-claro: #E9F1F8; --tinta: #203D7D; --foco: #203D7D;
+  --marca: #203D7D; --claro: #93BBDC; --hielo: #EEF4FA; --cab-fondo: #fff; --cab-txt: #203D7D; --cab-suave: #3d4b68; --cab-borde: #c9d6e6;
+  --marcador: #93BBDC; --marcador-txt: #16223d; --banda: #93BBDC; --banda-txt: #13213f; --rojo: #c62828;
+  --r-s: 4px; --r-m: 8px; --r-l: 14px; --radio: 14px; --sombra: none;
+  --titulos: "Bricolage Grotesque Variable", "Inter", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:root:not([data-theme="light"]) body.web {
+    --fondo: #0b1630; --tarjeta: #12224a; --texto: #E9F1F8; --suave: #a9bbd3; --borde: #24386a;
+    --azul: #93BBDC; --azul-osc: #F2F6FB; --azul-claro: #16294f; --tinta: #F2F6FB; --foco: #93BBDC;
+    --hielo: #10204a; --cab-fondo: #0b1630; --cab-txt: #fff; --cab-suave: #c3d2e6; --cab-borde: #2c4170;
+    --marcador: #203D7D; --marcador-txt: #fff; --banda: #203D7D; --banda-txt: #fff; --rojo: #ff8a80;
+  }
+}
+:root:root[data-theme="dark"] body.web {
+  --fondo: #0b1630; --tarjeta: #12224a; --texto: #E9F1F8; --suave: #a9bbd3; --borde: #24386a;
+  --azul: #93BBDC; --azul-osc: #F2F6FB; --azul-claro: #16294f; --tinta: #F2F6FB; --foco: #93BBDC;
+  --hielo: #10204a; --cab-fondo: #0b1630; --cab-txt: #fff; --cab-suave: #c3d2e6; --cab-borde: #2c4170;
+  --marcador: #203D7D; --marcador-txt: #fff; --banda: #203D7D; --banda-txt: #fff; --rojo: #ff8a80;
+}
+:root:root .web ::selection { background: #93BBDC; color: #13213f; }
+:root:root .web { --ancho: 1240px; scrollbar-color: var(--marca) var(--fondo); }
+:root:root .web :is(h1, h2, h3, .hero-titulo, .lead-titular, .marca-txt b, .agenda-dia b, .aa, .cifras-frase, .pie-logo b, .titulo-seccion) { font-family: var(--titulos); letter-spacing: -.015em; }
+
+/* ---------- Franja de arriba: que nadie la confunda con la web de la empresa ---------- */
+:root:root .web .franja-oficial[hidden] { display: block !important; }
+:root:root .web .franja-oficial { margin: 0; padding: 7px 28px; background: var(--hielo); color: var(--cab-txt); font-size: .82rem; line-height: 1.4; text-align: center; }
+
+/* ---------- Cabecera blanca ---------- */
+:root:root .web .cabecera { background: var(--cab-fondo); color: var(--cab-txt); box-shadow: 0 1px 0 var(--borde); }
+:root:root .web .cab-fila { padding: 16px 28px 4px; }
+:root:root .web .marca { color: var(--cab-txt); }
+:root:root .web .marca-logo img { box-shadow: none; border-radius: 10px; }
+:root:root .web .marca-txt b { text-transform: none; font-size: 1.3rem; font-weight: 750; letter-spacing: -.01em; }
+:root:root .web .marca-txt small { text-transform: none; letter-spacing: 0; font-size: .88rem; color: var(--cab-suave); }
+:root:root .web .cab-busca input { height: 44px; border: 1px solid var(--cab-borde); border-right: 0; border-radius: 22px 0 0 22px; background: var(--cab-fondo); color: var(--texto); padding-left: 18px; }
+:root:root .web .cab-busca input::placeholder { color: var(--suave); }
+:root:root .web .cab-busca button { height: 44px; border-radius: 0 22px 22px 0; background: var(--marca); color: #fff; padding: 0 20px; }
+:root:root .web .cab-btn { border-radius: 50%; border-color: var(--cab-borde); color: var(--cab-txt); }
+:root:root .web .cabecera :focus-visible { outline-color: var(--foco); }
+:root:root .web .pestanas { padding: 0 18px; }
+:root:root .web .pestanas-fila { gap: 0 4px; }
+:root:root .web .pestanas-fila a { text-transform: none; letter-spacing: 0; font-family: "Inter", sans-serif; font-weight: 600; font-size: 1rem; color: var(--cab-suave); padding: 12px 10px 16px; transition: color .15s ease; }
+:root:root .web .pestanas-fila a:hover, :root:root .web .pestanas-fila a.activa { color: var(--cab-txt); }
+:root:root .web .pestanas-fila a.activa::after { left: 10px; right: 10px; height: 3px; border-radius: 3px 3px 0 0; background: var(--cab-txt); }
+
+/* ---------- Portada: titular enorme a la izquierda y la imagen grande a la derecha ---------- */
+:root:root .web .hero { background: var(--fondo); color: var(--texto); padding: 56px 28px 84px; }
+:root:root .web .hero::before, :root:root .web .hero::after { display: none; }
+:root:root .web .hero-in { max-width: calc(var(--ancho) - 56px); grid-template-columns: minmax(0, .95fr) minmax(0, 1.2fr); gap: 56px; align-items: center; }
+:root:root .web .hero-eyebrow { display: none; }
+:root:root .web .hero-titulo { font-size: 4.7rem; line-height: .94; font-weight: 800; letter-spacing: -.04em; color: var(--tinta); }
+:root:root .web .hero-sub { max-width: 26em; margin-top: 28px; font-size: 1.3rem; line-height: 1.5; color: var(--suave); }
+:root:root .web .hero :focus-visible { outline-color: var(--foco); }
+/* La imagen, entera y con esquinas redondas, con un bloque plano de azul claro detrás */
+:root:root .web .hero-arte { aspect-ratio: 16 / 10; border-radius: 22px; background-size: cover; background-position: 40% 50%;
+  -webkit-mask-image: none; mask-image: none; box-shadow: 22px 22px 0 #93BBDC; }
+
+/* ---------- El aviso importante del momento, de lado a lado ---------- */
+:root:root .web .portada-caja { padding: 0 28px; }
+:root:root .web .portada-lead:not(:empty) { margin: 0; }
+:root:root .web .lead { overflow: visible; padding: 0 0 44px; border: 0; border-radius: 0; background: var(--fondo); box-shadow: 0 0 0 100vmax var(--fondo); clip-path: inset(0 -100vmax); }
+:root:root .web .lead.urgente { background: var(--fondo); }
+:root:root .web .lead .rayas { margin: 0 calc(50% - 50vw); height: 10px; box-shadow: none; }
+:root:root .web .lead::after { left: calc(50% - 50vw); right: calc(50% - 50vw); height: 9px; }
+:root:root .web .lead-cuerpo { padding-top: 34px; align-items: center; gap: 36px; }
+:root:root .web .lead .senal { width: 96px; height: 120px; }
+:root:root .web .lead-txt { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 48px; align-items: end; }
+:root:root .web .lead-etq, :root:root .web .lead-titular, :root:root .web .lead-entradilla { grid-column: 1; }
+:root:root .web .lead-etq { font-family: "Inter", sans-serif; text-transform: none; letter-spacing: 0; font-size: 1rem; font-weight: 700; }
+:root:root .web .lead-titular { font-size: 2.8rem; line-height: 1.02; font-weight: 800; color: var(--tinta); }
+:root:root .web .lead-entradilla { font-size: 1.15rem; }
+:root:root .web .lead-ir { grid-column: 2; grid-row: 1 / span 3; align-self: center; padding: 0 28px; min-height: 54px; border-radius: 27px; background: #c62828; color: #fff !important; text-decoration: none; font-weight: 700; }
+:root:root .web .lead:not(.urgente) .lead-ir { background: var(--marca); }
+
+/* ---------- El comité, ahora mismo: una frase, con los números marcados ---------- */
+:root:root .web .cifras[hidden][data-listo] { display: block !important; }
+:root:root .web .cifras { margin: 76px 0 0; }
+/* El título ya lo dice la frase («Ahora mismo hay…»): se queda solo para el lector de pantalla */
+:root:root .web .cifras-tit { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:root:root .web .cifras-frase { margin: 0; max-width: 21em; font-size: 2.7rem; line-height: 1.32; font-weight: 600; color: var(--texto); text-wrap: balance; }
+:root:root .web .cifra b { display: inline-block; padding: 0 .14em; font-size: 1.25em; line-height: 1; font-weight: 800; color: var(--marcador-txt);
+  background: linear-gradient(transparent 55%, var(--marcador) 55%); font-variant-numeric: tabular-nums; }
+
+/* ---------- Info general y Próximas reuniones ---------- */
+:root:root .web .portada-grid { grid-template-columns: minmax(0, 1fr) 330px; grid-template-rows: auto auto auto 1fr; column-gap: 72px; row-gap: 18px; align-items: start; margin-top: 80px; }
+:root:root .web .portada-grid > .col-principal, :root:root .web .portada-grid > .col-lateral, :root:root .web .col-lateral > #agenda { display: contents; }
+:root:root .web #v-actualidad .cab-bloque { grid-column: 1; grid-row: 1; align-self: end; margin: 0; padding: 0 0 12px; border-bottom: 1px solid var(--borde); }
+:root:root .web #v-actualidad .cab-bloque .titulo-seccion { font-size: 2.8rem; line-height: 1; font-weight: 800; color: var(--tinta); }
+:root:root .web #v-actualidad .cab-bloque .sub-vista { margin-top: 8px; font-size: 1.05rem; color: var(--suave); }
+:root:root .web .agenda-tit { grid-column: 2; grid-row: 1; align-self: end; margin: 0; padding: 0 0 12px; border-bottom: 1px solid var(--borde); font-size: 1.5rem; font-weight: 750; color: var(--tinta); }
+:root:root .web #lista-actualidad { grid-column: 1; grid-row: 2 / -1; }
+:root:root .web .col-lateral > * { grid-column: 2; }
+:root:root .web .agenda-lista, :root:root .web .agenda-vacia { grid-column: 2; grid-row: 2; margin: 0; }
+:root:root .web .col-lateral > #consultas { grid-row: 3; margin-top: 18px; }
+
+/* El primer anuncio, a lo ancho y grande; los demás debajo en dos columnas */
+:root:root .web #lista-actualidad { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; }
+:root:root .web #lista-actualidad > .tarjeta { padding: 22px 0 18px; border: 0; border-bottom: 1px solid var(--borde); border-radius: 0; background: none; }
+:root:root .web #lista-actualidad > .tarjeta:first-child { grid-column: 1 / -1; padding: 28px 0 26px; }
+:root:root .web #lista-actualidad > .tarjeta h3 { font-size: 1.45rem; line-height: 1.15; font-weight: 700; color: var(--tinta); }
+:root:root .web #lista-actualidad > .tarjeta:first-child h3 { font-size: 2.4rem; line-height: 1.02; font-weight: 800; max-width: 16em; margin-top: 4px; }
+:root:root .web #lista-actualidad > .tarjeta:first-child .texto { max-width: 38em; font-size: 1.12rem; }
+:root:root .web #v-actualidad .meta { font-size: .92rem; color: var(--suave); }
+:root:root .web #v-actualidad .meta .etq { font-weight: 700; color: var(--azul); text-transform: none; letter-spacing: 0; font-size: .92rem; }
+
+/* La agenda: el día en un círculo de azul claro */
+:root:root .web .agenda-item { gap: 18px; padding: 16px 0; align-items: center; }
+:root:root .web .agenda-lista li + li { border-top-color: var(--borde); }
+:root:root .web .agenda-dia { display: grid; place-content: center; width: 76px; height: 76px; border-radius: 50%; background: var(--hielo); color: var(--tinta); }
+:root:root .web .agenda-dia b { font-size: 2.1rem; font-weight: 800; line-height: .9; }
+:root:root .web .agenda-dia span { font-size: .75rem; letter-spacing: .04em; margin-top: 2px; }
+:root:root .web .agenda-datos b { font-family: "Inter", sans-serif; font-weight: 700; color: var(--tinta); }
+:root:root .web #v-actualidad .consulta { border: 1px solid var(--borde); border-radius: 14px; background: var(--tarjeta); }
+:root:root .web .cons-tipo { text-transform: none; letter-spacing: 0; font-size: .92rem; font-weight: 700; color: var(--azul); }
+:root:root .web .cons-op { border-width: 1px; border-radius: 22px; }
+:root:root .web .cons-barra i { background: var(--marca); }
+
+/* ---------- Hueco de foto (provisional) ---------- */
+:root:root .web .foto-pc[hidden] { display: block !important; }
+:root:root .web .foto-pc { margin: 88px 22px 0 0; }
+:root:root .web .foto-hueco { display: grid; place-items: center; aspect-ratio: 3 / 1; border-radius: 22px; box-shadow: 22px 22px 0 #93BBDC;
+  background: repeating-linear-gradient(135deg, rgba(32, 61, 125, .07) 0 2px, transparent 2px 14px), var(--hielo); color: var(--azul); }
+:root:root .web .foto-hueco span { padding: 10px 20px; border: 1px dashed currentColor; border-radius: 22px; font-weight: 700; font-size: 1.05rem; }
+:root:root .web .foto-pc figcaption { margin-top: 34px; font-size: .85rem; color: var(--suave); }
+
+/* ---------- Páginas de dentro: el título grande sobre azul hielo ---------- */
+:root:root .web .caja { padding-left: 28px; padding-right: 28px; }
+:root:root .web .cab-apartado-in, :root:root .web .banda-in { max-width: calc(var(--ancho) - 56px); }
+:root:root .web .cab-apartado { padding: 44px 28px 48px; background: var(--hielo); color: var(--texto); }
+:root:root .web .cab-apartado::after { display: none; }
+:root:root .web .cab-apartado h1 { font-size: 3.6rem; line-height: .98; font-weight: 800; letter-spacing: -.035em; color: var(--tinta); }
+:root:root .web .cab-apartado p { margin-top: 14px; font-size: 1.15rem; color: var(--suave); }
+:root:root .web .cab-apartado .miga { margin: 0 0 14px; }
+
+:root:root .web .titulo-bloque { margin: 44px 0 16px; padding: 0 0 10px; border: 0; border-bottom: 1px solid var(--borde); font-family: var(--titulos); font-size: 1.75rem; font-weight: 750; text-transform: none; letter-spacing: -.015em; color: var(--tinta); }
+:root:root .web #lista-avisos > .titulo-bloque:first-child { margin-top: 10px; }
+
+:root:root .web main .tarjeta { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 14px; box-shadow: none; }
+:root:root .web .etq { text-transform: none; letter-spacing: 0; }
+:root:root .web .btn { border-radius: 26px; background: var(--marca); color: #fff; }
+:root:root .web .btn-linea { border-radius: 26px; }
+
+:root:root .web .push-caja { border: 0; border-radius: 14px; background: var(--hielo); }
+:root:root .web .push-caja .btn.grande { width: auto; justify-self: start; padding: 0 28px; }
+:root:root .web .avisos-normales { grid-template-columns: minmax(0, 1fr); gap: 0; }
+:root:root .web .avisos-normales > .aviso { border: 0; border-bottom: 1px solid var(--borde); border-radius: 0; background: none; }
+:root:root .web #lista-avisos .aviso.urgente h3 { font-size: 2rem; color: var(--tinta); }
+
+:root:root .web .dia { border-radius: 50%; background: var(--hielo); color: var(--tinta); }
+:root:root .web .mes { border-radius: 14px; box-shadow: none; }
+:root:root .web .tabla-caja { border-radius: 14px; box-shadow: none; }
+:root:root .web .tabla th { background: var(--hielo); color: var(--tinta); border-bottom: 1px solid var(--borde); text-transform: none; letter-spacing: 0; font-size: .95rem; padding-top: 13px; padding-bottom: 13px; }
+:root:root .web .tabla td { padding-top: 12px; padding-bottom: 12px; }
+:root:root .web .tabla .t-fecha { color: var(--texto); font-weight: 600; }
+:root:root .web .segmentos { border-radius: 26px; background: var(--hielo); }
+:root:root .web .segmentos button { border-radius: 22px; color: var(--texto); }
+:root:root .web .segmentos button[aria-selected="true"] { background: var(--marca); color: #fff; box-shadow: none; }
+:root:root .web .chip { border-radius: 20px; }
+:root:root .web .acuerdos { border-left-width: 1px; }
+:root:root .web #v-reuniones .caja > .titulo-bloque:first-of-type { grid-row: 1; margin: 0 0 4px; }
+:root:root .web #v-reuniones .mes { grid-row: 2 / span 3; }
+
+:root:root .web #nosotros-texto { font-size: 1.15rem; }
+:root:root .web .miembro { padding: 22px; }
+:root:root .web .inicial { border-radius: 50%; background: var(--hielo); color: var(--tinta); }
+:root:root .web .seccion-tarjeta > .ic { display: none; }
+:root:root .web .secciones-lista { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+
+/* Sugerencias y preguntas */
+:root:root .web #v-buzon .caja { display: grid; grid-template-columns: minmax(0, 1fr) 380px; grid-template-rows: auto auto 1fr; column-gap: 48px; align-items: start; }
+:root:root .web #v-buzon .form-buzon { grid-column: 1; grid-row: 1 / -1; max-width: none; gap: 14px; padding: 26px 28px 24px; }
+:root:root .web #v-buzon .buzon-ayuda[hidden] { display: block !important; }
+:root:root .web #v-buzon .buzon-ayuda { grid-column: 2; grid-row: 1; padding: 26px 26px 10px; background: var(--hielo); border-radius: 14px; }
+:root:root .web #v-buzon .buzon-ayuda h2 { margin: 0 0 16px; font-size: 1.6rem; font-weight: 750; color: var(--tinta); }
+:root:root .web #v-buzon .buzon-ayuda ol { margin: 0; padding: 0 0 0 1.2em; }
+:root:root .web #v-buzon .buzon-ayuda li { padding: 0 0 14px 4px; font-size: .98rem; line-height: 1.5; }
+:root:root .web #v-buzon .buzon-ayuda li::marker { color: var(--azul); font-weight: 800; }
+:root:root .web #v-buzon .caja > #preguntas { grid-column: 2; grid-row: 2; margin-top: 30px; }
+:root:root .web #v-buzon .caja > #lista-preguntas { grid-column: 2; grid-row: 3; }
+:root:root .web .tipo-buzon { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+:root:root .web .tipo-buzon legend, :root:root .web .form-buzon .etq-campo { font-weight: 700; color: var(--tinta); }
+:root:root .web .tipo-buzon label { min-width: 0; }
+:root:root .web .tipo-buzon span { padding: 13px 14px 12px; border: 1px solid var(--borde); border-radius: 26px; background: var(--tarjeta); color: var(--texto); }
+:root:root .web .tipo-buzon input:checked + span { border-color: var(--marca); background: var(--marca); color: #fff; }
+:root:root .web .form-buzon textarea { min-height: 190px; border: 1px solid var(--borde); border-radius: 14px; }
+:root:root .web .form-buzon #buzon-enviar { justify-self: start; width: auto; min-width: 240px; padding: 0 30px; }
+:root:root .web .form-buzon .nota-buzon { margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--borde); }
+
+/* ---------- Banda del buzón y del contacto (azul claro de verdad) y pie azul ---------- */
+:root:root .web .banda-contacto { margin-top: 96px; background: var(--banda); border: 0; color: var(--banda-txt); }
+:root:root .web .banda-in { padding: 70px 28px 64px; grid-auto-columns: auto; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 72px; }
+:root:root .web .banda-parte h2 { font-size: 2.6rem; line-height: 1; font-weight: 800; letter-spacing: -.03em; color: var(--banda-txt); }
+:root:root .web .banda-parte + .banda-parte h2 { font-size: 1.9rem; }
+:root:root .web .banda-parte p { margin-top: 14px; font-size: 1.12rem; color: var(--banda-txt); }
+:root:root .web .banda-parte a { margin-top: 12px; padding: 0 24px; border-radius: 26px; background: var(--banda-txt); color: var(--banda) !important; text-decoration: none; }
+:root:root .web .banda-parte + .banda-parte { padding-left: 0; border-left: 0; }
+:root:root .web .banda-contacto :focus-visible { outline-color: var(--banda-txt); }
+:root:root .web .pie { margin-top: 0; background: #203D7D; border-top: 0; }
+:root:root .web .pie-in { padding-left: 28px; padding-right: 28px; }
+:root:root .web .pie-legal { max-width: calc(var(--ancho) - 56px); padding-left: 0; padding-right: 0; border-top-color: rgba(255, 255, 255, .22); }
+:root:root .web .pie-col h2 { text-transform: none; letter-spacing: 0; font-size: 1rem; color: #fff; }
+:root:root .web .pie, :root:root .web .pie a { color: #e6eef8; }
+:root:root .web .pie-logo img { box-shadow: none; border-radius: 10px; }
+:root:root .web .pie-logo b { text-transform: none; letter-spacing: -.01em; font-size: 1.15rem; }
+:root:root .web .pie-logo small { text-transform: none; letter-spacing: 0; font-size: .85rem; color: #c9dcee; }
+:root:root .web .pie :focus-visible { outline-color: #93BBDC; }
+@media (prefers-color-scheme: dark) {
+  :root:root:not([data-theme="light"]) .web .pie { background: #08122a; border-top: 1px solid #24386a; }
+  :root:root:not([data-theme="light"]) .web .lead:not(.urgente) .lead-ir { background: #93BBDC; color: #0d1a38 !important; }
+  :root:root:not([data-theme="light"]) .web .hero-arte, :root:root:not([data-theme="light"]) .web .foto-hueco { box-shadow: 22px 22px 0 #203D7D; }
+  :root:root:not([data-theme="light"]) .web .banda-parte a { background: #93BBDC; color: #0d1a38 !important; }
+}
+:root:root[data-theme="dark"] .web .pie { background: #08122a; border-top: 1px solid #24386a; }
+:root:root[data-theme="dark"] .web .lead:not(.urgente) .lead-ir { background: #93BBDC; color: #0d1a38 !important; }
+:root:root[data-theme="dark"] .web .hero-arte, :root:root[data-theme="dark"] .web .foto-hueco { box-shadow: 22px 22px 0 #203D7D; }
+:root:root[data-theme="dark"] .web .banda-parte a { background: #93BBDC; color: #0d1a38 !important; }
+
+/* ---------- Movimiento (web-pc-anim.js lo activa solo en el PC y sin «reducir movimiento»; sin JS todo se ve quieto) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .pc-anim:not(.pc-anim-listo) #v-actualidad :is(.hero-titulo, .hero-sub) { opacity: 0; }
+  .pc-revela { opacity: 0; transform: var(--pc-desde); }
+  .pc-revela.pc-visto { opacity: 1; transform: none; transition: opacity .6s cubic-bezier(.16, 1, .3, 1) var(--pc-retraso, 0ms), transform .75s cubic-bezier(.16, 1, .3, 1) var(--pc-retraso, 0ms); }
+  :root:root .web { --pc-desde: translateY(18px); }
+  :root:root .web .senal-luz { animation: pc-luz 2.4s ease-in-out infinite; filter: none; }
+  @keyframes pc-luz { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+  :root:root .web .vista:not([hidden]):not(#v-actualidad) .cab-apartado-in { animation: pc-vista .5s cubic-bezier(.16, 1, .3, 1) both; }
+  @keyframes pc-vista { from { opacity: 0; transform: translateX(-14px); } }
+  @media (hover: hover) {
+    /* Hover: el marcador de azul claro sube por debajo del titular; los botones, apenas */
+    :root:root .web #lista-actualidad > .tarjeta h3 { background: linear-gradient(transparent 62%, var(--marcador) 62%) 0 0 / 0% 100% no-repeat; transition: background-size .35s cubic-bezier(.16, 1, .3, 1); }
+    :root:root .web #lista-actualidad > .tarjeta:hover h3 { background-size: 100% 100%; }
+    :root:root .web .agenda-dia { transition: background-color .2s ease, color .2s ease; }
+    :root:root .web .agenda-item:hover .agenda-dia { background: var(--marca); color: #fff; }
+    :root:root .web .btn, :root:root .web .lead-ir, :root:root .web .banda-parte a { transition: transform .15s ease; }
+    :root:root .web .btn:hover, :root:root .web .lead-ir:hover, :root:root .web .banda-parte a:hover { transform: translateY(-1px); }
+  }
+}
