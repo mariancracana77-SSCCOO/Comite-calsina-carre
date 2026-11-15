@@ -66,7 +66,7 @@
 :root:root .web .hero::before, :root:root .web .hero::after { display: none; }
 :root:root .web .hero-in { max-width: calc(var(--ancho) - 56px); grid-template-columns: minmax(0, .95fr) minmax(0, 1.2fr); gap: 56px; align-items: center; }
 :root:root .web .hero-eyebrow { display: none; }
-:root:root .web .hero-titulo { font-size: 4.7rem; line-height: .94; font-weight: 800; letter-spacing: -.04em; color: var(--tinta); }
+:root:root .web .hero-titulo { font-size: clamp(2.8rem, 4.9vw, 4.7rem); line-height: .94; font-weight: 800; letter-spacing: -.04em; color: var(--tinta); }
 :root:root .web .hero-sub { max-width: 26em; margin-top: 28px; font-size: 1.3rem; line-height: 1.5; color: var(--suave); }
 :root:root .web .hero :focus-visible { outline-color: var(--foco); }
 /* La imagen, entera y con esquinas redondas, con un bloque plano de azul claro detrás */
@@ -85,7 +85,7 @@
 :root:root .web .lead-txt { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 48px; align-items: end; }
 :root:root .web .lead-etq, :root:root .web .lead-titular, :root:root .web .lead-entradilla { grid-column: 1; }
 :root:root .web .lead-etq { font-family: "Inter", sans-serif; text-transform: none; letter-spacing: 0; font-size: 1rem; font-weight: 700; }
-:root:root .web .lead-titular { font-size: 2.8rem; line-height: 1.02; font-weight: 800; color: var(--tinta); }
+:root:root .web .lead-titular { font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.02; font-weight: 800; color: var(--tinta); }
 :root:root .web .lead-entradilla { font-size: 1.15rem; }
 :root:root .web .lead-ir { grid-column: 2; grid-row: 1 / span 3; align-self: center; padding: 0 28px; min-height: 54px; border-radius: 27px; background: #c62828; color: #fff !important; text-decoration: none; font-weight: 700; }
 :root:root .web .lead:not(.urgente) .lead-ir { background: var(--marca); }
@@ -146,7 +146,7 @@
 :root:root .web .cab-apartado-in, :root:root .web .banda-in { max-width: calc(var(--ancho) - 56px); }
 :root:root .web .cab-apartado { padding: 44px 28px 48px; background: var(--hielo); color: var(--texto); }
 :root:root .web .cab-apartado::after { display: none; }
-:root:root .web .cab-apartado h1 { font-size: 3.6rem; line-height: .98; font-weight: 800; letter-spacing: -.035em; color: var(--tinta); }
+:root:root .web .cab-apartado h1 { font-size: clamp(2.5rem, 3.8vw, 3.6rem); line-height: .98; font-weight: 800; letter-spacing: -.035em; color: var(--tinta); }
 :root:root .web .cab-apartado p { margin-top: 14px; font-size: 1.15rem; color: var(--suave); }
 :root:root .web .cab-apartado .miga { margin: 0 0 14px; }
 :root:root .web .cab-apartado .miga a { color: var(--azul); }
@@ -178,6 +178,8 @@
 :root:root .web .segmentos button[aria-selected="true"] { background: var(--marca); color: #fff; box-shadow: none; }
 :root:root .web .chip { border-radius: 20px; }
 :root:root .web .acuerdos { border-left-width: 1px; }
+/* El filtro elegido, siempre en el azul de la marca con letra blanca (en oscuro, el azul claro con letra blanca no se leería) */
+:root:root .web .chip.activa { background: var(--marca); border-color: var(--marca); color: #fff; }
 :root:root .web #v-reuniones .caja > .titulo-bloque:first-of-type { grid-row: 1; margin: 0 0 4px; }
 :root:root .web #v-reuniones .mes { grid-row: 2 / span 3; }
 
