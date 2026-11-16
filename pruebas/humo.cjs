@@ -75,7 +75,7 @@ fs.mkdirSync(OUT, { recursive: true });
         const enc = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
         return { w: r.width, h: r.height, izq: r.left, der: r.right, img: cs.backgroundImage, vis: cs.display !== "none" && cs.visibility !== "hidden" && +cs.opacity > 0, encima: enc === e || e.contains(enc) || (enc && enc.contains(e) && enc.classList.contains("hero-in")) };
       });
-      if (!cam.vis || !/(portada(-movil)?|camion-[a-z-]+)\.webp/.test(cam.img) || cam.h < 80 || cam.w < (c.w >= 1000 ? 450 : 260) || cam.izq < -40 || cam.der > c.w + 40 || !cam.encima) fallos.push(`${c.nombre}: la imagen del camión y la carretilla no se ve bien (${JSON.stringify(cam)})`);
+      if (!cam.vis || !/(portada(-[a-z-]+)?|camion-[a-z-]+)\.webp/.test(cam.img) || cam.h < 80 || cam.w < (c.w >= 1000 ? 450 : 260) || cam.izq < -40 || cam.der > c.w + 40 || !cam.encima) fallos.push(`${c.nombre}: la imagen del camión y la carretilla no se ve bien (${JSON.stringify(cam)})`);
       // Secciones propias: pestaña, acceso en la portada, subsección, enlace directo a una publicación y sección oculta
       await p.goto(BASE + "#actualidad"); await p.waitForTimeout(600);
       if (!(await p.$('#pestanas a[href="#seccion-1"]'))) fallos.push(`${c.nombre}: la sección principal no sale como pestaña`);
