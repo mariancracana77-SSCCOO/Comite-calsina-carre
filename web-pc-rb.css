@@ -70,10 +70,9 @@
 :root:root .web .hero::before { display: none; }
 /* Sin velo (16/11/2026, Lorena: «el degradado ese no me gusta»): la foto lleva el cielo alargado por arriba y menos suelo, y el texto va sobre el cielo. */
 :root:root .web .hero-arte::after { content: ""; display: block; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-  /* Capa azul de Calsina para que el texto se lea siempre (encargo de Lorena, 16/11/2026): bajo el titular nunca es menos opaca que .8,
-     medido con cada foto a 1100 y 1440 px: 4,5:1 o más en el 95 % de los puntos detrás del texto, y la sombra del texto ayuda en el resto. */
-  background: linear-gradient(90deg, rgba(11, 30, 60, .94) 0%, rgba(11, 30, 60, .9) 40%, rgba(11, 30, 60, .8) 58%, rgba(11, 30, 60, .3) 82%, rgba(11, 30, 60, .12) 100%),
-    linear-gradient(0deg, rgba(11, 30, 60, .55) 0%, rgba(11, 30, 60, 0) 30%); }
+  /* Sin capa azul encima de toda la foto (16/11/2026, Lorena: «ese degradado no me gusta… no algo que sature tanto las fotos»):
+     la foto se ve limpia y solo se oscurece un poco abajo, para los puntos y el crédito. El texto va en su propia caja (.hero-txt). */
+  background: linear-gradient(0deg, rgba(11, 30, 60, .5) 0%, rgba(11, 30, 60, 0) 22%); }
 :root:root .web .hero::after { display: none; }
 :root:root .web .hero-in { position: static; width: 100%; max-width: calc(var(--ancho) - 56px); margin: 0 auto; display: block; padding: clamp(36px, 5vh, 64px) 0 88px; }
 :root:root .web .hero-arte { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; max-width: none;
@@ -98,18 +97,24 @@
 :root:root .web .hero-pases button:hover::before, :root:root .web .hero-pases .pausa:hover { background: rgba(255, 255, 255, .25); }
 :root:root .web .hero-pases button:focus-visible { outline: 3px solid #93BBDC; outline-offset: 2px; }
 :root:root .web .hero-arte img { display: none; }
-:root:root .web .hero-txt { position: relative; z-index: 1; max-width: min(1000px, 60vw); }
-:root:root .web .hero-eyebrow { display: block; margin: 0 0 22px; padding: 0; border: 0; background: none;
-  font-family: "Inter", sans-serif; font-size: .95rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #fff; text-shadow: 0 1px 10px rgba(6, 20, 46, .8); }
-:root:root .web .hero-titulo { font-size: clamp(2.8rem, 4.2vw, 4.6rem); line-height: .95; font-weight: 800; letter-spacing: -.04em; color: #fff; text-shadow: 0 2px 18px rgba(6, 20, 46, .7), 0 1px 3px rgba(6, 20, 46, .5); }
-:root:root .web .hero-sub { max-width: 34em; margin-top: 26px; font-size: 1.4rem; font-weight: 500; line-height: 1.5; color: #fff; text-shadow: 0 1px 12px rgba(6, 20, 46, .85), 0 1px 2px rgba(6, 20, 46, .6); }
+:root:root .web .hero-txt { position: relative; z-index: 1; width: fit-content; max-width: min(720px, 52vw); padding: 34px 40px 36px;
+  /* Caja de cristal azul de Calsina: deja ver la foto difuminada detrás y el texto blanco se lee siempre (4,5:1 o más aunque detrás haya blanco) */
+  background: rgba(11, 30, 60, .68); -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, .18); border-radius: 22px; box-shadow: 0 18px 50px rgba(6, 20, 46, .35); }
+:root:root .web .hero-txt::before { content: ""; display: block; width: 54px; height: 4px; margin-bottom: 18px; border-radius: 2px; background: #00C6FF; }
+:root:root .web .hero-eyebrow { display: block; margin: 0 0 14px; padding: 0; border: 0; background: none;
+  font-family: "Inter", sans-serif; font-size: .9rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #BFE9FF; }
+:root:root .web .hero-titulo { font-size: clamp(2.3rem, 3.3vw, 3.6rem); line-height: 1.05; font-weight: 800; letter-spacing: -.025em; color: #fff; text-wrap: balance; text-shadow: none; }
+:root:root .web .hero-sub { max-width: 32em; margin-top: 18px; font-size: 1.2rem; font-weight: 400; line-height: 1.55; color: #E6EEF7; text-shadow: none; }
 /* Sin botones: en el PC ningún enlace se repite en la misma pantalla (regla de la v25; ya están en la banda de abajo) */
 :root:root .web .hero :focus-visible { outline-color: #93BBDC; }
 
 /* Crédito de la foto que se ve, discreto, abajo a la izquierda (lo escribe web-pc-anim.js) */
 :root:root .web .hero-credito[hidden] { display: none; }
 :root:root .web .hero-credito { position: absolute; z-index: 2; left: max(28px, calc((100% - var(--ancho)) / 2 + 28px)); bottom: 30px; margin: 0; max-width: 60%;
-  font-size: .8rem; color: rgba(255, 255, 255, .85); text-shadow: 0 1px 6px rgba(6, 20, 46, .9); }
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 340px);
+  padding: 5px 12px; border-radius: 999px; background: rgba(11, 30, 60, .66); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  font-size: .8rem; color: #fff; }
 :root:root .web .hero-credito a { color: inherit; }
 
 /* ---------- El aviso importante del momento, de lado a lado ---------- */
@@ -134,7 +139,7 @@
 :root:root .web .cifras { margin: 76px 0 0; }
 /* El título ya lo dice la frase («Ahora mismo hay…»): se queda solo para el lector de pantalla */
 :root:root .web .cifras-tit { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-:root:root .web .cifras-frase { margin: 0; max-width: 21em; font-size: 2.7rem; line-height: 1.32; font-weight: 600; color: var(--texto); text-wrap: balance; }
+:root:root .web .cifras-frase { margin: 0; max-width: 21em; font-size: 2.7rem; line-height: 1.32; font-weight: 600; color: var(--texto); text-wrap: balance; text-shadow: none; }
 :root:root .web .cifra b { display: inline-block; padding: 0 .14em; font-size: 1.25em; line-height: 1; font-weight: 800; color: var(--marcador-txt);
   background: linear-gradient(transparent 55%, var(--marcador) 55%); font-variant-numeric: tabular-nums; }
 
