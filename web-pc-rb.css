@@ -79,22 +79,40 @@
   justify-self: stretch; align-self: stretch; aspect-ratio: auto; margin: 0; border-radius: 0; box-shadow: none;
   background: #0b1e3c url(img/portada/1-conductores.webp) 50% 50% / cover no-repeat;
   -webkit-mask-image: none; mask-image: none; }
-/* Fotos de varios oficios que van cambiando solas (las pone web-pc-anim.js después de cargar la página; la primera es el fondo de .hero-arte) */
+/* Fotos que van cambiando solas (las pone web-pc-anim.js después de cargar la página; la primera es el fondo de .hero-arte).
+   Cambio «de cortina» (16/11/2026, Lorena: el fundido parecía un PowerPoint): la foto nueva entra de derecha a izquierda con un corte
+   inclinado y un filo celeste, llega algo grande y se asienta despacio; la de antes se aparta un poco hacia la izquierda y se oscurece. */
 :root:root .web .hero-fotos { position: absolute; inset: 0; overflow: hidden; }
-:root:root .web .hero-foto { position: absolute; inset: 0; background: 50% 50% / cover no-repeat; opacity: 0; transition: opacity 1.6s ease; }
-:root:root .web .hero-foto.activa { opacity: 1; }
-/* Variante B: además del fundido, un acercamiento muy lento */
-:root:root .web .hero-fotos.zoom .hero-foto { transform: scale(1); transition: opacity 1.6s ease, transform 0s linear 1.6s; }
-:root:root .web .hero-fotos.zoom .hero-foto.activa { transform: scale(1.07); transition: opacity 1.6s ease, transform 9s linear; }
+:root:root .web .hero-foto { position: absolute; inset: 0; visibility: hidden; }
+:root:root .web .hero-foto i { position: absolute; inset: 0; background: 50% 50% / cover no-repeat; transform-origin: 60% 50%; will-change: transform; }
+:root:root .web .hero-foto.activa, :root:root .web .hero-foto.sale { visibility: visible; }
+:root:root .web .hero-foto.activa { z-index: 3; }
+:root:root .web .hero-foto.activa i { animation: hero-asienta 8.6s linear both; }
+:root:root .web .hero-foto.sale { z-index: 1; }
+:root:root .web .hero-foto.sale i { animation: hero-aparta 1.5s cubic-bezier(.3, 0, .2, 1) both; }
+:root:root .web .hero-foto.entra { clip-path: polygon(calc(105% + 220px) 0, 120% 0, 120% 100%, 105% 100%); }
+:root:root .web .hero-foto.entra.va { clip-path: polygon(0 0, 120% 0, 120% 100%, -220px 100%); transition: clip-path 1.5s cubic-bezier(.77, 0, .18, 1); }
+/* El filo celeste: una capa igual que va un poco por delante de la foto nueva */
+:root:root .web .hero-filo { position: absolute; inset: 0; z-index: 2; background: #00C6FF; visibility: hidden; }
+:root:root .web .hero-filo.entra { visibility: visible; clip-path: polygon(calc(105% + 210px) 0, 120% 0, 120% 100%, calc(105% - 10px) 100%); }
+:root:root .web .hero-filo.entra.va { clip-path: polygon(-10px 0, 120% 0, 120% 100%, -230px 100%); transition: clip-path 1.5s cubic-bezier(.77, 0, .18, 1); }
+:root:root .web .hero-foto:first-child.activa:not(.ya) i { animation: none; }
+@keyframes hero-asienta { 0% { transform: scale(1.14); animation-timing-function: cubic-bezier(.2, .7, .2, 1); } 20% { transform: scale(1.04); animation-timing-function: linear; } 100% { transform: scale(1); } }
+@keyframes hero-aparta { to { transform: translateX(-7%) scale(1.02); filter: brightness(.55); } }
 /* Puntos para cambiar de foto y botón de pausa, abajo a la derecha */
 :root:root .web .hero-pases { position: absolute; z-index: 2; right: max(28px, calc((100% - var(--ancho)) / 2 + 28px)); bottom: 26px; display: flex; align-items: center; gap: 4px; }
 :root:root .web .hero-pases[hidden] { display: none; }
 :root:root .web .hero-pases button { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: none; color: #fff; cursor: pointer; }
-:root:root .web .hero-pases .punto::before { content: ""; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #fff; background: transparent; box-shadow: 0 0 6px rgba(6, 20, 46, .6); transition: background .3s, transform .3s; }
-:root:root .web .hero-pases .punto[aria-current="true"]::before { background: #fff; transform: scale(1.15); }
+:root:root .web .hero-pases .punto { width: 44px; }
+:root:root .web .hero-pases .punto::before { content: ""; position: relative; width: 32px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .45); box-shadow: 0 0 6px rgba(6, 20, 46, .5); overflow: hidden;
+  background-image: linear-gradient(#fff, #fff); background-repeat: no-repeat; background-size: 0 100%; }
+/* La rayita de la foto que se ve se va llenando hasta que cambia */
+:root:root .web .hero-pases .punto[aria-current="true"]::before { animation: hero-llena 7s linear both; }
+:root:root .web .hero-pases.parado .punto[aria-current="true"]::before { animation: none; background-size: 100% 100%; }
+@keyframes hero-llena { to { background-size: 100% 100%; } }
 :root:root .web .hero-pases .pausa { width: 36px; height: 36px; margin-right: 6px; background: rgba(11, 30, 60, .55); border: 1px solid rgba(255, 255, 255, .5); }
 :root:root .web .hero-pases .pausa svg { width: 16px; height: 16px; fill: currentColor; }
-:root:root .web .hero-pases button:hover::before, :root:root .web .hero-pases .pausa:hover { background: rgba(255, 255, 255, .25); }
+:root:root .web .hero-pases .punto:hover::before { background-color: rgba(255, 255, 255, .75); } :root:root .web .hero-pases .pausa:hover { background: rgba(255, 255, 255, .25); }
 :root:root .web .hero-pases button:focus-visible { outline: 3px solid #93BBDC; outline-offset: 2px; }
 :root:root .web .hero-arte img { display: none; }
 :root:root .web .hero-txt { position: relative; z-index: 1; max-width: min(640px, 48vw); padding: 0; background: none; border: 0; box-shadow: none; }

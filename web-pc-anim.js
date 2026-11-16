@@ -213,13 +213,14 @@
     };
     pon(0);
     if (!mover) return; // con «reducir movimiento», una sola foto fija
-    var caja = document.createElement("div");
-    caja.className = "hero-fotos" + (/[?&]fondo=b\b/.test(location.search) ? " zoom" : "");
+    var caja = document.createElement("div"); caja.className = "hero-fotos";
     var capas = FOTOS.map(function (f, i) {
       var d = document.createElement("div"); d.className = "hero-foto" + (i === 0 ? " activa" : "");
-      if (i === 0) d.style.backgroundImage = "url(" + f.src + ")";
+      d.appendChild(document.createElement("i"));
+      if (i === 0) d.firstChild.style.backgroundImage = "url(" + f.src + ")";
       caja.appendChild(d); return d;
     });
+    var filo = document.createElement("div"); filo.className = "hero-filo"; caja.appendChild(filo);
     arte.appendChild(caja);
     var pases = document.createElement("div"); pases.className = "hero-pases";
     pases.setAttribute("role", "group"); pases.setAttribute("aria-label", "Fotos de la portada");
@@ -237,27 +238,39 @@
     var actual = 0, parado = false, reloj = null;
     var carga1 = function (i) {
       return new Promise(function (ok) {
-        var c = capas[i];
+        var c = capas[i].firstChild;
         if (c.style.backgroundImage) { ok(); return; }
         var im = new Image(); im.onload = im.onerror = function () { c.style.backgroundImage = "url(" + FOTOS[i].src + ")"; ok(); }; im.src = FOTOS[i].src;
       });
     };
+    var limpia = null;
     var ve = function (i) {
       if (i === actual) return;
       carga1(i).then(function () {
-        capas[actual].classList.remove("activa"); puntos[actual].removeAttribute("aria-current");
-        actual = i; capas[i].classList.add("activa"); puntos[i].setAttribute("aria-current", "true"); pon(i);
+        clearTimeout(limpia);
+        capas.forEach(function (c) { c.classList.remove("sale", "entra", "va"); });
+        filo.classList.remove("entra", "va");
+        var antes = capas[actual], nueva = capas[i];
+        antes.classList.remove("activa"); antes.classList.add("sale"); puntos[actual].removeAttribute("aria-current");
+        nueva.classList.add("entra", "activa", "ya"); filo.classList.add("entra");
+        void nueva.offsetWidth; // que el navegador pinte la posición de salida antes de mover la cortina
+        nueva.classList.add("va"); filo.classList.add("va");
+        actual = i; puntos[i].setAttribute("aria-current", "true"); pon(i);
+        limpia = setTimeout(function () { antes.classList.remove("sale"); nueva.classList.remove("entra", "va"); filo.classList.remove("entra", "va"); }, 1700);
         carga1((i + 1) % FOTOS.length); // la siguiente, ya preparada
       });
     };
+    var llena = function () { // vuelve a empezar la rayita que se va llenando
+      var b = puntos[actual]; b.removeAttribute("aria-current"); void b.offsetWidth; b.setAttribute("aria-current", "true");
+    };
     var para = function () { clearInterval(reloj); reloj = null; };
-    var sigue = function () { para(); if (!parado && !document.hidden) reloj = setInterval(function () { ve((actual + 1) % FOTOS.length); }, CADA); };
+    var sigue = function () { para(); if (!parado && !document.hidden) { llena(); reloj = setInterval(function () { ve((actual + 1) % FOTOS.length); }, CADA); } };
     var pinta = function () {
-      boton.innerHTML = parado ? SIGUE : PAUSA;
+      boton.innerHTML = parado ? SIGUE : PAUSA; pases.classList.toggle("parado", parado);
       boton.setAttribute("aria-label", parado ? "Seguir pasando las fotos" : "Parar las fotos");
     };
     boton.addEventListener("click", function () { parado = !parado; pinta(); sigue(); });
-    puntos.forEach(function (b, i) { b.addEventListener("click", function () { ve(i); sigue(); }); });
+    puntos.forEach(function (b, i) { b.addEventListener("click", function () { if (i === actual) return; ve(i); setTimeout(sigue, 0); }); });
     document.addEventListener("visibilitychange", sigue);
     quieto.addEventListener && quieto.addEventListener("change", function (e) { if (e.matches) { parado = true; pinta(); para(); } });
     pinta();
