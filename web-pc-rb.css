@@ -66,7 +66,7 @@
    con ESRGAN, sin rótulos añadidos y con el cielo alargado por arriba y menos suelo (lo eligió Lorena el 16/11/2026). El titular va a la
    izquierda, sobre el cielo, sin velo ni bordes difuminados. En el móvil y la app, img/portada-plantilla-movil.webp (styles.css). */
 :root:root .web .hero { position: relative; overflow: hidden; background: #0b1e3c; color: #fff; padding: 0 28px;
-  min-height: clamp(520px, 44vw, 720px); display: flex; align-items: flex-start; }
+  min-height: clamp(520px, 44vw, 720px); display: flex; align-items: flex-end; }
 :root:root .web .hero::before { display: none; }
 /* Sin velo (16/11/2026, Lorena: «el degradado ese no me gusta»): la foto lleva el cielo alargado por arriba y menos suelo, y el texto va sobre el cielo. */
 :root:root .web .hero-arte::after { content: ""; display: block; position: absolute; inset: 0; z-index: 1; pointer-events: none;
@@ -97,15 +97,16 @@
 :root:root .web .hero-pases button:hover::before, :root:root .web .hero-pases .pausa:hover { background: rgba(255, 255, 255, .25); }
 :root:root .web .hero-pases button:focus-visible { outline: 3px solid #93BBDC; outline-offset: 2px; }
 :root:root .web .hero-arte img { display: none; }
-:root:root .web .hero-txt { position: relative; z-index: 1; width: fit-content; max-width: min(720px, 52vw); padding: 34px 40px 36px;
-  /* Caja de cristal azul de Calsina: deja ver la foto difuminada detrás y el texto blanco se lee siempre (4,5:1 o más aunque detrás haya blanco) */
-  background: rgba(11, 30, 60, .68); -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
-  border: 1px solid rgba(255, 255, 255, .18); border-radius: 22px; box-shadow: 0 18px 50px rgba(6, 20, 46, .35); }
+:root:root .web .hero-txt { position: relative; z-index: 1; max-width: min(640px, 48vw); padding: 0; background: none; border: 0; box-shadow: none; }
+/* Sin caja (16/11/2026, Lorena: «el recuadro quita mucho protagonismo a las fotos»): el texto va abajo a la izquierda, más compacto,
+   con una sombra suave sin bordes solo detrás de las letras; el resto de la foto queda limpio. */
+:root:root .web .hero-txt::after { content: ""; position: absolute; z-index: -1; inset: -80px -160px -100px -120px; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(11, 30, 60, .82) 0%, rgba(11, 30, 60, .74) 55%, rgba(11, 30, 60, .35) 80%, rgba(11, 30, 60, 0) 100%); }
 :root:root .web .hero-txt::before { content: ""; display: block; width: 54px; height: 4px; margin-bottom: 18px; border-radius: 2px; background: #00C6FF; }
 :root:root .web .hero-eyebrow { display: block; margin: 0 0 14px; padding: 0; border: 0; background: none;
-  font-family: "Inter", sans-serif; font-size: .9rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #BFE9FF; }
-:root:root .web .hero-titulo { font-size: clamp(2.3rem, 3.3vw, 3.6rem); line-height: 1.05; font-weight: 800; letter-spacing: -.025em; color: #fff; text-wrap: balance; text-shadow: none; }
-:root:root .web .hero-sub { max-width: 32em; margin-top: 18px; font-size: 1.2rem; font-weight: 400; line-height: 1.55; color: #E6EEF7; text-shadow: none; }
+  font-family: "Inter", sans-serif; font-size: .9rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #D6F2FF; text-shadow: 0 1px 2px rgba(6, 20, 46, .7), 0 1px 10px rgba(6, 20, 46, .6); }
+:root:root .web .hero-titulo { font-size: clamp(2.1rem, 3vw, 3.2rem); line-height: 1.05; font-weight: 800; letter-spacing: -.025em; color: #fff; text-wrap: balance; text-shadow: 0 1px 2px rgba(6, 20, 46, .6), 0 2px 16px rgba(6, 20, 46, .5); }
+:root:root .web .hero-sub { max-width: 32em; margin-top: 18px; font-size: 1.2rem; font-weight: 400; line-height: 1.55; color: #fff; text-shadow: 0 1px 2px rgba(6, 20, 46, .7), 0 1px 12px rgba(6, 20, 46, .6); }
 /* Sin botones: en el PC ningún enlace se repite en la misma pantalla (regla de la v25; ya están en la banda de abajo) */
 :root:root .web .hero :focus-visible { outline-color: #93BBDC; }
 
