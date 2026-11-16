@@ -929,9 +929,21 @@ main:focus, main:focus-visible { outline: none; }
   .web .aviso-privacidad { bottom: calc(16px + env(safe-area-inset-bottom)); }
 }
 
-/* Prueba (16/11/2026): portada del móvil y de la app con el camión de Calsina en carretera, de lado a lado y sin difuminar */
-.hero-arte { width: calc(100% + 32px); max-width: none; margin: 14px -16px 0; aspect-ratio: 2 / 1;
-  background: url(img/camion-carretera-movil.webp) center / cover no-repeat; -webkit-mask-image: none; mask-image: none; }
+/* Portada del móvil y de la app (16/11/2026, lo pidió Lorena: «que se vea todo más armonizado»): la foto del camión de Calsina en carretera
+   arriba, de lado a lado; el titular empieza encima de la parte baja de la foto, con un velo oscuro leve (como en el PC), y sigue sobre el
+   mismo azul noche. Sin los círculos de la marca ni la pastilla del nombre, para que la foto mande. */
+.hero { background: #0B1E3C; padding-top: 0; }
+.hero::before, .hero::after { display: none; }
+.hero-arte { position: relative; width: calc(100% + 32px); max-width: none; margin: 0 -16px; aspect-ratio: 4 / 3;
+  background: url(img/camion-carretera-movil.webp) 62% 50% / cover no-repeat; -webkit-mask-image: none; mask-image: none; }
+.hero-arte::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(11, 30, 60, 0) 45%, rgba(11, 30, 60, .55) 75%, #0B1E3C 100%); }
+.hero-txt { position: relative; margin-top: -84px; }
+.hero-eyebrow { padding: 0; border: 0; background: none; border-radius: 0; color: #fff; font-family: "Inter", sans-serif; font-weight: 700; letter-spacing: .1em; text-shadow: 0 1px 8px rgba(6, 20, 46, .8); }
+.hero-titulo { text-shadow: 0 2px 14px rgba(6, 20, 46, .7); }
 @media (min-width: 760px) {
-  .hero-arte { width: 100%; margin: 0; aspect-ratio: 16 / 9; border-radius: var(--r-l); background-image: url(img/camion-carretera-ia.webp); }
+  .hero { padding-top: 36px; }
+  .hero-arte { width: 100%; margin: 0; aspect-ratio: 16 / 9; border-radius: var(--r-l); background: url(img/camion-carretera-ia.webp) 62% 60% / cover no-repeat; }
+  .hero-arte::after { display: none; }
+  .hero-txt { margin-top: 0; }
 }
