@@ -943,7 +943,7 @@ main:focus, main:focus-visible { outline: none; }
 .hero-titulo { text-shadow: 0 2px 14px rgba(6, 20, 46, .7); }
 @media (min-width: 760px) {
   .hero { padding-top: 36px; }
-  .hero-arte { width: 100%; margin: 0; aspect-ratio: 16 / 9; border-radius: var(--r-l); background: url(img/portada-plantilla.webp) 70% 55% / cover no-repeat; }
+  .hero-arte { width: 100%; margin: 0; aspect-ratio: 16 / 9; border-radius: var(--r-l); background: url(img/portada-plantilla.webp) 50% 100% / cover no-repeat; }
   .hero-arte::after { display: none; }
   .hero-txt { margin-top: 0; }
 }

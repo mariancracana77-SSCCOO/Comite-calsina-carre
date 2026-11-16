@@ -65,19 +65,18 @@
    img/camion-carretera-ia.webp: el camión de Calsina en carretera, hecho con IA (Higgsfield, FLUX 3) a partir de la foto del camión
    de un compañero; sin matrícula legible. El titular va a la izquierda, sobre el cielo, sin difuminar los bordes y con un velo leve solo detrás del titular (lo eligió Lorena el 16/11/2026). */
 :root:root .web .hero { position: relative; overflow: hidden; background: #0b1e3c; color: #fff; padding: 0 28px;
-  min-height: clamp(520px, min(84vh, 52vw), 860px); display: flex; align-items: flex-start; }
+  min-height: clamp(520px, 52vw, 1000px); display: flex; align-items: flex-start; }
 :root:root .web .hero::before { display: none; }
-/* El velo va dentro de la foto (.hero-arte::after): .hero-in es un elemento flex con z-index y hace su propia capa, así que un ::before de .hero quedaba debajo de la foto y no se veía. */
-:root:root .web .hero-arte::after { display: block; content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(90deg, rgba(6, 20, 46, .8) 0, rgba(6, 20, 46, .62) 32%, rgba(6, 20, 46, .25) 52%, rgba(6, 20, 46, 0) 68%); }
+/* Sin velo (16/11/2026, Lorena: «el degradado ese no me gusta»): la foto lleva el cielo alargado por arriba y menos suelo, y el texto va sobre el cielo. */
+:root:root .web .hero-arte::after { display: none; }
 :root:root .web .hero::after { display: none; }
 :root:root .web .hero-in { position: static; width: 100%; max-width: calc(var(--ancho) - 56px); margin: 0 auto; display: block; padding: clamp(36px, 5vh, 64px) 0 88px; }
 :root:root .web .hero-arte { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; max-width: none;
   justify-self: stretch; align-self: stretch; aspect-ratio: auto; margin: 0; border-radius: 0; box-shadow: none;
-  background: url(img/portada-plantilla.webp) 70% 55% / cover no-repeat;
+  background: url(img/portada-plantilla.webp) 50% 100% / cover no-repeat;
   -webkit-mask-image: none; mask-image: none; }
 :root:root .web .hero-arte img { display: none; }
-:root:root .web .hero-txt { position: relative; z-index: 1; max-width: min(820px, 60vw); }
+:root:root .web .hero-txt { position: relative; z-index: 1; max-width: min(1000px, 60vw); }
 :root:root .web .hero-eyebrow { display: block; margin: 0 0 22px; padding: 0; border: 0; background: none;
   font-family: "Inter", sans-serif; font-size: .95rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #fff; text-shadow: 0 1px 10px rgba(6, 20, 46, .8); }
 :root:root .web .hero-titulo { font-size: clamp(2.8rem, 4.2vw, 4.6rem); line-height: .95; font-weight: 800; letter-spacing: -.04em; color: #fff; text-shadow: 0 2px 18px rgba(6, 20, 46, .7), 0 1px 3px rgba(6, 20, 46, .5); }
