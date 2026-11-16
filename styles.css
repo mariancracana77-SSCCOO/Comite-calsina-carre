@@ -928,3 +928,10 @@ main:focus, main:focus-visible { outline: none; }
   .web .pie-legal { align-items: center; }
   .web .aviso-privacidad { bottom: calc(16px + env(safe-area-inset-bottom)); }
 }
+
+/* Prueba (16/11/2026): portada del móvil y de la app con el camión de Calsina en carretera, de lado a lado y sin difuminar */
+.hero-arte { width: calc(100% + 32px); max-width: none; margin: 14px -16px 0; aspect-ratio: 2 / 1;
+  background: url(img/camion-carretera-movil.webp) center / cover no-repeat; -webkit-mask-image: none; mask-image: none; }
+@media (min-width: 760px) {
+  .hero-arte { width: 100%; margin: 0; aspect-ratio: 16 / 9; border-radius: var(--r-l); background-image: url(img/camion-carretera-ia.webp); }
+}
