@@ -100,7 +100,7 @@
 @keyframes hero-asienta { 0% { transform: scale(1.14); animation-timing-function: cubic-bezier(.2, .7, .2, 1); } 20% { transform: scale(1.04); animation-timing-function: linear; } 100% { transform: scale(1); } }
 @keyframes hero-aparta { to { transform: translateX(-7%) scale(1.02); filter: brightness(.55); } }
 /* Puntos para cambiar de foto y botón de pausa, abajo a la derecha */
-:root:root .web .hero-pases { position: absolute; z-index: 2; right: max(28px, calc((100% - var(--ancho)) / 2 + 28px)); bottom: 26px; display: flex; align-items: center; gap: 4px; }
+:root:root .web .hero-pases { top: auto; padding: 0; background: none; border-radius: 0; grid-column: auto; position: absolute; z-index: 2; right: max(28px, calc((100% - var(--ancho)) / 2 + 28px)); bottom: 26px; display: flex; align-items: center; gap: 4px; }
 :root:root .web .hero-pases[hidden] { display: none; }
 :root:root .web .hero-pases button { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: none; color: #fff; cursor: pointer; }
 :root:root .web .hero-pases .punto { width: 30px; }
