@@ -21,7 +21,7 @@
     { src: "img/portada/5-gasolinera.webp", que: "La gasolinera de la empresa", credito: "Foto: Calsina Carré (calsina-carre.com)" },
     { src: "img/portada/6-tren.webp", que: "Transporte en tren", credito: "Foto: Calsina Carré (calsina-carre.com)" },
     { src: "img/portada/7-barco.webp", que: "Transporte por barco", credito: "Foto: Calsina Carré (calsina-carre.com)" },
-    { src: "img/portada/8-duo.webp", que: "Dúo tráiler", credito: "Foto: Calsina Carré (calsina-carre.com)" },
+    { src: "img/portada/8-logistica.webp", que: "Logística europea", credito: "Foto: Calsina Carré (calsina-carre.com)" },
     { src: "img/portada/9-base.webp", que: "La base", credito: "Foto: Calsina Carré (calsina-carre.com)" }
   ];
   var CADA = 7000;
