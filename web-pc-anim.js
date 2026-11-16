@@ -196,9 +196,15 @@
   // la página y cada una justo antes de enseñarla. Cambia cada 7 s con un fundido; se para si la pestaña no se ve, con el botón
   // de pausa o con «reducir movimiento» (entonces se queda la primera, quieta). Créditos completos en creditos.html.
   var FOTOS = [
-    { src: "img/portada/1-conductores.webp", que: "Conductores", credito: "Foto: aportada por un compañero de la plantilla" },
-    { src: "img/portada/2-almacen.webp", que: "Almacén y carretillas", credito: "Foto: TLSuda, CC BY-SA 4.0 (Wikimedia Commons)" },
-    { src: "img/portada/3-taller.webp", que: "Taller", credito: "Foto: PattayaPatrol, CC BY-SA 4.0 (Wikimedia Commons)" }
+    { src: "img/portada/1-conductores.webp", que: "Conducción", credito: "Foto: aportada por un compañero de la plantilla" },
+    { src: "img/portada/2-flota.webp", que: "La flota de camiones", credito: "Foto: Calsina Carré (calsina-carre.com)" },
+    { src: "img/portada/3-almacen.webp", que: "Almacén y muelles de carga", credito: "Foto: Calsina Carré (calsina-carre.com)" },
+    { src: "img/portada/4-taller.webp", que: "Taller", credito: "Foto: PattayaPatrol, CC BY-SA 4.0 (Wikimedia Commons)" },
+    { src: "img/portada/5-gasolinera.webp", que: "La gasolinera de la empresa", credito: "Foto: Calsina Carré (calsina-carre.com)" },
+    { src: "img/portada/6-tren.webp", que: "Transporte en tren", credito: "Foto: Calsina Carré (calsina-carre.com)" },
+    { src: "img/portada/7-barco.webp", que: "Transporte por barco", credito: "Foto: Calsina Carré (calsina-carre.com)" },
+    { src: "img/portada/8-duo.webp", que: "Dúo tráiler", credito: "Foto: Calsina Carré (calsina-carre.com)" },
+    { src: "img/portada/9-base.webp", que: "La base", credito: "Foto: Calsina Carré (calsina-carre.com)" }
   ];
   var CADA = 7000;
   var montaFotos = function () {

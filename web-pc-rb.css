@@ -81,7 +81,7 @@
   -webkit-mask-image: none; mask-image: none; }
 /* Fotos que van cambiando solas (las pone web-pc-anim.js después de cargar la página; la primera es el fondo de .hero-arte).
    Cambio «de cortina» (16/11/2026, Lorena: el fundido parecía un PowerPoint): la foto nueva entra de derecha a izquierda con un corte
-   inclinado y un filo celeste, llega algo grande y se asienta despacio; la de antes se aparta un poco hacia la izquierda y se oscurece. */
+   inclinado y un filo azul de Calsina, llega algo grande y se asienta despacio; la de antes se aparta un poco hacia la izquierda y se oscurece. */
 :root:root .web .hero-fotos { position: absolute; inset: 0; overflow: hidden; }
 :root:root .web .hero-foto { position: absolute; inset: 0; visibility: hidden; }
 :root:root .web .hero-foto i { position: absolute; inset: 0; background: 50% 50% / cover no-repeat; transform-origin: 60% 50%; will-change: transform; }
@@ -92,8 +92,8 @@
 :root:root .web .hero-foto.sale i { animation: hero-aparta 1.5s cubic-bezier(.3, 0, .2, 1) both; }
 :root:root .web .hero-foto.entra { clip-path: polygon(calc(105% + 220px) 0, 120% 0, 120% 100%, 105% 100%); }
 :root:root .web .hero-foto.entra.va { clip-path: polygon(0 0, 120% 0, 120% 100%, -220px 100%); transition: clip-path 1.5s cubic-bezier(.77, 0, .18, 1); }
-/* El filo celeste: una capa igual que va un poco por delante de la foto nueva */
-:root:root .web .hero-filo { position: absolute; inset: 0; z-index: 2; background: #00C6FF; visibility: hidden; }
+/* El filo azul de Calsina (lo pidió Lorena, 16/11/2026, en vez del celeste): una capa igual que va un poco por delante de la foto nueva */
+:root:root .web .hero-filo { position: absolute; inset: 0; z-index: 2; background: #0E5FAE; visibility: hidden; }
 :root:root .web .hero-filo.entra { visibility: visible; clip-path: polygon(calc(105% + 210px) 0, 120% 0, 120% 100%, calc(105% - 10px) 100%); }
 :root:root .web .hero-filo.entra.va { clip-path: polygon(-10px 0, 120% 0, 120% 100%, -230px 100%); transition: clip-path 1.5s cubic-bezier(.77, 0, .18, 1); }
 :root:root .web .hero-foto:first-child.activa:not(.ya) i { animation: none; }
@@ -103,8 +103,8 @@
 :root:root .web .hero-pases { position: absolute; z-index: 2; right: max(28px, calc((100% - var(--ancho)) / 2 + 28px)); bottom: 26px; display: flex; align-items: center; gap: 4px; }
 :root:root .web .hero-pases[hidden] { display: none; }
 :root:root .web .hero-pases button { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: none; color: #fff; cursor: pointer; }
-:root:root .web .hero-pases .punto { width: 44px; }
-:root:root .web .hero-pases .punto::before { content: ""; position: relative; width: 32px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .45); box-shadow: 0 0 6px rgba(6, 20, 46, .5); overflow: hidden;
+:root:root .web .hero-pases .punto { width: 30px; }
+:root:root .web .hero-pases .punto::before { content: ""; position: relative; width: 22px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .45); box-shadow: 0 0 6px rgba(6, 20, 46, .5); overflow: hidden;
   background-image: linear-gradient(#fff, #fff); background-repeat: no-repeat; background-size: 0 100%; }
 /* La rayita de la foto que se ve se va llenando hasta que cambia */
 :root:root .web .hero-pases .punto[aria-current="true"]::before { animation: hero-llena 7s linear both; }
@@ -119,8 +119,8 @@
 /* Sin caja (16/11/2026, Lorena: «el recuadro quita mucho protagonismo a las fotos»): el texto va abajo a la izquierda, más compacto,
    con una sombra suave sin bordes solo detrás de las letras; el resto de la foto queda limpio. */
 :root:root .web .hero-txt::after { content: ""; position: absolute; z-index: -1; inset: -80px -160px -100px -120px; pointer-events: none;
-  background: radial-gradient(closest-side, rgba(11, 30, 60, .82) 0%, rgba(11, 30, 60, .74) 55%, rgba(11, 30, 60, .35) 80%, rgba(11, 30, 60, 0) 100%); }
-:root:root .web .hero-txt::before { content: ""; display: block; width: 54px; height: 4px; margin-bottom: 18px; border-radius: 2px; background: #00C6FF; }
+  background: radial-gradient(closest-side, rgba(11, 30, 60, .86) 0%, rgba(11, 30, 60, .8) 60%, rgba(11, 30, 60, .42) 82%, rgba(11, 30, 60, 0) 100%); }
+:root:root .web .hero-txt::before { content: ""; display: block; width: 54px; height: 4px; margin-bottom: 18px; border-radius: 2px; background: #0E5FAE; box-shadow: 0 0 0 1px rgba(255, 255, 255, .25); }
 :root:root .web .hero-eyebrow { display: block; margin: 0 0 14px; padding: 0; border: 0; background: none;
   font-family: "Inter", sans-serif; font-size: .9rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #D6F2FF; text-shadow: 0 1px 2px rgba(6, 20, 46, .7), 0 1px 10px rgba(6, 20, 46, .6); }
 :root:root .web .hero-titulo { font-size: clamp(2.1rem, 3vw, 3.2rem); line-height: 1.05; font-weight: 800; letter-spacing: -.025em; color: #fff; text-wrap: balance; text-shadow: 0 1px 2px rgba(6, 20, 46, .6), 0 2px 16px rgba(6, 20, 46, .5); }
@@ -131,7 +131,7 @@
 /* Crédito de la foto que se ve, discreto, abajo a la izquierda (lo escribe web-pc-anim.js) */
 :root:root .web .hero-credito[hidden] { display: none; }
 :root:root .web .hero-credito { position: absolute; z-index: 2; left: max(28px, calc((100% - var(--ancho)) / 2 + 28px)); bottom: 30px; margin: 0; max-width: 60%;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 340px);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 420px);
   padding: 5px 12px; border-radius: 999px; background: rgba(11, 30, 60, .66); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   font-size: .8rem; color: #fff; }
 :root:root .web .hero-credito a { color: inherit; }
