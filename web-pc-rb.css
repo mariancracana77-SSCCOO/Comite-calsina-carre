@@ -61,31 +61,29 @@
 :root:root .web .pestanas-fila a:hover, :root:root .web .pestanas-fila a.activa { color: var(--cab-txt); }
 :root:root .web .pestanas-fila a.activa::after { left: 10px; right: 10px; height: 3px; border-radius: 3px 3px 0 0; background: var(--cab-txt); }
 
-/* ---------- Portada: imagen grande de lado a lado, como en las webs de transporte (lo pidió Lorena, 15/11/2026) ----------
-   Foto real del dúo tráiler de Calsina (img/camion-real-pc.webp: de calsina-carre.com, matrícula borrosa; pidió Lorena «imagen 100 de Calsina de verdad») a la derecha, sobre su mismo azul noche,
-   y el titular en blanco a la izquierda. Va oscura también en modo claro: es una foto. */
-:root:root .web .hero { position: relative; overflow: hidden; background: #01102a; color: #fff; padding: 0 28px;
-  min-height: clamp(520px, 72vh, 720px); display: flex; align-items: center; }
-:root:root .web .hero::before, :root:root .web .hero::after { display: none; }
-:root:root .web .hero-in { position: static; width: 100%; max-width: calc(var(--ancho) - 56px); display: block; padding: 72px 0 88px; }
-:root:root .web .hero-arte { position: absolute; z-index: 0; top: 0; right: 0; bottom: 0; width: min(64%, 1120px); max-width: none; height: auto;
-  aspect-ratio: auto; margin: 0; border-radius: 0; box-shadow: none;
-  background: url(img/portada-pc.webp) 100% 58% / 100% auto no-repeat;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6%), linear-gradient(180deg, transparent 8%, #000 26%, #000 82%, transparent 98%); -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(90deg, transparent 0, #000 6%), linear-gradient(180deg, transparent 8%, #000 26%, #000 82%, transparent 98%); mask-composite: intersect; }
-:root:root .web .hero-txt { position: relative; z-index: 1; max-width: min(470px, 36vw); }
-:root:root .web .hero-eyebrow { display: block; margin: 0 0 22px; padding: 0; border: 0; background: none; text-shadow: none;
-  font-family: "Inter", sans-serif; font-size: .95rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #93BBDC; }
-:root:root .web .hero-titulo { font-size: clamp(2.6rem, 3.9vw, 4.2rem); line-height: .95; font-weight: 800; letter-spacing: -.04em; color: #fff; text-shadow: 0 2px 24px rgba(1, 16, 42, .6); }
-:root:root .web .hero-sub { max-width: 27em; margin-top: 26px; font-size: 1.25rem; line-height: 1.5; color: rgba(233, 241, 248, .86); }
+/* ---------- Portada: foto grande de lado a lado, como en las webs de transporte (lo pidió Lorena, 15–16/11/2026) ----------
+   img/camion-carretera-ia.webp: el camión de Calsina en carretera, hecho con IA (Higgsfield, FLUX 3) a partir de la foto del camión
+   de un compañero; sin matrícula legible. El titular va a la izquierda, sobre el cielo, sin degradados (lo dijo Lorena); se lee por la sombra de las letras. */
+:root:root .web .hero { position: relative; overflow: hidden; background: #0b1e3c; color: #fff; padding: 0 28px;
+  min-height: clamp(520px, min(84vh, 52vw), 860px); display: flex; align-items: flex-start; }
+:root:root .web .hero::before { display: none; }
+:root:root .web .hero::after { display: none; }
+:root:root .web .hero-in { position: static; width: 100%; max-width: calc(var(--ancho) - 56px); margin: 0 auto; display: block; padding: clamp(64px, 10vh, 120px) 0 88px; }
+:root:root .web .hero-arte { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; max-width: none;
+  justify-self: stretch; align-self: stretch; aspect-ratio: auto; margin: 0; border-radius: 0; box-shadow: none;
+  background: url(img/camion-carretera-ia.webp) 62% 62% / cover no-repeat;
+  -webkit-mask-image: none; mask-image: none; }
+:root:root .web .hero-arte img { display: none; }
+:root:root .web .hero-txt { position: relative; z-index: 1; max-width: min(560px, 40vw); }
+:root:root .web .hero-eyebrow { display: block; margin: 0 0 22px; padding: 0; border: 0; background: none;
+  font-family: "Inter", sans-serif; font-size: .95rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #fff; text-shadow: 0 1px 10px rgba(6, 20, 46, .8); }
+:root:root .web .hero-titulo { font-size: clamp(2.8rem, 4.2vw, 4.6rem); line-height: .95; font-weight: 800; letter-spacing: -.04em; color: #fff; text-shadow: 0 2px 18px rgba(6, 20, 46, .7), 0 1px 3px rgba(6, 20, 46, .5); }
+:root:root .web .hero-sub { max-width: 21em; margin-top: 26px; font-size: 1.25rem; line-height: 1.5; color: rgba(233, 241, 248, .92); text-shadow: 0 1px 12px rgba(6, 20, 46, .85), 0 1px 2px rgba(6, 20, 46, .6); }
 /* Sin botones: en el PC ningún enlace se repite en la misma pantalla (regla de la v25; ya están en la banda de abajo) */
 :root:root .web .hero :focus-visible { outline-color: #93BBDC; }
 
-/* Crédito de la foto real, abajo a la derecha (provisional hasta el sí por escrito de la empresa) */
-/* Con el dibujo no va crédito; con la foto real, cambiar a display: block !important */
+/* Sin crédito: la imagen está hecha para la web */
 :root:root .web .hero-credito[hidden] { display: none; }
-:root:root .web .hero-credito { position: absolute; z-index: 1; right: 16px; bottom: 12px; margin: 0; padding: 3px 9px; border-radius: 4px;
-  background: rgba(1, 16, 42, .62); color: #E9F1F8; font-size: .78rem; line-height: 1.4; }
 
 /* ---------- El aviso importante del momento, de lado a lado ---------- */
 :root:root .web .portada-caja { padding: 0 28px; }
