@@ -199,6 +199,7 @@
     { src: "img/portada/1-conductores.webp", que: "Conducción", credito: "Foto: aportada por un compañero de la plantilla" },
     { src: "img/portada/2-flota.webp", que: "La flota de camiones", credito: "Foto: Calsina Carré (calsina-carre.com)" },
     { src: "img/portada/3-almacen.webp", que: "Almacén y muelles de carga", credito: "Foto: Calsina Carré (calsina-carre.com)" },
+    { src: "img/portada/3b-almacen-dentro.webp", que: "Dentro del almacén", credito: "Foto: TLSuda, CC BY-SA 4.0 (Wikimedia Commons)" },
     { src: "img/portada/4-taller.webp", que: "Taller", credito: "Foto: PattayaPatrol, CC BY-SA 4.0 (Wikimedia Commons)" },
     { src: "img/portada/5-gasolinera.webp", que: "La gasolinera de la empresa", credito: "Foto: Calsina Carré (calsina-carre.com)" },
     { src: "img/portada/6-tren.webp", que: "Transporte en tren", credito: "Foto: Calsina Carré (calsina-carre.com)" },
