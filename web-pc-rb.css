@@ -62,8 +62,9 @@
 :root:root .web .pestanas-fila a.activa::after { left: 10px; right: 10px; height: 3px; border-radius: 3px 3px 0 0; background: var(--cab-txt); }
 
 /* ---------- Portada: foto grande de lado a lado, como en las webs de transporte (lo pidió Lorena, 15–16/11/2026) ----------
-   img/camion-carretera-ia.webp: el camión de Calsina en carretera, hecho con IA (Higgsfield, FLUX 3) a partir de la foto del camión
-   de un compañero; sin matrícula legible. El titular va a la izquierda, sobre el cielo, sin difuminar los bordes y con un velo leve solo detrás del titular (lo eligió Lorena el 16/11/2026). */
+   img/portada-plantilla.webp: toda la plantilla (almacén, carga y descarga, chófer y la gasolinera), hecha con IA (Higgsfield), ampliada
+   con ESRGAN, sin rótulos añadidos y con el cielo alargado por arriba y menos suelo (lo eligió Lorena el 16/11/2026). El titular va a la
+   izquierda, sobre el cielo, sin velo ni bordes difuminados. En el móvil y la app, img/portada-plantilla-movil.webp (styles.css). */
 :root:root .web .hero { position: relative; overflow: hidden; background: #0b1e3c; color: #fff; padding: 0 28px;
   min-height: clamp(520px, 52vw, 1000px); display: flex; align-items: flex-start; }
 :root:root .web .hero::before { display: none; }
