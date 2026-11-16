@@ -66,16 +66,37 @@
    con ESRGAN, sin rótulos añadidos y con el cielo alargado por arriba y menos suelo (lo eligió Lorena el 16/11/2026). El titular va a la
    izquierda, sobre el cielo, sin velo ni bordes difuminados. En el móvil y la app, img/portada-plantilla-movil.webp (styles.css). */
 :root:root .web .hero { position: relative; overflow: hidden; background: #0b1e3c; color: #fff; padding: 0 28px;
-  min-height: clamp(520px, 52vw, 1000px); display: flex; align-items: flex-start; }
+  min-height: clamp(520px, 44vw, 720px); display: flex; align-items: flex-start; }
 :root:root .web .hero::before { display: none; }
 /* Sin velo (16/11/2026, Lorena: «el degradado ese no me gusta»): la foto lleva el cielo alargado por arriba y menos suelo, y el texto va sobre el cielo. */
-:root:root .web .hero-arte::after { display: none; }
+:root:root .web .hero-arte::after { content: ""; display: block; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  /* Capa azul de Calsina para que el texto se lea siempre (encargo de Lorena, 16/11/2026): bajo el titular nunca es menos opaca que .8,
+     medido con cada foto a 1100 y 1440 px: 4,5:1 o más en el 95 % de los puntos detrás del texto, y la sombra del texto ayuda en el resto. */
+  background: linear-gradient(90deg, rgba(11, 30, 60, .94) 0%, rgba(11, 30, 60, .9) 40%, rgba(11, 30, 60, .8) 58%, rgba(11, 30, 60, .3) 82%, rgba(11, 30, 60, .12) 100%),
+    linear-gradient(0deg, rgba(11, 30, 60, .55) 0%, rgba(11, 30, 60, 0) 30%); }
 :root:root .web .hero::after { display: none; }
 :root:root .web .hero-in { position: static; width: 100%; max-width: calc(var(--ancho) - 56px); margin: 0 auto; display: block; padding: clamp(36px, 5vh, 64px) 0 88px; }
 :root:root .web .hero-arte { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; max-width: none;
   justify-self: stretch; align-self: stretch; aspect-ratio: auto; margin: 0; border-radius: 0; box-shadow: none;
-  background: url(img/portada-plantilla.webp) 50% 100% / cover no-repeat;
+  background: #0b1e3c url(img/portada/1-conductores.webp) 50% 50% / cover no-repeat;
   -webkit-mask-image: none; mask-image: none; }
+/* Fotos de varios oficios que van cambiando solas (las pone web-pc-anim.js después de cargar la página; la primera es el fondo de .hero-arte) */
+:root:root .web .hero-fotos { position: absolute; inset: 0; overflow: hidden; }
+:root:root .web .hero-foto { position: absolute; inset: 0; background: 50% 50% / cover no-repeat; opacity: 0; transition: opacity 1.6s ease; }
+:root:root .web .hero-foto.activa { opacity: 1; }
+/* Variante B: además del fundido, un acercamiento muy lento */
+:root:root .web .hero-fotos.zoom .hero-foto { transform: scale(1); transition: opacity 1.6s ease, transform 0s linear 1.6s; }
+:root:root .web .hero-fotos.zoom .hero-foto.activa { transform: scale(1.07); transition: opacity 1.6s ease, transform 9s linear; }
+/* Puntos para cambiar de foto y botón de pausa, abajo a la derecha */
+:root:root .web .hero-pases { position: absolute; z-index: 2; right: max(28px, calc((100% - var(--ancho)) / 2 + 28px)); bottom: 26px; display: flex; align-items: center; gap: 4px; }
+:root:root .web .hero-pases[hidden] { display: none; }
+:root:root .web .hero-pases button { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: none; color: #fff; cursor: pointer; }
+:root:root .web .hero-pases .punto::before { content: ""; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #fff; background: transparent; box-shadow: 0 0 6px rgba(6, 20, 46, .6); transition: background .3s, transform .3s; }
+:root:root .web .hero-pases .punto[aria-current="true"]::before { background: #fff; transform: scale(1.15); }
+:root:root .web .hero-pases .pausa { width: 36px; height: 36px; margin-right: 6px; background: rgba(11, 30, 60, .55); border: 1px solid rgba(255, 255, 255, .5); }
+:root:root .web .hero-pases .pausa svg { width: 16px; height: 16px; fill: currentColor; }
+:root:root .web .hero-pases button:hover::before, :root:root .web .hero-pases .pausa:hover { background: rgba(255, 255, 255, .25); }
+:root:root .web .hero-pases button:focus-visible { outline: 3px solid #93BBDC; outline-offset: 2px; }
 :root:root .web .hero-arte img { display: none; }
 :root:root .web .hero-txt { position: relative; z-index: 1; max-width: min(1000px, 60vw); }
 :root:root .web .hero-eyebrow { display: block; margin: 0 0 22px; padding: 0; border: 0; background: none;
@@ -85,8 +106,11 @@
 /* Sin botones: en el PC ningún enlace se repite en la misma pantalla (regla de la v25; ya están en la banda de abajo) */
 :root:root .web .hero :focus-visible { outline-color: #93BBDC; }
 
-/* Sin crédito: la imagen está hecha para la web */
+/* Crédito de la foto que se ve, discreto, abajo a la izquierda (lo escribe web-pc-anim.js) */
 :root:root .web .hero-credito[hidden] { display: none; }
+:root:root .web .hero-credito { position: absolute; z-index: 2; left: max(28px, calc((100% - var(--ancho)) / 2 + 28px)); bottom: 30px; margin: 0; max-width: 60%;
+  font-size: .8rem; color: rgba(255, 255, 255, .85); text-shadow: 0 1px 6px rgba(6, 20, 46, .9); }
+:root:root .web .hero-credito a { color: inherit; }
 
 /* ---------- El aviso importante del momento, de lado a lado ---------- */
 :root:root .web .portada-caja { padding: 0 28px; }
