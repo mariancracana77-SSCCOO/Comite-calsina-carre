@@ -197,11 +197,8 @@
   // de pausa o con «reducir movimiento» (entonces se queda la primera, quieta). Créditos completos en creditos.html.
   var FOTOS = [
     { src: "img/portada/1-conductores.webp", que: "Conductores", credito: "Foto: aportada por un compañero de la plantilla" },
-    { src: "img/portada/2-camion.webp", que: "Camión en la base", credito: "Foto: aportada por un compañero de la plantilla" },
-    { src: "img/portada/3-almacen.webp", que: "Almacén y carretillas", credito: "Foto: TLSuda, CC BY-SA 4.0 (Wikimedia Commons)" },
-    { src: "img/portada/4-taller.webp", que: "Taller", credito: "Foto: PattayaPatrol, CC BY-SA 4.0 (Wikimedia Commons)" },
-    { src: "img/portada/5-oficina.webp", que: "Oficina y administración", credito: "Foto: Metropolitan Transportation Authority, CC BY 2.0 (Wikimedia Commons)" },
-    { src: "img/portada/6-limpieza.webp", que: "Limpieza y mantenimiento", credito: "Foto: Moritz Borkowski, CC BY-SA 4.0 (Wikimedia Commons)" }
+    { src: "img/portada/2-almacen.webp", que: "Almacén y carretillas", credito: "Foto: TLSuda, CC BY-SA 4.0 (Wikimedia Commons)" },
+    { src: "img/portada/3-taller.webp", que: "Taller", credito: "Foto: PattayaPatrol, CC BY-SA 4.0 (Wikimedia Commons)" }
   ];
   var CADA = 7000;
   var montaFotos = function () {
