@@ -69,17 +69,17 @@
 :root:root .web .hero::before { display: block; content: ""; position: absolute; inset: 0; width: auto; height: auto; z-index: 0; pointer-events: none; border: 0; border-radius: 0; box-shadow: none;
   background: linear-gradient(90deg, rgba(6, 20, 46, .78) 0, rgba(6, 20, 46, .5) 30%, rgba(6, 20, 46, 0) 56%); }
 :root:root .web .hero::after { display: none; }
-:root:root .web .hero-in { position: static; width: 100%; max-width: calc(var(--ancho) - 56px); margin: 0 auto; display: block; padding: clamp(64px, 10vh, 120px) 0 88px; }
+:root:root .web .hero-in { position: static; width: 100%; max-width: calc(var(--ancho) - 56px); margin: 0 auto; display: block; padding: clamp(36px, 5vh, 64px) 0 88px; }
 :root:root .web .hero-arte { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; max-width: none;
   justify-self: stretch; align-self: stretch; aspect-ratio: auto; margin: 0; border-radius: 0; box-shadow: none;
   background: url(img/portada-plantilla.webp) 70% 55% / cover no-repeat;
   -webkit-mask-image: none; mask-image: none; }
 :root:root .web .hero-arte img { display: none; }
-:root:root .web .hero-txt { position: relative; z-index: 1; max-width: min(560px, 40vw); }
+:root:root .web .hero-txt { position: relative; z-index: 1; max-width: min(820px, 60vw); }
 :root:root .web .hero-eyebrow { display: block; margin: 0 0 22px; padding: 0; border: 0; background: none;
   font-family: "Inter", sans-serif; font-size: .95rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #fff; text-shadow: 0 1px 10px rgba(6, 20, 46, .8); }
 :root:root .web .hero-titulo { font-size: clamp(2.8rem, 4.2vw, 4.6rem); line-height: .95; font-weight: 800; letter-spacing: -.04em; color: #fff; text-shadow: 0 2px 18px rgba(6, 20, 46, .7), 0 1px 3px rgba(6, 20, 46, .5); }
-:root:root .web .hero-sub { max-width: 21em; margin-top: 26px; font-size: 1.25rem; line-height: 1.5; color: rgba(233, 241, 248, .92); text-shadow: 0 1px 12px rgba(6, 20, 46, .85), 0 1px 2px rgba(6, 20, 46, .6); }
+:root:root .web .hero-sub { max-width: 34em; margin-top: 26px; font-size: 1.25rem; line-height: 1.5; color: rgba(233, 241, 248, .92); text-shadow: 0 1px 12px rgba(6, 20, 46, .85), 0 1px 2px rgba(6, 20, 46, .6); }
 /* Sin botones: en el PC ningún enlace se repite en la misma pantalla (regla de la v25; ya están en la banda de abajo) */
 :root:root .web .hero :focus-visible { outline-color: #93BBDC; }
 
@@ -271,3 +271,5 @@
     :root:root .web .btn:hover, :root:root .web .lead-ir:hover, :root:root .web .banda-parte a:hover { transform: translateY(-1px); }
   }
 }
+/* En los PC más estrechos, sin la línea pequeña de encima del titular: así el texto no tapa el rótulo de la gasolinera */
+@media (max-width: 1279px) { :root:root .web .hero-eyebrow { display: none; } }

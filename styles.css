@@ -935,7 +935,7 @@ main:focus, main:focus-visible { outline: none; }
 .hero { background: #0B1E3C; padding-top: 0; }
 .hero::before, .hero::after { display: none; }
 .hero-arte { position: relative; width: calc(100% + 32px); max-width: none; margin: 0 -16px; aspect-ratio: 4 / 3;
-  background: url(img/portada-plantilla-movil.webp) 50% 50% / cover no-repeat; -webkit-mask-image: none; mask-image: none; }
+  background: url(img/portada-plantilla-movil.webp) 40% 50% / cover no-repeat; -webkit-mask-image: none; mask-image: none; }
 .hero-arte::after { content: ""; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(180deg, rgba(11, 30, 60, 0) 45%, rgba(11, 30, 60, .55) 75%, #0B1E3C 100%); }
 .hero-txt { position: relative; margin-top: -84px; }
