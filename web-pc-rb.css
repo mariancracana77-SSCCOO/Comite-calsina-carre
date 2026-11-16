@@ -63,10 +63,11 @@
 
 /* ---------- Portada: foto grande de lado a lado, como en las webs de transporte (lo pidió Lorena, 15–16/11/2026) ----------
    img/camion-carretera-ia.webp: el camión de Calsina en carretera, hecho con IA (Higgsfield, FLUX 3) a partir de la foto del camión
-   de un compañero; sin matrícula legible. El titular va a la izquierda, sobre el cielo, sin degradados (lo dijo Lorena); se lee por la sombra de las letras. */
+   de un compañero; sin matrícula legible. El titular va a la izquierda, sobre el cielo, sin difuminar los bordes y con un velo leve solo detrás del titular (lo eligió Lorena el 16/11/2026). */
 :root:root .web .hero { position: relative; overflow: hidden; background: #0b1e3c; color: #fff; padding: 0 28px;
   min-height: clamp(520px, min(84vh, 52vw), 860px); display: flex; align-items: flex-start; }
-:root:root .web .hero::before { display: none; }
+:root:root .web .hero::before { display: block; content: ""; position: absolute; inset: 0; width: auto; height: auto; z-index: 0; pointer-events: none; border: 0; border-radius: 0; box-shadow: none;
+  background: linear-gradient(90deg, rgba(6, 20, 46, .78) 0, rgba(6, 20, 46, .5) 30%, rgba(6, 20, 46, 0) 56%); }
 :root:root .web .hero::after { display: none; }
 :root:root .web .hero-in { position: static; width: 100%; max-width: calc(var(--ancho) - 56px); margin: 0 auto; display: block; padding: clamp(64px, 10vh, 120px) 0 88px; }
 :root:root .web .hero-arte { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; max-width: none;
