@@ -1,0 +1,77 @@
+/* Portada del ordenador: foto grande de lado a lado con las fotos reales que pasan solas (portada-fotos.js).
+   Se carga en el navegador del PC y también en la app instalada en el ordenador (lo pidió Lorena, 16/11/2026: «como la web del PC»).
+   Antes estaba dentro de web-pc-rb.css. */
+/* ---------- Portada: foto grande de lado a lado, como en las webs de transporte (lo pidió Lorena, 15–16/11/2026) ----------
+   Las fotos son reales (portada-fotos.js); la primera es el fondo de .hero-arte. El titular va abajo a la izquierda con una sombra suave. */
+:root:root .web .hero { position: relative; overflow: hidden; background: #0b1e3c; color: #fff; padding: 0 28px;
+  min-height: clamp(520px, 44vw, 720px); display: flex; align-items: flex-end; }
+:root:root .web .hero::before { display: none; }
+/* Sin velo (16/11/2026, Lorena: «el degradado ese no me gusta»): la foto lleva el cielo alargado por arriba y menos suelo, y el texto va sobre el cielo. */
+:root:root .web .hero-arte::after { content: ""; display: block; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  /* Sin capa azul encima de toda la foto (16/11/2026, Lorena: «ese degradado no me gusta… no algo que sature tanto las fotos»):
+     la foto se ve limpia y solo se oscurece un poco abajo, para los puntos y el crédito. El texto va en su propia caja (.hero-txt). */
+  background: linear-gradient(0deg, rgba(11, 30, 60, .5) 0%, rgba(11, 30, 60, 0) 22%); }
+:root:root .web .hero::after { display: none; }
+:root:root .web .hero-in { position: static; width: 100%; max-width: calc(var(--ancho) - 56px); margin: 0 auto; display: block; padding: clamp(36px, 5vh, 64px) 0 88px; }
+:root:root .web .hero-arte { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; max-width: none;
+  justify-self: stretch; align-self: stretch; aspect-ratio: auto; margin: 0; border-radius: 0; box-shadow: none;
+  background: #0b1e3c url(img/portada/1-conductores.webp) 50% 50% / cover no-repeat;
+  -webkit-mask-image: none; mask-image: none; }
+/* Fotos que van cambiando solas (las pone web-pc-anim.js después de cargar la página; la primera es el fondo de .hero-arte).
+   Cambio «de cortina» (16/11/2026, Lorena: el fundido parecía un PowerPoint): la foto nueva entra de derecha a izquierda con un corte
+   inclinado y un filo azul de Calsina, llega algo grande y se asienta despacio; la de antes se aparta un poco hacia la izquierda y se oscurece. */
+:root:root .web .hero-fotos { position: absolute; inset: 0; overflow: hidden; }
+:root:root .web .hero-foto { position: absolute; inset: 0; visibility: hidden; }
+:root:root .web .hero-foto i { position: absolute; inset: 0; background: 50% 50% / cover no-repeat; transform-origin: 60% 50%; will-change: transform; }
+:root:root .web .hero-foto.activa, :root:root .web .hero-foto.sale { visibility: visible; }
+:root:root .web .hero-foto.activa { z-index: 3; }
+:root:root .web .hero-foto.activa i { animation: hero-asienta 8.6s linear both; }
+:root:root .web .hero-foto.sale { z-index: 1; }
+:root:root .web .hero-foto.sale i { animation: hero-aparta 1.5s cubic-bezier(.3, 0, .2, 1) both; }
+:root:root .web .hero-foto.entra { clip-path: polygon(calc(105% + 220px) 0, 120% 0, 120% 100%, 105% 100%); }
+:root:root .web .hero-foto.entra.va { clip-path: polygon(0 0, 120% 0, 120% 100%, -220px 100%); transition: clip-path 1.5s cubic-bezier(.77, 0, .18, 1); }
+/* El filo azul de Calsina (lo pidió Lorena, 16/11/2026, en vez del celeste): una capa igual que va un poco por delante de la foto nueva */
+:root:root .web .hero-filo { position: absolute; inset: 0; z-index: 2; background: #0E5FAE; visibility: hidden; }
+:root:root .web .hero-filo.entra { visibility: visible; clip-path: polygon(calc(105% + 210px) 0, 120% 0, 120% 100%, calc(105% - 10px) 100%); }
+:root:root .web .hero-filo.entra.va { clip-path: polygon(-10px 0, 120% 0, 120% 100%, -230px 100%); transition: clip-path 1.5s cubic-bezier(.77, 0, .18, 1); }
+:root:root .web .hero-foto:first-child.activa:not(.ya) i { animation: none; }
+@keyframes hero-asienta { 0% { transform: scale(1.14); animation-timing-function: cubic-bezier(.2, .7, .2, 1); } 20% { transform: scale(1.04); animation-timing-function: linear; } 100% { transform: scale(1); } }
+@keyframes hero-aparta { to { transform: translateX(-7%) scale(1.02); filter: brightness(.55); } }
+/* Puntos para cambiar de foto y botón de pausa, abajo a la derecha */
+:root:root .web .hero-pases { top: auto; padding: 0; background: none; border-radius: 0; grid-column: auto; position: absolute; z-index: 2; right: max(28px, calc((100% - var(--ancho)) / 2 + 28px)); bottom: 26px; display: flex; align-items: center; gap: 4px; }
+:root:root .web .hero-pases[hidden] { display: none; }
+:root:root .web .hero-pases button { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: none; color: #fff; cursor: pointer; }
+:root:root .web .hero-pases .punto { width: 30px; }
+:root:root .web .hero-pases .punto::before { content: ""; position: relative; width: 22px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .45); box-shadow: 0 0 6px rgba(6, 20, 46, .5); overflow: hidden;
+  background-image: linear-gradient(#fff, #fff); background-repeat: no-repeat; background-size: 0 100%; }
+/* La rayita de la foto que se ve se va llenando hasta que cambia */
+:root:root .web .hero-pases .punto[aria-current="true"]::before { animation: hero-llena 7s linear both; }
+:root:root .web .hero-pases.parado .punto[aria-current="true"]::before { animation: none; background-size: 100% 100%; }
+@keyframes hero-llena { to { background-size: 100% 100%; } }
+:root:root .web .hero-pases .pausa { width: 36px; height: 36px; margin-right: 6px; background: rgba(11, 30, 60, .55); border: 1px solid rgba(255, 255, 255, .5); }
+:root:root .web .hero-pases .pausa svg { width: 16px; height: 16px; fill: currentColor; }
+:root:root .web .hero-pases .punto:hover::before { background-color: rgba(255, 255, 255, .75); } :root:root .web .hero-pases .pausa:hover { background: rgba(255, 255, 255, .25); }
+:root:root .web .hero-pases button:focus-visible { outline: 3px solid #93BBDC; outline-offset: 2px; }
+:root:root .web .hero-arte img { display: none; }
+:root:root .web .hero-txt { position: relative; z-index: 1; max-width: min(640px, 48vw); padding: 0; background: none; border: 0; box-shadow: none; }
+/* Sin caja (16/11/2026, Lorena: «el recuadro quita mucho protagonismo a las fotos»): el texto va abajo a la izquierda, más compacto,
+   con una sombra suave sin bordes solo detrás de las letras; el resto de la foto queda limpio. */
+:root:root .web .hero-txt::after { content: ""; position: absolute; z-index: -1; inset: -80px -160px -100px -120px; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(11, 30, 60, .86) 0%, rgba(11, 30, 60, .8) 60%, rgba(11, 30, 60, .42) 82%, rgba(11, 30, 60, 0) 100%); }
+:root:root .web .hero-txt::before { content: ""; display: block; width: 54px; height: 4px; margin-bottom: 18px; border-radius: 2px; background: #0E5FAE; box-shadow: 0 0 0 1px rgba(255, 255, 255, .25); }
+:root:root .web .hero-eyebrow { display: block; margin: 0 0 14px; padding: 0; border: 0; background: none;
+  font-family: "Inter", sans-serif; font-size: .9rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #D6F2FF; text-shadow: 0 1px 2px rgba(6, 20, 46, .7), 0 1px 10px rgba(6, 20, 46, .6); }
+:root:root .web .hero-titulo { font-size: clamp(2.1rem, 3vw, 3.2rem); line-height: 1.05; font-weight: 800; letter-spacing: -.025em; color: #fff; text-wrap: balance; text-shadow: 0 1px 2px rgba(6, 20, 46, .6), 0 2px 16px rgba(6, 20, 46, .5); }
+:root:root .web .hero-sub { max-width: 32em; margin-top: 18px; font-size: 1.2rem; font-weight: 400; line-height: 1.55; color: #fff; text-shadow: 0 1px 2px rgba(6, 20, 46, .7), 0 1px 12px rgba(6, 20, 46, .6); }
+/* Sin botones: en el PC ningún enlace se repite en la misma pantalla (regla de la v25; ya están en la banda de abajo) */
+:root:root .web .hero :focus-visible { outline-color: #93BBDC; }
+
+/* Crédito de la foto que se ve, discreto, abajo a la izquierda (lo escribe web-pc-anim.js) */
+:root:root .web .hero-credito[hidden] { display: none; }
+:root:root .web .hero-credito { text-align: left; position: absolute; z-index: 2; left: max(28px, calc((100% - var(--ancho)) / 2 + 28px)); bottom: 30px; margin: 0; max-width: 60%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 420px);
+  padding: 5px 12px; border-radius: 999px; background: rgba(11, 30, 60, .66); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  font-size: .8rem; color: #fff; }
+:root:root .web .hero-credito a { color: inherit; }
+
+@media (max-width: 1279px) { :root:root .web .hero-eyebrow { display: none; } }
