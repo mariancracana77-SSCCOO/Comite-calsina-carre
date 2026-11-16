@@ -66,8 +66,10 @@
    de un compañero; sin matrícula legible. El titular va a la izquierda, sobre el cielo, sin difuminar los bordes y con un velo leve solo detrás del titular (lo eligió Lorena el 16/11/2026). */
 :root:root .web .hero { position: relative; overflow: hidden; background: #0b1e3c; color: #fff; padding: 0 28px;
   min-height: clamp(520px, min(84vh, 52vw), 860px); display: flex; align-items: flex-start; }
-:root:root .web .hero::before { display: block; content: ""; position: absolute; inset: 0; width: auto; height: auto; z-index: 0; pointer-events: none; border: 0; border-radius: 0; box-shadow: none;
-  background: linear-gradient(90deg, rgba(6, 20, 46, .78) 0, rgba(6, 20, 46, .5) 30%, rgba(6, 20, 46, 0) 56%); }
+:root:root .web .hero::before { display: none; }
+/* El velo va dentro de la foto (.hero-arte::after): .hero-in es un elemento flex con z-index y hace su propia capa, así que un ::before de .hero quedaba debajo de la foto y no se veía. */
+:root:root .web .hero-arte::after { display: block; content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(6, 20, 46, .8) 0, rgba(6, 20, 46, .62) 32%, rgba(6, 20, 46, .25) 52%, rgba(6, 20, 46, 0) 68%); }
 :root:root .web .hero::after { display: none; }
 :root:root .web .hero-in { position: static; width: 100%; max-width: calc(var(--ancho) - 56px); margin: 0 auto; display: block; padding: clamp(36px, 5vh, 64px) 0 88px; }
 :root:root .web .hero-arte { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; max-width: none;
@@ -79,7 +81,7 @@
 :root:root .web .hero-eyebrow { display: block; margin: 0 0 22px; padding: 0; border: 0; background: none;
   font-family: "Inter", sans-serif; font-size: .95rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #fff; text-shadow: 0 1px 10px rgba(6, 20, 46, .8); }
 :root:root .web .hero-titulo { font-size: clamp(2.8rem, 4.2vw, 4.6rem); line-height: .95; font-weight: 800; letter-spacing: -.04em; color: #fff; text-shadow: 0 2px 18px rgba(6, 20, 46, .7), 0 1px 3px rgba(6, 20, 46, .5); }
-:root:root .web .hero-sub { max-width: 34em; margin-top: 26px; font-size: 1.25rem; line-height: 1.5; color: rgba(233, 241, 248, .92); text-shadow: 0 1px 12px rgba(6, 20, 46, .85), 0 1px 2px rgba(6, 20, 46, .6); }
+:root:root .web .hero-sub { max-width: 34em; margin-top: 26px; font-size: 1.4rem; font-weight: 500; line-height: 1.5; color: #fff; text-shadow: 0 1px 12px rgba(6, 20, 46, .85), 0 1px 2px rgba(6, 20, 46, .6); }
 /* Sin botones: en el PC ningún enlace se repite en la misma pantalla (regla de la v25; ya están en la banda de abajo) */
 :root:root .web .hero :focus-visible { outline-color: #93BBDC; }
 
