@@ -935,61 +935,15 @@ main:focus, main:focus-visible { outline: none; }
 .hero { background: #0B1E3C; padding-top: 0; }
 .hero::before, .hero::after { display: none; }
 .hero-arte { position: relative; width: calc(100% + 32px); max-width: none; margin: 0 -16px; aspect-ratio: 4 / 3;
-  background: #0B1E3C url(img/portada/movil/1-conductores.webp) 50% 50% / cover no-repeat; -webkit-mask-image: none; mask-image: none; overflow: hidden; }
-.hero-arte::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: url(img/portada-plantilla-movil.webp) 40% 50% / cover no-repeat; -webkit-mask-image: none; mask-image: none; }
+.hero-arte::after { content: ""; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(180deg, rgba(11, 30, 60, 0) 45%, rgba(11, 30, 60, .55) 75%, #0B1E3C 100%); }
 .hero-txt { position: relative; margin-top: -84px; }
 .hero-eyebrow { padding: 0; border: 0; background: none; border-radius: 0; color: #fff; font-family: "Inter", sans-serif; font-weight: 700; letter-spacing: .1em; text-shadow: 0 1px 8px rgba(6, 20, 46, .8); }
 .hero-titulo { text-shadow: 0 2px 14px rgba(6, 20, 46, .7); }
 @media (min-width: 760px) {
   .hero { padding-top: 36px; }
-  .hero-arte { width: 100%; margin: 0; aspect-ratio: 16 / 9; border-radius: var(--r-l); background: #0B1E3C url(img/portada/1-conductores.webp) 50% 50% / cover no-repeat; }
+  .hero-arte { width: 100%; margin: 0; aspect-ratio: 16 / 9; border-radius: var(--r-l); background: url(img/portada-plantilla.webp) 50% 100% / cover no-repeat; }
   .hero-arte::after { display: none; }
   .hero-txt { margin-top: 0; }
 }
-/* Fotos reales de la empresa que van pasando solas (portada-fotos.js; 16/11/2026, Lorena: fuera la imagen hecha con IA, fotos reales
-   también en el móvil y en la app). Cambio «de cortina»: la foto nueva entra de derecha a izquierda con un corte inclinado y un filo azul
-   de Calsina, llega algo grande y se asienta despacio; la de antes se aparta un poco y se oscurece. En el PC, retoques en web-pc-rb.css. */
-.hero-arte { isolation: isolate; } /* que la capa oscura de la foto (::after) no tape el titular */
-.hero-fotos { position: absolute; inset: 0; z-index: 0; overflow: hidden; border-radius: inherit; }
-.hero-foto { position: absolute; inset: 0; visibility: hidden; }
-.hero-foto i { position: absolute; inset: 0; background: 50% 50% / cover no-repeat; transform-origin: 60% 50%; will-change: transform; }
-.hero-foto.activa, .hero-foto.sale { visibility: visible; }
-.hero-foto.activa { z-index: 3; }
-.hero-foto.activa i { animation: hero-asienta 8.6s linear both; }
-.hero-foto:first-child.activa:not(.ya) i { animation: none; }
-.hero-foto.sale { z-index: 1; }
-.hero-foto.sale i { animation: hero-aparta 1.5s cubic-bezier(.3, 0, .2, 1) both; }
-.hero-foto.entra { clip-path: polygon(calc(105% + 120px) 0, 120% 0, 120% 100%, 105% 100%); }
-.hero-foto.entra.va { clip-path: polygon(0 0, 120% 0, 120% 100%, -120px 100%); transition: clip-path 1.3s cubic-bezier(.77, 0, .18, 1); }
-.hero-filo { position: absolute; inset: 0; z-index: 2; background: #0E5FAE; visibility: hidden; }
-.hero-filo.entra { visibility: visible; clip-path: polygon(calc(105% + 112px) 0, 120% 0, 120% 100%, calc(105% - 8px) 100%); }
-.hero-filo.entra.va { clip-path: polygon(-8px 0, 120% 0, 120% 100%, -128px 100%); transition: clip-path 1.3s cubic-bezier(.77, 0, .18, 1); }
-@keyframes hero-asienta { 0% { transform: scale(1.14); animation-timing-function: cubic-bezier(.2, .7, .2, 1); } 20% { transform: scale(1.04); animation-timing-function: linear; } 100% { transform: scale(1); } }
-@keyframes hero-aparta { to { transform: translateX(-7%) scale(1.02); filter: brightness(.55); } }
-/* Rayitas (una por foto; la de la que se ve se va llenando) y botón de parar, arriba a la derecha de la foto */
-.hero-pases { position: absolute; z-index: 3; top: 10px; right: -6px; display: flex; align-items: center; gap: 0; padding: 2px 6px 2px 2px;
-  border-radius: 999px; background: rgba(11, 30, 60, .55); }
-.hero-pases[hidden] { display: none; }
-.hero-pases button { display: grid; place-items: center; width: 22px; height: 32px; padding: 0; border: 0; background: none; color: #fff; cursor: pointer; }
-.hero-pases .pausa { width: 32px; border-radius: 50%; }
-.hero-pases .pausa svg { width: 14px; height: 14px; fill: currentColor; }
-.hero-pases .punto::before { content: ""; width: 14px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .45) linear-gradient(#fff, #fff) no-repeat; background-size: 0 100%; }
-.hero-pases .punto[aria-current="true"]::before { animation: hero-llena 7s linear both; }
-.hero-pases.parado .punto[aria-current="true"]::before { animation: none; background-size: 100% 100%; }
-.hero-pases button:focus-visible { outline: 3px solid #93BBDC; outline-offset: 1px; border-radius: 6px; }
-@keyframes hero-llena { to { background-size: 100% 100%; } }
-/* En el móvil no caben diez rayitas: solo el botón de parar */
-@media (max-width: 759px) { .hero-pases .punto { display: none; } .hero-pases { right: -4px; padding: 0; } }
-.hero-credito[hidden] { display: none; }
-.hero-credito { position: relative; z-index: 1; max-width: 980px; margin: 14px auto 0; font-size: .75rem; line-height: 1.4; color: rgba(255, 255, 255, .78); }
-.hero-credito a { color: inherit; }
-@media (min-width: 760px) {
-  .hero-pases { position: static; grid-column: 2; order: 3; justify-self: end; margin-top: -2px; }
-  .hero-credito { max-width: var(--ancho, 980px); text-align: right; }
-  .hero-foto.entra { clip-path: polygon(calc(105% + 180px) 0, 120% 0, 120% 100%, 105% 100%); }
-  .hero-foto.entra.va { clip-path: polygon(0 0, 120% 0, 120% 100%, -180px 100%); }
-  .hero-filo.entra { clip-path: polygon(calc(105% + 172px) 0, 120% 0, 120% 100%, calc(105% - 8px) 100%); }
-  .hero-filo.entra.va { clip-path: polygon(-8px 0, 120% 0, 120% 100%, -188px 100%); }
-}
-@media (prefers-reduced-motion: reduce) { .hero-foto i, .hero-pases .punto::before { animation: none !important; } }
