@@ -66,9 +66,9 @@
    con ESRGAN, sin rótulos añadidos y con el cielo alargado por arriba y menos suelo (lo eligió Lorena el 16/11/2026). El titular va a la
    izquierda, sobre el cielo, sin velo ni bordes difuminados. En el móvil y la app, img/portada-plantilla-movil.webp (styles.css). */
 :root:root .web .hero { position: relative; overflow: hidden; background: #0b1e3c; color: #fff; padding: 0 28px;
-  /* Más baja (17/11/2026, Lorena: «la imagen principal me parece exageradamente grande»): como mucho ~46 % de la ventana,
+  /* Más baja (17/11/2026, Lorena: «la imagen principal me parece exageradamente grande»): como mucho la mitad de la ventana,
      para que se vean enseguida el aviso y las reuniones; la foto se recorta (cover) sin ampliarse más. */
-  min-height: clamp(340px, min(30vw, 46vh), 460px); display: flex; align-items: center; }
+  min-height: clamp(360px, min(34vw, 50vh), 520px); display: flex; align-items: flex-start; }
 :root:root .web .hero::before { display: none; }
 /* Sin velo (16/11/2026, Lorena: «el degradado ese no me gusta»): la foto lleva el cielo alargado por arriba y menos suelo, y el texto va sobre el cielo. */
 :root:root .web .hero-arte::after { display: none; }
@@ -76,7 +76,7 @@
 :root:root .web .hero-in { position: static; width: 100%; max-width: calc(var(--ancho) - 56px); margin: 0 auto; display: block; padding: clamp(28px, 4vh, 44px) 0; }
 :root:root .web .hero-arte { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; max-width: none;
   justify-self: stretch; align-self: stretch; aspect-ratio: auto; margin: 0; border-radius: 0; box-shadow: none;
-  background: url(img/portada-plantilla.webp) 50% 72% / cover no-repeat;
+  background: url(img/portada-plantilla.webp) 50% 100% / cover no-repeat;
   -webkit-mask-image: none; mask-image: none; }
 :root:root .web .hero-arte img { display: none; }
 :root:root .web .hero-txt { position: relative; z-index: 1; max-width: min(1000px, 60vw); }
