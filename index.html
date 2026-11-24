@@ -121,6 +121,18 @@
           <div id="agenda" class="agenda"></div>
           <div id="consultas"></div>
           <p id="consultas-estado" class="sr-only" role="status"></p>
+          <!-- v36 (para presentar la web a la plantilla): qué es el comité y cómo contactar. Solo móvil y app (en el PC ya están
+               las cifras y la franja «Habla con el comité»). Texto: el primer párrafo de «Nosotros»; caras: los miembros. -->
+          <section class="conoce tarjeta" id="conoce" aria-labelledby="conoce-tit" hidden>
+            <h2 id="conoce-tit">Conoce a tu comité</h2>
+            <p class="conoce-txt" id="conoce-txt"></p>
+            <a class="conoce-caras" id="conoce-caras" href="#nosotros"></a>
+            <div class="conoce-vias">
+              <a href="#buzon"><span class="ic" data-ic="mensaje"></span><b>Buzón anónimo</b><span>Sin dar tu nombre</span></a>
+              <a href="#nosotros"><span class="ic" data-ic="personas"></span><b>Habla con un miembro</b><span>En persona o por teléfono</span></a>
+              <a href="mailto:ssccoo.calsinacarre@gmail.com"><span class="ic" data-ic="email"></span><b>Escribe un email</b><span>Al correo del comité</span></a>
+            </div>
+          </section>
           <div class="tarjeta contacto-card">
             <span class="ic" data-ic="personas"></span>
             <h2>¿Necesitas al comité?</h2>

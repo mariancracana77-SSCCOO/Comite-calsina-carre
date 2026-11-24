@@ -280,3 +280,6 @@
 }
 /* En los PC más estrechos, sin la línea pequeña de encima del titular: así el texto no tapa el rótulo de la gasolinera */
 @media (max-width: 1279px) { :root:root .web .hero-eyebrow { display: none; } }
+
+/* v36: en el PC ya están las cifras y la franja «Habla con el comité»: «Conoce a tu comité» no sale */
+:root:root .web .conoce { display: none !important; }

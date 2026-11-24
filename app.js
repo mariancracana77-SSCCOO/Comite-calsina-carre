@@ -277,9 +277,30 @@
       return `<li><a class="agenda-item" href="#reunion-${r.id}"><span class="agenda-dia" aria-hidden="true"><b>${d.getDate()}</b><span>${esc(d.toLocaleDateString("es-ES", { month: "short" }).replace(".", ""))}</span></span>
         <span class="agenda-datos"><b>${esc(r.titulo || "Reunión")}</b><span>${esc(fechaSemana(r.fecha))}${r.hora ? " · " + esc(horario(r)) : ""}</span>${r.lugar ? `<span>${esc(r.lugar)}</span>` : ""}</span></a></li>`;
     }).join("")}</ol>` : '<p class="agenda-vacia">No hay reuniones convocadas por ahora.</p>');
+    pintaConoce();
     pintaNovedades();
     pintaConsultas();
     $("lista-actualidad").innerHTML = D.actualidad.slice(0, TOPE_LISTA.actualidad).map(tarjetaNoticia).join("") + verMas("actualidad") || vacio("Todavía no hay anuncios", "Aquí saldrá la información general del comité: acuerdos, cambios de turnos y pausas, convenio, nóminas y todo lo que te afecta.", "periodico", ["#avisos-movil", "Avisarme cuando haya novedades"]);
+  };
+
+  // v36: «Conoce a tu comité» (portada en el móvil y la app). Todo sale de lo que el padre ya edita en el panel:
+  // el primer párrafo de «Nosotros» y los miembros (foto o iniciales). Sin texto ni miembros, no se enseña.
+  const pintaConoce = () => {
+    const caja = $("conoce"); if (!caja) return;
+    const parrafo = String(D.paginas.nosotros || "").split(/\n\s*\n/)[0].replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+    // dos frases como mucho (así no se corta a medias); si aun así es largo, se recorta por una palabra
+    const frases = parrafo.match(/[^.!?]+[.!?]+/g) || [parrafo];
+    let txt = frases.slice(0, 2).join("").trim(); if (txt.length > 190) txt = frases[0].trim();
+    if (txt.length > 190) txt = txt.slice(0, 189).replace(/\s+\S*$/, "") + "…";
+    const ms = D.miembros, VER = 3;
+    $("conoce-txt").textContent = txt; $("conoce-txt").hidden = !txt;
+    const ini = (m) => String(m.nombre || "?").split(/\s+/).slice(0, 2).map((p) => p[0] || "").join("").toUpperCase();
+    $("conoce-caras").innerHTML = ms.length ? `<span class="caras" aria-hidden="true">${ms.slice(0, VER).map((m) => m.foto && m.foto.url
+        ? `<img src="${esc(urlSegura(m.foto.url))}" alt="" loading="lazy" decoding="async" width="36" height="36">`
+        : `<span>${esc(ini(m))}</span>`).join("")}${ms.length > VER ? `<span class="mas">+${ms.length - VER}</span>` : ""}</span>
+      <span class="caras-txt"><b>${ms.length} ${ms.length === 1 ? "persona" : "personas"} en el comité</b><span>Ver quién es quién${icono("flecha")}</span></span>` : "";
+    $("conoce-caras").hidden = !ms.length;
+    caja.hidden = !txt && !ms.length;
   };
 
   // ---------- Avisos ----------
